@@ -220,25 +220,30 @@ three: it runs the memory contest once per replicate per person.
 
 ### Grid v3 — PREPARED, NOT EXECUTED
 
-The 32-cell smoke grid with enough repetition to stop being anecdotal: same axes, 5 reps,
-≈ 960 runs.
-
 ```bash
-python -m sim.recovery --T 300 600 --noise 0.05 0.1 0.2 0.3 \
-    --keep 1.0 0.7 --nonlinear_h 0 1 --reps 5 --jobs 12 --out out_reduced
-# 4 nodes x 2 T x 4 noise x 2 keep x 2 h x 5 reps = 960 runs
+python -m sim.recovery --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7 \
+    --nonlinear_h 0 1 --reps_per_person 1 10 --reps 10 --jobs 12 --out out_v3
+# 4 nodes x 2 T x 2 noise x 2 keep x 2 h x 2 reps_per_person x 10 seeds = 1280 runs
+# minimal version, --reps 3: 384 runs
 ```
 
-**Do not run it until the approval line in [ESTADO_CELULA.md](ESTADO_CELULA.md) carries a
-date** (Modo Celular, rule 5). As of v3 the line is still blank and the grid has not run.
+This command is the one in [PREREGISTRO_v2.md](PREREGISTRO_v2.md); the two must agree,
+and the pre-registration is authoritative. **Do not run it until the approval line in
+[ESTADO_CELULA.md](ESTADO_CELULA.md) carries a date** (Modo Celular, rule 5).
 
-Cost: a v3 run is cheaper than v2 because the Markov null no longer fires on single
-trajectories — it cannot change a verdict that is already `nao identificavel`. Expect the
-wall clock to be dominated by the Wiener and S bootstraps.
+**Cost, measured serially on this machine:** 11.7 s per cell at T = 300, 23.6 s at T = 600 —
+and **nearly flat in `reps_per_person`**, because `identify()` fits everything but the M axis
+on the first trajectory and H3 caps at `H3_MAX_TRAJ` = 8 replicates. So 1280 runs is ≈ 3.1 h
+serial. The specified factors give only 384 runs, 26% of the ~1500 budget; the headroom went
+into seed repetitions (3 → 10), because "anecdotal at 2–3 reps" is the standing complaint
+against every rate in this README. `nonlinear_h` did **not** need to be cut.
 
-When it does run it writes `recovery_map_v2.svg` (exact / spurious / missed / **undecided**
-per node) alongside the existing figures. `h3_separation.svg` comes from ensembles rather
-than the grid; both plotting paths are already exercised on existing data in `out_figuras/`.
+`reps_per_person` above 8 buys nothing in the current implementation: H3 fits at most
+`H3_MAX_TRAJ` trajectories, so 10 and 30 differ only by which person is drawn. That is why
+the grid uses {1, 10} and not {1, 10, 30}.
+
+It writes `recovery_map_v3.svg` (exact / spurious / missed / **undecided** per node)
+alongside the other figures.
 
 **Batch rule:** the full grid (`--T 200 400 800 1600 --noise 0.02 0.05 0.1 0.2 0.4 --keep
 1.0 0.7 0.5 --nonlinear_h 0 1 --reps 20`, ≈ 9,600 runs) stays prepared and **not executed**,

@@ -4,7 +4,7 @@ Gerado por `make_prereg.py`, que lê as constantes dos módulos. Nenhuma linha
 deste documento é digitada duas vezes: se uma tolerância mudar no código, ela muda
 aqui na próxima execução. O que o código não implementa, não aparece.
 
-**Proveniência:** git commit `bf7c50ec1bff835bd114552da0194774430df8af` **with uncommitted changes**
+**Proveniência:** git commit `738c3ce4be39b7cf1dbad7ff865b0a3104634d3b` **with uncommitted changes**
 
 **Sementes:** CRC32 da tupla da célula (`zlib.crc32(repr((node, T, noise, keep, nonlinear_h, rep)))`), de modo que o mapa
 independe do número de processos. Verificado por diff entre `--jobs 1` e `--jobs 4`.

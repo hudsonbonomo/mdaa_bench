@@ -432,7 +432,7 @@ Não criei o repositório — ele já estava lá.
 
 ```
 Grade reduzida aprovada por Hudson em: ____________   (v2, superada pela v3)
-Grade v3 aprovada por Hudson em: 2026-09-11   (VAZIA -> etapa 5 não executada)
+Grade v3 aprovada por Hudson em: 2026-09-11   (preenchida depois; ver célula final)
 ```
 
 ## Etapa 1 — invariante estrutural de M1+H

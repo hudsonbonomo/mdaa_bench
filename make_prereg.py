@@ -31,6 +31,7 @@ _GRID_TAIL = "    --nonlinear_h 0 1 --reps_per_person 1 10 --reps {n} --jobs 12 
 GRID_V3 = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=10)
 GRID_V3_MIN = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=3)
 CELL_SECONDS = {300: 11.7, 600: 23.6}      # measured serially, one process, this machine
+OUT_NAME = "PREREGISTRO_v2.md"
 
 
 def provenance() -> str:
@@ -40,8 +41,14 @@ def provenance() -> str:
         h = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True,
                            text=True, timeout=10)
         if h.returncode == 0:
-            dirty = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT,
-                                   capture_output=True, text=True, timeout=10).stdout.strip()
+            lines = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT,
+                                   capture_output=True, text=True,
+                                   timeout=10).stdout.splitlines()
+            # The document itself cannot be committed at the instant it is written,
+            # so its own modification must not count as "the code is uncommitted".
+            # Without this the marker is self-inflicted: writing the file dirties the
+            # tree, so the next run reports dirt whose only cause is the last run.
+            dirty = [l for l in lines if OUT_NAME not in l]
             return (f"git commit `{h.stdout.strip()}`"
                     + (" **with uncommitted changes**" if dirty else ""))
     except (OSError, subprocess.SubprocessError):
@@ -235,7 +242,7 @@ def main() -> None:
         "determinístico.")
     add("")
 
-    out = ROOT / "PREREGISTRO_v2.md"
+    out = ROOT / OUT_NAME
     out.write_text("\n".join(L) + "\n", encoding="utf-8")
     print(f"{out.name}: {len(L)} linhas")
 
