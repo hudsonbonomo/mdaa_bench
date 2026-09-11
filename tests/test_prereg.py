@@ -13,7 +13,7 @@ import pytest
 from sim import pipeline as P, density as D, generators as G
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-DOC = ROOT / "PREREGISTRO_v1.md"
+DOC = ROOT / "PREREGISTRO_v2.md"
 
 
 def test_document_is_regenerated_from_the_code():
@@ -22,7 +22,7 @@ def test_document_is_regenerated_from_the_code():
                        capture_output=True, text=True, timeout=600)
     assert r.returncode == 0, r.stderr
     assert DOC.read_text(encoding="utf-8") == before, (
-        "PREREGISTRO_v1.md is stale — run `python make_prereg.py`")
+        "PREREGISTRO_v2.md is stale — run `python make_prereg.py`")
 
 
 @pytest.mark.parametrize("value", [P.TOL, P.NULL_Q, P.N_SURR, P.MIN_SEG, P.MIN_REPLICATES,

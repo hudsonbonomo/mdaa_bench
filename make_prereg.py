@@ -26,8 +26,11 @@ SRC = sorted((ROOT / "sim").glob("*.py"))   # the analysis code the document des
                                            # hashing tests/ too would make this file
                                            # change whenever its own guard changes
 
-REDUCED_GRID = ("python -m sim.recovery --T 300 600 --noise 0.05 0.1 0.2 0.3 \\\n"
-                "    --keep 1.0 0.7 --nonlinear_h 0 1 --reps 5 --jobs 12 --out out_reduzida")
+_GRID_HEAD = "python -m sim.recovery --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7"
+_GRID_TAIL = "    --nonlinear_h 0 1 --reps_per_person 1 10 --reps {n} --jobs 12 --out out_v3"
+GRID_V3 = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=10)
+GRID_V3_MIN = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=3)
+CELL_SECONDS = {300: 11.7, 600: 23.6}      # measured serially, one process, this machine
 
 
 def provenance() -> str:
@@ -82,7 +85,7 @@ def main() -> None:
     L: list[str] = []
     add = L.append
 
-    add("# Pré-registro v1 — mdaa_bench")
+    add("# Pré-registro v2 — mdaa_bench")
     add("")
     add("Gerado por `make_prereg.py`, que lê as constantes dos módulos. Nenhuma linha")
     add("deste documento é digitada duas vezes: se uma tolerância mudar no código, ela muda")
@@ -118,6 +121,15 @@ def main() -> None:
         f"contra o limite de {50.0} que `tests/test_boundedness.py` impõe.")
     add("")
 
+    add("### Fronteira medida de `loc_radius`")
+    add("")
+    add(f"H1 recusa o pooling quando a razão entre/intra passa de "
+        f"`H1_BETWEEN_WITHIN` = {D.H1_BETWEEN_WITHIN}. Por bisseção em quatro sementes "
+        f"(M1, 30 pessoas, T=400, ruído 0.05, `A_radius`=0), isso acontece em "
+        f"`loc_radius` entre **0.65 e 1.01**, mediana ≈ 0.84, em unidades de estado. "
+        f"Com `loc_radius`=0 e `A_radius` até 0.9 a razão fica em 0.008 e H1 passa: "
+        f"dispersar a LEI não quebra o pooling em raio nenhum.")
+    add("")
     add("## Gates e regras de parada")
     add("")
     add("Cada gate devolve `(veredito, estatística, nota de parada)`. O veredito pertence a "
@@ -173,19 +185,40 @@ def main() -> None:
         "coluna em vez de contar como rejeição correta.")
     add("- O eixo **S** acima de ruído de medida ≈ 0.1 (poder cai de 8/8 para 4/8).")
     add("- Qualquer `h` não monotônico: o nulo de Wiener gaussianiza por posto.")
+    add("- O eixo M sobre réplicas **não é infalível**. Medido em 8 células de ensemble "
+        "(reps=10, 4 nós × 2 T): um falso positivo em `M1+H` a T=300 e um falso negativo "
+        "em `M1+M` a T=300. A separação limpa (margem 0.157) foi medida a T=400 com 30 "
+        "réplicas numa semente; as taxas reais são o que a grade v3 vai estabelecer.")
+    add("- `reps_per_person` acima de "
+        f"{D.H3_MAX_TRAJ} não muda o que H3 vê: o gate corta em `H3_MAX_TRAJ`. Os valores "
+        "10 e 30 diferem apenas por sortearem pessoas diferentes, não por mais informação.")
     add("")
 
-    add("## Grade reduzida — pré-registrada, condicional à aprovação")
+    add("## Grade v3 — pré-registrada, condicional à aprovação")
     add("")
     add("```bash")
-    add(REDUCED_GRID)
+    add(GRID_V3)
     add("```")
-    n = 4 * 2 * 4 * 2 * 2 * 5
+    n = len(G.NODES) * 2 * 2 * 2 * 2 * 2 * 10
+    n_min = len(G.NODES) * 2 * 2 * 2 * 2 * 2 * 3
+    hrs = (n / 2) * (CELL_SECONDS[300] + CELL_SECONDS[600]) / 2 / 3600
     add("")
-    add(f"{len(G.NODES)} nós × 2 T × 4 ruídos × 2 keep × 2 h × 5 reps = **{n} runs**. "
-        f"Colunas registradas por `recovery.run_cell`: `exact`, `spurious`, `missed`, "
-        f"`undecided`, `m_verdict`, `s_axis`, `n_hardest`, além de `vd_*` por eixo e "
-        f"`gain_*` por estatística.")
+    add(f"{len(G.NODES)} nós × 2 T × 2 ruídos × 2 keep × 2 h × 2 reps_per_person × 10 "
+        f"sementes = **{n} runs**. Versão mínima, com 3 sementes: {n_min} runs.")
+    add("")
+    add(f"Custo medido serialmente nesta máquina: {CELL_SECONDS[300]} s por célula em "
+        f"T=300 e {CELL_SECONDS[600]} s em T=600, **praticamente independente de "
+        f"`reps_per_person`** porque `identify()` ajusta tudo menos o eixo M na primeira "
+        f"trajetória e H3 se limita a `H3_MAX_TRAJ` = {D.H3_MAX_TRAJ} réplicas. "
+        f"Total serial estimado: {hrs:.1f} h.")
+    add("")
+    add(f"O fator `reps_per_person` é o que esta grade adiciona: em 1 o eixo M é "
+        f"`{D.UNIDENTIFIABLE}` por construção; em 10 ele recebe veredito de H3. Sem esse "
+        f"fator a grade não diria nada sobre memória.")
+    add("")
+    add("Colunas registradas por `recovery.run_cell`: `exact`, `spurious`, `missed`, "
+        "`undecided`, `m_verdict`, `reps_per_person`, `s_axis`, `n_hardest`, além de "
+        "`vd_*` por eixo e `gain_*` por estatística.")
     add("")
     add("A grade **não roda** enquanto a linha de aprovação em `ESTADO_CELULA.md` estiver "
         "vazia (Modo Celular, regra 5).")
@@ -202,7 +235,7 @@ def main() -> None:
         "determinístico.")
     add("")
 
-    out = ROOT / "PREREGISTRO_v1.md"
+    out = ROOT / "PREREGISTRO_v2.md"
     out.write_text("\n".join(L) + "\n", encoding="utf-8")
     print(f"{out.name}: {len(L)} linhas")
 

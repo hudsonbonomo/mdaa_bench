@@ -173,3 +173,27 @@ def test_other_axes_keep_a_binary_verdict():
     for k in ("N", "H"):
         assert fit.verdicts[k] in (PASS, FAIL)
         assert fit.axes[k] == (fit.verdicts[k] == PASS)
+
+
+# --- cell "lyapunov" step 2: the replication factor in the grid ---------------
+
+def test_reps_per_person_changes_the_M_verdict_and_nothing_else_silently():
+    """reps_per_person = 1 must reproduce the single-trajectory design exactly:
+    M undecidable. Above MIN_REPLICATES the same cell gets a real verdict."""
+    from sim.recovery import run_cell
+    solo = run_cell("M1+M", 300, 0.05, 1.0, False, 0, reps_per_person=1)
+    many = run_cell("M1+M", 300, 0.05, 1.0, False, 0, reps_per_person=10)
+    assert solo["m_verdict"] == UNIDENTIFIABLE
+    assert solo["reps_per_person"] == 1 and many["reps_per_person"] == 10
+    assert many["m_verdict"] in (PASS, FAIL)          # decided, whichever way
+    assert solo["undecided"] == 1 and many["undecided"] == 0
+
+
+def test_replication_is_within_person():
+    """The grid's replicates must share the structure; if they did not, the cell
+    would be a between-person ensemble and H3 would mean something else."""
+    from sim.ensemble import generate_ensemble
+    ens = generate_ensemble("M1+M", n_traj=5, mode="within", T=300, seed=7)
+    As = ens.truth["A_per_traj"]
+    for A in As[1:]:
+        assert np.allclose(A, As[0])

@@ -24,6 +24,7 @@ import numpy as np
 import pytest
 from sim.generators import generate, NODES, _companion_rho
 from sim.ensemble import generate_ensemble, MODES
+from sim.stability import common_lyapunov, certifies
 
 N_SEEDS = 120
 T = 800
@@ -102,3 +103,49 @@ def test_m1m_kernel_still_decays():
     k = generate("M1+M", T=60, seed=0).truth["kernel"]
     assert np.all(np.diff(k) < 0), k
     assert k[0] / k[-1] > 50, "the kernel should span orders of magnitude"
+
+
+# --- cell "lyapunov": the switched node gets a real invariant -----------------
+
+def test_every_generated_hybrid_carries_a_verified_common_lyapunov_P():
+    """M1+H's old condition was rho(A) < 1 and rho(A2) < 1 separately, which does
+    not certify anything under switching. Now the generator redraws A2 until a
+    COMMON P exists, and the P it stores is re-checked here against both LMIs —
+    the search is not allowed to be its own witness."""
+    redraws = []
+    for s in range(200):
+        t = generate("M1+H", T=60, seed=s).truth
+        P = t["lyapunov_P"]
+        assert P is not None, s
+        assert np.linalg.eigvalsh(P).min() > 0, (s, P)
+        for A in (t["A"], t["A2"]):
+            assert np.linalg.eigvalsh(A.T @ P @ A - P).max() < 0, (s, A)
+        assert certifies(P, (t["A"], t["A2"])), s
+        redraws.append(t["n_redraws"])
+    assert max(redraws) < 50, "redraw budget nearly exhausted"
+
+
+def test_a_pair_without_a_common_P_is_rejected():
+    """Opposite shears: both stable at rho = 0.9, but their product has spectral
+    radius 26.6, so no common P can exist and none must be reported."""
+    A1 = np.array([[0.9, 5.0], [0.0, 0.9]])
+    A2 = np.array([[0.9, 0.0], [5.0, 0.9]])
+    assert max(abs(np.linalg.eigvals(A1))) < 1 and max(abs(np.linalg.eigvals(A2))) < 1
+    assert max(abs(np.linalg.eigvals(A1 @ A2))) > 1        # switching diverges
+    P, margin = common_lyapunov((A1, A2))
+    assert P is None and margin > 0, (P, margin)
+    assert not certifies(P, (A1, A2))
+
+
+def test_common_lyapunov_agrees_with_itself_on_a_trivially_feasible_pair():
+    """Two contractions sharing P = I: the solver must find something, and what it
+    finds must certify."""
+    A1 = np.diag([0.5, 0.8]); A2 = np.diag([0.7, 0.3])
+    P, margin = common_lyapunov((A1, A2))
+    assert P is not None and margin < 0
+    assert certifies(P, (A1, A2))
+
+
+def test_common_lyapunov_refuses_dimensions_it_cannot_solve():
+    with pytest.raises(NotImplementedError):
+        common_lyapunov((np.eye(3) * 0.5, np.eye(3) * 0.4))

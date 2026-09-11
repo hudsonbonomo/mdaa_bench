@@ -15,8 +15,10 @@ known additive effect, optional authorized pause where u_ped = 0.
 from __future__ import annotations
 from dataclasses import dataclass, field
 import numpy as np
+from .stability import common_lyapunov
 
 NODES = ("M1", "M1+N", "M1+H", "M1+M")
+H_MAX_REDRAWS = 50   # 24.8% of A2 draws lack a common P; 50 makes exhaustion impossible
 
 
 @dataclass
@@ -130,11 +132,21 @@ def generate(node: str, T: int = 400, d: int = 2, seed: int = 0,
             x[t] = drift + (B @ u[t - 1]) + off + rng.normal(scale=process_noise, size=d)
 
     elif node == "M1+H":
-        # BOUNDEDNESS: rho(A) < 1 AND rho(A2) < 1, plus slow switching (expected dwell
-        # 1/(1-p_stay) = 67). NOT sufficient in general — arbitrary switching between two
-        # stable matrices can diverge (joint spectral radius); held empirically by test_boundedness.
-        A2 = _stable_matrix(rng, d, rho * 0.6)
-        A2 = -A2 if rng.random() < 0.5 else A2                # qualitatively different law
+        # BOUNDEDNESS: exists P > 0 with A'PA - P < 0 and A2'PA2 - P < 0 (a COMMON
+        # quadratic Lyapunov function), which certifies stability under arbitrary
+        # switching. rho(A) < 1 and rho(A2) < 1 separately do NOT: two stable
+        # matrices can be switched into divergence. A2 is redrawn until a common P
+        # exists; 24.8% of draws are rejected (measured, 200 nodes) — see the README.
+        for _n_redraw in range(H_MAX_REDRAWS):
+            A2 = _stable_matrix(rng, d, rho * 0.6)
+            A2 = -A2 if rng.random() < 0.5 else A2            # qualitatively different law
+            P_common, lyap_margin = common_lyapunov((A, A2))  # sign-invariant: (-A2)'P(-A2) = A2'PA2
+            if P_common is not None:
+                break
+        else:
+            raise RuntimeError(f"no common Lyapunov P after {H_MAX_REDRAWS} redraws "
+                               f"(seed={seed}, rho={rho})")
+        truth.update(lyapunov_P=P_common, lyapunov_margin=lyap_margin, n_redraws=_n_redraw)
         p_stay = 0.985
         q = np.zeros(T, dtype=int)
         for t in range(1, T):

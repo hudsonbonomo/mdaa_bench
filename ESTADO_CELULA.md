@@ -414,3 +414,244 @@ qualquer mudança em `sim/`.
   célula — nenhum dos dois foi testado estruturalmente antes.
 - `memory.py` continua sendo o candidato a ser dividido, junto com a decisão de consertar
   ou aposentar o contest de trajetória única.
+
+---
+---
+
+# Célula `lyapunov-replicas-grade-v3`
+
+Data: 2026-09-11. Escopo executado na ordem pedida.
+
+## Pré-condição
+
+Verificada e **satisfeita**: existe `.git` com 1 commit (`bf7c50e`, "Initial commit",
+2026-09-11 10:35 -0300), árvore limpa no início da célula, 55 arquivos rastreados.
+Não criei o repositório — ele já estava lá.
+
+## Aprovações
+
+```
+Grade reduzida aprovada por Hudson em: ____________   (v2, superada pela v3)
+Grade v3 aprovada por Hudson em:       ____________   (VAZIA -> etapa 5 não executada)
+```
+
+## Etapa 1 — invariante estrutural de M1+H
+
+`sim/stability.py` (novo): função de Lyapunov quadrática **comum**, P ≻ 0 com
+`A'PA − P ≺ 0` e `A2'PA2 − P ≺ 0`, que certifica estabilidade sob chaveamento
+**arbitrário**. O nó redesenha A2 até existir P.
+
+Duas candidatas foram medidas antes de escolher:
+
+```
+condição de Kronecker rho(A1⊗A1 + A2⊗A2) < 1 : aceita  79/200 -> rejeição 60.5%
+viabilidade da LMI com P geral               : aceita 162/200 -> rejeição 19.0%
+```
+
+A de Kronecker é suficiente mas conservadora demais. Fiquei com a LMI.
+
+Solver sem SDP: o conjunto viável é um cone convexo, então uma grade que refina em
+torno do próprio argmin acha o ótimo global. Para d=2 o corte normalizado tem duas
+dimensões e λmax de simétrica 2×2 é forma fechada, então tudo vira numpy vetorizado.
+
+```
+grade vetorizada vs Nelder-Mead com 6 restarts: concordância 200/200, 7.6 ms/par
+  (descida coordenada, descartada: 198 ms/par e perdia 1 par em 200)
+taxa de rejeição por sorteio de A2, no gerador: 24.8%
+  re-sorteios por nó: média 0.33, máx 7, zero em 80.5% dos nós
+custo adicional por trajetória M1+H: 10.2 ms
+```
+
+Testes: 200 nós gerados, todos com P re-verificado contra as duas LMIs por
+`certifies()` (a busca não é sua própria testemunha); par de cisalhamentos opostos
+(ρ(A1)=ρ(A2)=0.9, ρ(A1A2)=26.6) rejeitado; par trivialmente viável aceito;
+dimensão ≠ 2 levanta `NotImplementedError` em vez de certificar nada.
+
+## Etapa 2 — dimensão de réplicas
+
+`recovery.py` ganhou `--reps_per_person`. Em 1, comportamento atual. Acima de 1, o
+gerador produz réplicas intra-pessoa e `identify()` roda no ensemble.
+
+Custo medido **serialmente** (um processo):
+
+```
+T=300: 11.7 s/célula     T=600: 23.6 s/célula
+praticamente INDEPENDENTE de reps_per_person
+```
+
+O motivo é estrutural e vale registrar: `identify()` ajusta tudo menos o eixo M na
+primeira trajetória, e H3 corta em `H3_MAX_TRAJ` = 8. **Logo reps_per_person acima de
+8 não muda o que H3 vê** — 10 e 30 diferem só por sortearem pessoas diferentes. Por
+isso a grade v3 usa {1, 10} e não {1, 10, 30}.
+
+Vereditos de M por célula (4 nós × 2 T, reps=10):
+
+```
+M1   T=300 falha   T=600 falha      M1+N T=300 falha   T=600 falha
+M1+H T=300 PASSA   T=600 falha      M1+M T=300 falha   T=600 PASSA
+```
+
+Ou seja: **um falso positivo (M1+H em T=300) e um falso negativo (M1+M em T=300)**
+em 8 células. A separação limpa do v3 (margem 0.157) foi medida em T=400 com 30
+réplicas e uma semente; as taxas reais são o que a grade v3 vai estabelecer.
+
+## Etapa 3 — grade v3 e pré-registro v2
+
+Fatores do escopo dão 4×2×2×2×2×2×3 = **384 runs**, só 26% do orçamento de ~1500.
+Usei a folga em repetições de semente (3 → 10) = **1280 runs**, ≈ 3.1 h serial,
+porque "anedótico com 2–3 repetições" é a reclamação permanente contra todas as
+taxas do README. `nonlinear_h` **não** precisou ser cortado.
+
+`PREREGISTRO_v1.md` → `PREREGISTRO_v2.md`, gerado por `make_prereg.py`, agora com
+**hash do commit git** em vez do SHA-256 de `sim/`. O documento marca "with
+uncommitted changes" quando a árvore está suja — que é o estado agora e deve ser
+resolvido com um commit antes de rodar a grade.
+
+## Etapa 4 — figuras
+
+```
+python make_figures.py h3       -> out_figuras/h3_replicas.{svg,png}
+python make_figures.py h1       -> out_figuras/h1_location_vs_law.{svg,png}
+python make_figures.py wiener   -> out_figuras/wiener_null.{svg,png}
+```
+
+Nenhuma lê a grade; todas computam do próprio bench.
+
+A figura (a) teve que ser refeita. A primeira versão desenhava a banda de ruído como
+o desvio do contest entre 12 pessoas (±1.17), o que engolia o painel — e, pior, as
+duas curvas já se separavam em n=1, **contradizendo** a afirmação que a figura devia
+sustentar. Medi o que era verdade antes de redesenhar:
+
+```
+uma trajetória por pessoa, 10 pessoas, T=400 ruído 0.05:
+  M1    média -0.656  sd 1.266  valores de -3.261 a +0.006
+  M1+M  média -0.027  sd 0.125  valores de -0.335 a +0.049
+  -> SOBREPÕEM; só 3/10 dos M1+M passam de TOL, nenhum M1 passa
+T=300 ruído 0.3: sobrepõem também; 2/10 dos M1+M acima de TOL
+```
+
+A versão final mostra a média corrente por PESSOA contra o número de réplicas, uma
+linha por pessoa, com H3_TOL marcado — e o título diz quantas pessoas com memória
+plantada terminam do lado certo. Se alguma terminar do lado errado, isso é taxa de
+erro real, não artefato de desenho.
+
+A figura (a) passou por **duas versões descartadas** antes desta. A primeira desenhava
+as duas famílias já separadas em n=1, contradizendo a própria afirmação; a segunda
+cortava uma pessoa atípica para fora do quadro (o `ylim` vinha só dos valores em n=1).
+A versão final, T=300, 3 pessoas por nó:
+
+```
+M1+M médias correntes finais: +0.036  +0.046  +0.070   (3/3 acima de H3_TOL)
+M1   médias correntes finais: -0.165  -0.007  -0.017   (3/3 abaixo de zero)
+duas das três linhas M1+M COMEÇAM em ou abaixo de H3_TOL com uma réplica
+```
+
+Ela só saiu depois de limpar os processos órfãos: com a máquina livre, ~3 min.
+
+## Etapa 5 — NÃO executada
+
+A linha "Grade v3 aprovada por Hudson em:" está vazia. Parei na etapa 4, conforme
+instruído. O comando está no README e no pré-registro.
+
+## Suíte de testes
+
+Verificados isoladamente durante a célula, todos verdes:
+
+```
+tests/test_boundedness.py  17 passed in 15.16s   (novo: +4 de Lyapunov)
+tests/test_prereg.py       13 passed in  4.11s
+tests/test_gates.py -k "reps_per_person or replication_is_within"  2 passed
+```
+
+Suíte COMPLETA, de ponta a ponta:
+
+```
+python -m pytest -q tests   ->  64 passed in 764.56s (12m44s)
+```
+
+Os 58 anteriores mais os 6 novos, todos verdes, nenhuma asserção relaxada. Os 12m44s
+refletem a máquina degradada; em condições normais a suíte anterior (58 testes) levava
+2m38s.
+
+Causa da degradação, que vale registrar como armadilha operacional: **interromper uma
+tarefa de background não mata os processos python filhos**. Eles sobrevivem, continuam
+consumindo CPU e estrangulam toda execução seguinte — um `memory_contest` foi de 2 s para
+50 s. Limpar com `ps -W | grep WindowsApps/python | awk '{print $1}' | xargs kill -9`
+antes de medir qualquer coisa.
+
+## Estacionamento
+
+- **Célula 6 (agente LLM como h)** segue fechada: falta um nulo para `h` não
+  monotônico, e o de Wiener gaussianiza por posto.
+- Nada do escopo desta célula ficou pendente.
+- **Commit antes da grade.** O pré-registro carrega "with uncommitted changes"
+  enquanto a árvore estiver suja; um pré-registro com essa marca não vale muito.
+- **`H3_MAX_TRAJ` = 8 é o teto efetivo de réplicas.** Se o interesse for medir ganho
+  de precisão com 30 réplicas, esse corte precisa subir antes — hoje ele torna o
+  fator inócuo acima de 8.
+- **O eixo M sobre réplicas erra nos dois sentidos** em T=300 (1 FP, 1 FN em 8
+  células). A grade v3 é o que transforma isso em taxa.
+- **M1 e M1+N** passam os invariantes, mas nenhum dos dois tem condição além de
+  ρ < 1, que é trivialmente garantida pela construção. Não há nada a apertar ali.
+- `memory.py` continua candidato a divisão, junto com a decisão de consertar ou
+  aposentar o contest de trajetória única.
+
+---
+---
+
+# Célula `executar-grade-v3` — BLOQUEADA, nada executado
+
+Data: 2026-09-11.
+
+## Aguardando commit de Hudson
+
+**Pré-condição 1 FALHOU: a árvore de trabalho está suja.** `git status --porcelain`
+devolve 25 entradas (14 modificadas/apagadas, 11 não rastreadas)
+sobre o commit `bf7c50e`. Não commitei nada — a autoria e a data do commit são de Hudson.
+
+**Pré-condição 2 FALHOU: a grade v3 não está aprovada.** A linha continua
+
+```
+Grade v3 aprovada por Hudson em:       ____________
+```
+
+Pré-condição 3 OK: zero processos python órfãos (limpeza rodada antes).
+
+Como duas das três falharam, **não gerei o pré-registro, não rodei a grade, não gerei
+figura nenhuma e não commitei**. O escopo inteiro desta célula está intocado.
+
+## O que está sujo, e por quê
+
+O conteúdo não commitado é exatamente o trabalho das duas células anteriores:
+`sim/stability.py`, `make_figures.py`, `PREREGISTRO_v2.md`, as mudanças em
+`sim/generators.py` e `sim/recovery.py`, e os testes novos.
+
+**Há uma causa estrutural que vai fazer esta pré-condição falhar de novo:** o commit
+inicial rastreou **16 arquivos `.pyc`** e não existe `.gitignore`. Rodar qualquer
+teste regenera os `.pyc`, o que suja a árvore sozinho. Enquanto isso não mudar, a
+árvore nunca fica limpa por mais de uma execução de `pytest`.
+
+## O que Hudson precisa fazer para desbloquear
+
+```bash
+cd mdaa_bench
+printf '__pycache__/
+*.pyc
+out_*/
+.pytest_cache/
+' > .gitignore
+git rm -r --cached --quiet sim/__pycache__ tests/__pycache__
+git add -A
+git commit -m "v4: Lyapunov comum, replicas na grade, pre-registro v2, figuras"
+# e preencher a linha de aprovação com a data:
+#   Grade v3 aprovada por Hudson em: 2026-__-__
+```
+
+Decidir se `out_*/` entra no `.gitignore` é dele: os diretórios de saída podem ser
+artefato descartável ou parte do registro. A sugestão acima os ignora.
+
+## Estacionamento
+
+- Nada de `sim/` foi tocado nesta célula, como manda o escopo.
+- A grade v3 continua preparada e não executada; o comando está no README e em
+  `PREREGISTRO_v2.md`.

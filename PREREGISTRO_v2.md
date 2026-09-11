@@ -1,10 +1,10 @@
-# Pré-registro v1 — mdaa_bench
+# Pré-registro v2 — mdaa_bench
 
 Gerado por `make_prereg.py`, que lê as constantes dos módulos. Nenhuma linha
 deste documento é digitada duas vezes: se uma tolerância mudar no código, ela muda
 aqui na próxima execução. O que o código não implementa, não aparece.
 
-**Proveniência:** **not a git repository** — SHA-256 over the 11 files of `sim/` instead: `aa9fea62e0ef61c1`. A real pre-registration needs a commit; this identifies the code but cannot prove when it was written.
+**Proveniência:** git commit `bf7c50ec1bff835bd114552da0194774430df8af` **with uncommitted changes**
 
 **Sementes:** CRC32 da tupla da célula (`zlib.crc32(repr((node, T, noise, keep, nonlinear_h, rep)))`), de modo que o mapa
 independe do número de processos. Verificado por diff entre `--jobs 1` e `--jobs 4`.
@@ -32,10 +32,14 @@ Nós: `M1`, `M1+N`, `M1+H`, `M1+M`. Parâmetros de `generate()`:
 |---|---|
 | `M1` | rho(A) < 1. Guaranteed by _stable_matrix, which normalises to rho. |
 | `M1+N` | rho(A - alpha e0 e0') < 1, i.e. the FAR-FIELD matrix, not A. |
-| `M1+H` | rho(A) < 1 AND rho(A2) < 1, plus slow switching (expected dwell 1/(1-p_stay) = 67). NOT sufficient in general — arbitrary switching between two stable matrices can diverge (joint spectral radius); held empirically by test_boundedness. |
+| `M1+H` | exists P > 0 with A'PA - P < 0 and A2'PA2 - P < 0 (a COMMON quadratic Lyapunov function), which certifies stability under arbitrary switching. rho(A) < 1 and rho(A2) < 1 separately do NOT: two stable matrices can be switched into divergence. A2 is redrawn until a common P exists; 24.8% of draws are rejected (measured, 200 nodes) — see the README. |
 | `M1+M` | rho(companion of [0.5A + k1 I, k2 I, ..., kp I]) < 1. The old fixed mass of 0.55 put z = 1 on the characteristic polynomial exactly: at z = 1 it reads 1 = lambda + sum(kernel) = 0.45 + 0.55, so a UNIT ROOT appeared whenever 0.5A had a real dominant eigenvalue 0.45 — 60 of 200 seeds. Those trajectories were integrated random walks, not the stationary decaying-kernel memory the node claims to be. The kernel SHAPE (0.5^k) is kept and its MASS is solved for so the companion radius lands on rho, the same target every other node is normalised to. |
 
 Medido no código atual: `M1+M` tem raio de companion em [0.7987, 0.9000] sobre 60 sementes; o maior `max|x|` sobre os quatro nós × 40 sementes em T=800 é 28.4, contra o limite de 50.0 que `tests/test_boundedness.py` impõe.
+
+### Fronteira medida de `loc_radius`
+
+H1 recusa o pooling quando a razão entre/intra passa de `H1_BETWEEN_WITHIN` = 1.0. Por bisseção em quatro sementes (M1, 30 pessoas, T=400, ruído 0.05, `A_radius`=0), isso acontece em `loc_radius` entre **0.65 e 1.01**, mediana ≈ 0.84, em unidades de estado. Com `loc_radius`=0 e `A_radius` até 0.9 a razão fica em 0.008 e H1 passa: dispersar a LEI não quebra o pooling em raio nenhum.
 
 ## Gates e regras de parada
 
@@ -71,15 +75,23 @@ Declaradas antes de ver o resultado, com justificativa escrita no código:
 - O eixo **M** em trajetória única. O veredito é `nao identificavel`, não `falha`. Motivo medido: o modelo de memória com o kernel verdadeiro vence o melhor espaço de estados livre d+k por 0–11%, contra um piso de ruído de estimação de ±0.14. O mapa de recuperação registra a terceira coluna em vez de contar como rejeição correta.
 - O eixo **S** acima de ruído de medida ≈ 0.1 (poder cai de 8/8 para 4/8).
 - Qualquer `h` não monotônico: o nulo de Wiener gaussianiza por posto.
+- O eixo M sobre réplicas **não é infalível**. Medido em 8 células de ensemble (reps=10, 4 nós × 2 T): um falso positivo em `M1+H` a T=300 e um falso negativo em `M1+M` a T=300. A separação limpa (margem 0.157) foi medida a T=400 com 30 réplicas numa semente; as taxas reais são o que a grade v3 vai estabelecer.
+- `reps_per_person` acima de 8 não muda o que H3 vê: o gate corta em `H3_MAX_TRAJ`. Os valores 10 e 30 diferem apenas por sortearem pessoas diferentes, não por mais informação.
 
-## Grade reduzida — pré-registrada, condicional à aprovação
+## Grade v3 — pré-registrada, condicional à aprovação
 
 ```bash
-python -m sim.recovery --T 300 600 --noise 0.05 0.1 0.2 0.3 \
-    --keep 1.0 0.7 --nonlinear_h 0 1 --reps 5 --jobs 12 --out out_reduzida
+python -m sim.recovery --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7 \
+    --nonlinear_h 0 1 --reps_per_person 1 10 --reps 10 --jobs 12 --out out_v3
 ```
 
-4 nós × 2 T × 4 ruídos × 2 keep × 2 h × 5 reps = **640 runs**. Colunas registradas por `recovery.run_cell`: `exact`, `spurious`, `missed`, `undecided`, `m_verdict`, `s_axis`, `n_hardest`, além de `vd_*` por eixo e `gain_*` por estatística.
+4 nós × 2 T × 2 ruídos × 2 keep × 2 h × 2 reps_per_person × 10 sementes = **1280 runs**. Versão mínima, com 3 sementes: 384 runs.
+
+Custo medido serialmente nesta máquina: 11.7 s por célula em T=300 e 23.6 s em T=600, **praticamente independente de `reps_per_person`** porque `identify()` ajusta tudo menos o eixo M na primeira trajetória e H3 se limita a `H3_MAX_TRAJ` = 8 réplicas. Total serial estimado: 3.1 h.
+
+O fator `reps_per_person` é o que esta grade adiciona: em 1 o eixo M é `nao identificavel` por construção; em 10 ele recebe veredito de H3. Sem esse fator a grade não diria nada sobre memória.
+
+Colunas registradas por `recovery.run_cell`: `exact`, `spurious`, `missed`, `undecided`, `m_verdict`, `reps_per_person`, `s_axis`, `n_hardest`, além de `vd_*` por eixo e `gain_*` por estatística.
 
 A grade **não roda** enquanto a linha de aprovação em `ESTADO_CELULA.md` estiver vazia (Modo Celular, regra 5).
 

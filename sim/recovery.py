@@ -21,6 +21,7 @@ from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 from .generators import NODES, generate
 from .observe import observe
+from .ensemble import generate_ensemble
 from .pipeline import identify
 from .switching import match_switches
 from .density import PASS, FAIL, UNIDENTIFIABLE
@@ -29,10 +30,22 @@ AXES = ("N", "H", "M")
 SWITCH_TOL = 10          # steps; a recovered switch counts if within +/- this
 
 
-def run_cell(node, T, noise, keep, nonlinear_h, rep):
-    seed = zlib.crc32(repr((node, T, noise, keep, nonlinear_h, rep)).encode()) % (2**31)  # deterministic
-    traj = generate(node, T=T, seed=seed)
-    obs = observe(traj, meas_noise=noise, keep_frac=keep, nonlinear_h=nonlinear_h, seed=seed)
+def run_cell(node, T, noise, keep, nonlinear_h, rep, reps_per_person=1):
+    """One cell. `reps_per_person` is the replication factor: 1 reproduces the
+    single-trajectory design, where the M axis is `nao identificavel` by
+    construction; above 1 the cell becomes WITHIN-PERSON replicates (same A, same
+    B, same intervention schedule, different realisation) and the M axis gets a
+    real verdict from H3. Everything else is still fitted on one trajectory."""
+    seed = zlib.crc32(repr((node, T, noise, keep, nonlinear_h, rep,
+                            reps_per_person)).encode()) % (2**31)   # deterministic
+    if reps_per_person > 1:
+        ens = generate_ensemble(node, n_traj=reps_per_person, mode="within", T=T,
+                                seed=seed, meas_noise=noise, keep_frac=keep,
+                                nonlinear_h=nonlinear_h)
+        traj, obs = generate(node, T=T, seed=seed), ens.obs
+    else:
+        traj = generate(node, T=T, seed=seed)
+        obs = observe(traj, meas_noise=noise, keep_frac=keep, nonlinear_h=nonlinear_h, seed=seed)
     fit = identify(obs, seed=seed)
     planted = set(node.split("+")[1:])                       # axes actually planted
     found = {k for k in AXES if fit.axes.get(k)}
@@ -40,6 +53,7 @@ def run_cell(node, T, noise, keep, nonlinear_h, rep):
     # counting it as "missed" would let an undecidable M look like a clean miss
     undecided = {k for k in AXES if fit.verdicts.get(k) == UNIDENTIFIABLE}
     row = dict(node=node, T=T, noise=noise, keep=keep, nonlinear_h=int(nonlinear_h), rep=rep,
+               reps_per_person=reps_per_person,
                selected=fit.node, exact=int(fit.node == node),
                spurious=int(bool(found - planted)),
                missed=int(bool(planted - found - undecided)),
@@ -69,14 +83,17 @@ def main(argv=None):
     ap.add_argument("--keep", type=float, nargs="+", default=[1.0])
     ap.add_argument("--nonlinear_h", type=int, nargs="+", default=[0])
     ap.add_argument("--reps", type=int, default=2)
+    ap.add_argument("--reps_per_person", type=int, nargs="+", default=[1],
+                    help="within-person replicates per cell; >1 gives the M axis a verdict")
     ap.add_argument("--nodes", nargs="+", default=list(NODES))
     ap.add_argument("--jobs", type=int, default=1, help="worker processes (batch runs)")
     ap.add_argument("--out", default="out")
     a = ap.parse_args(argv)
     os.makedirs(a.out, exist_ok=True)
     t0 = time.time()
-    grid = [(n, T, nz, k, bool(nh), r) for n, T, nz, k, nh, r
-            in itertools.product(a.nodes, a.T, a.noise, a.keep, a.nonlinear_h, range(a.reps))]
+    grid = [(n, T, nz, k, bool(nh), r, rp) for n, T, nz, k, nh, r, rp
+            in itertools.product(a.nodes, a.T, a.noise, a.keep, a.nonlinear_h,
+                                 range(a.reps), a.reps_per_person)]
     print(f"{len(grid)} runs, {a.jobs} job(s)")
     rows = []
     if a.jobs > 1:
@@ -100,7 +117,8 @@ def main(argv=None):
     plot(rows, a.out)
     plot_observation(rows, a.out)
     plot_recovery_v2(rows, a.out)
-    print(json.dumps({k: summary[k] for k in ("by_node", "by_axis", "switch_timing")}, indent=1))
+    print(json.dumps({k: summary[k] for k in
+                      ("by_node", "by_axis", "switch_timing", "m_by_reps_per_person")}, indent=1))
 
 
 def _mean(xs):
@@ -144,8 +162,13 @@ def summarize(rows):
         recovered=_mean([r["sw_n_recovered"] for r in sw_rows]))
     m_verdicts = {v: sum(1 for r in rows if r.get("m_verdict") == v)
                   for v in (PASS, FAIL, UNIDENTIFIABLE)}
+    by_reps = {}
+    for rp in sorted({r.get("reps_per_person", 1) for r in rows}):
+        sub = [r for r in rows if r.get("reps_per_person", 1) == rp]
+        by_reps[str(rp)] = {v: round(sum(1 for r in sub if r["m_verdict"] == v) / len(sub), 3)
+                            for v in (PASS, FAIL, UNIDENTIFIABLE)}
     return dict(by_node=by_node, by_axis=by_axis, switch_timing=switch_timing,
-                m_verdicts=m_verdicts,
+                m_verdicts=m_verdicts, m_by_reps_per_person=by_reps,
                 confusion={f"{k[0]} -> {k[1]}": v for k, v in sorted(conf.items())})
 
 
@@ -190,8 +213,6 @@ def plot_observation(rows, out):
     fig.savefig(os.path.join(out, "observability.svg"), bbox_inches="tight")
 
 
-if __name__ == "__main__":
-    main()
 
 
 def plot_recovery_v2(rows, out):
@@ -242,3 +263,7 @@ def plot_h3_separation(per_node_gains, out, tol):
     fig.savefig(os.path.join(out, "h3_separation.svg"), bbox_inches="tight")
     fig.savefig(os.path.join(out, "h3_separation.png"), bbox_inches="tight")
     plt.close(fig)
+
+
+if __name__ == "__main__":
+    main()
