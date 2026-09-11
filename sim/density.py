@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from .ensemble import pooled_window, windows
 from .memory import memory_contest
+from .switching_null import switching_null
 from .statespace import to_grid
 
 H1_INSTAB = 0.25        # max bootstrap instability of rho (mean relative L1)
@@ -42,6 +43,14 @@ H1_BETWEEN_WITHIN = 1.0  # between-person variance may not exceed within-person 
 H2_SCALE_RATIO = 10.0   # one order of magnitude
 H3_TOL = 0.03           # same TOL the M axis uses on a single trajectory
 H3_MAX_TRAJ = 8         # trajectories actually fitted (each is 3 EM fits)
+H3_NULL_TRAJ = 1        # replicates that get a switching null. Within-person
+                        # replicates share A, B and the regime statistics, so the
+                        # null characterises the WORLD, not the replicate: computing
+                        # it once is the right object, not a saving.
+H3_SWITCH_SURR = 9      # switching surrogates per trajectory for the M null.
+                        # Grid v3: the M axis fired on 28% of two-regime worlds
+                        # against 18% of memory worlds — pooled across regimes,
+                        # piecewise-linear dynamics look history-dependent.
 H4_GRID = 6             # cells per axis for the local flow field
 H4_MARGIN = 0.05        # local must win by a declared margin, not by a hair: the
                         # non-local competitor emits one drift per window against the
@@ -198,26 +207,50 @@ def h2_geometry(obs_list, normalised: bool = False) -> GateResult:
                       dict(scale_ratio=ratio, sd=sd.tolist()))
 
 
-def h3_memory(obs_list, p: int = 6, max_traj: int = H3_MAX_TRAJ, n_iter: int = 25) -> GateResult:
-    gains = []
+def h3_memory(obs_list, p: int = 6, max_traj: int = H3_MAX_TRAJ, n_iter: int = 25,
+              switch_null: bool = True, seed: int = 0) -> GateResult:
+    """The memory-kernel gain, averaged over replicates, against a SWITCHING null.
+
+    Without the null this gate fired more often on two-regime worlds than on
+    memory worlds (grid v3: 28% against 18%). A regime path is itself a slow
+    hidden state, so pooling across regimes makes yesterday predict today — which
+    is exactly the signature the memory kernel is looking for. The null asks
+    whether a stable linear switching process, fitted to this very trajectory,
+    would produce the same gain.
+    """
+    gains, nulls = [], []
+    rng = np.random.default_rng(seed + 41_000)
     used = obs_list[:max_traj]
     for o in used:
         y, u, m = to_grid(o)
         kt = max(int(len(y) * 0.7), 20)
         idx = o.t[o.t >= kt]
         g = memory_contest(y, u, m, kt, idx, p=p, n_iter=n_iter)["gain"]
-        if np.isfinite(g):
-            gains.append(g)
+        if not np.isfinite(g):
+            continue
+        gains.append(g)
+        if switch_null and len(nulls) < H3_NULL_TRAJ:
+            def mem_gain(ys, _y=y, _u=u, _m=m, _kt=kt, _idx=idx):
+                r = memory_contest(ys, _u, _m, _kt, _idx, p=p, n_iter=n_iter)["gain"]
+                return r if np.isfinite(r) else float("nan")
+            q, _ = switching_null(y, u, m, kt, mem_gain, rng,
+                                  n_surr=H3_SWITCH_SURR, min_dur=25)
+            nulls.append(float(np.quantile(q, 0.95)))
     if not gains:
         return GateResult("H3", UNIDENTIFIABLE, float("nan"), "no trajectory yielded a usable contest")
     stat = float(np.mean(gains))
-    passed = bool(stat <= H3_TOL)
+    q_switch = float(np.mean(nulls)) if nulls else float("-inf")
+    # PASS means "effectively Markov": the gain must clear BOTH the tolerance and
+    # what a switching world would have produced by itself.
+    passed = bool(stat <= H3_TOL or stat <= q_switch)
     note = (f"mean memory-kernel gain over {len(gains)} trajectories (of {len(obs_list)}; "
             f"capped at {max_traj}, each costs three EM fits) = {stat:+.3f}; PASS means "
-            f"effectively Markov after augmentation, i.e. gain <= {H3_TOL}. Failing sends "
-            f"the analysis to the generalised (non-Markov) branch.")
+            f"effectively Markov after augmentation, i.e. gain <= {H3_TOL} OR gain <= the "
+            f"switching null's q95 = {q_switch:+.3f}. Failing sends the analysis to the "
+            f"generalised (non-Markov) branch.")
     return GateResult("H3", PASS if passed else FAIL, stat, note,
-                      dict(mean_gain=stat, per_traj=gains))
+                      dict(mean_gain=stat, per_traj=gains, switching_q95=q_switch,
+                           n_nulls=len(nulls)))
 
 
 def _cells(pts, lo, hi, n):

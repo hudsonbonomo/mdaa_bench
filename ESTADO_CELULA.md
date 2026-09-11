@@ -248,6 +248,27 @@ suíte passa de 2 min para mais de 20.
 
 ---
 
+## Um teste antigo que o terceiro nulo quebrou
+
+A suite acusou uma falha, em `test_wiener_null_blocks_nonlinearity_made_by_the_observation_map`.
+Ela e anterior a esta celula e dizia duas coisas que o terceiro nulo tornou falsas
+pela forma, nao pelo conteudo:
+
+```
+assert fit.gains["N_null_q95"] == max(linear_q95, wiener_q95)      # faltava o terceiro
+assert bound_by_wiener >= 5                                        # o de chaveamento tambem vincula
+```
+
+Na semente que falhou: linear -0.004, Wiener 0.015, chaveamento 0.076. O gate estava
+certo; a assercao e que ainda contava dois nulos.
+
+A correcao nao relaxa nada. A primeira linha passou a incluir o terceiro nulo, e a
+segunda foi trocada pela alegacao que o teste sempre quis fazer, agora dita direto:
+**o nulo linear nunca pode ser o vinculante num mundo cuja nao linearidade mora em h.**
+`bound_by_linear == 0` e mais estrito que o `>= 5` antigo, que tolerava uma semente
+vinculada pelo linear. Qual dos dois nulos honestos vincula varia por semente e nao e
+a questao. Verificado: 0/6.
+
 ## Estacionamento
 
 **Célula 6 (agente LLM como `h`) — não aberta, por decisão.** O achado 5 do v1 e a etapa 1
@@ -773,3 +794,128 @@ ps -W | grep -i python | grep -iv "blender\|comfy" | awk '{print $1}' | xargs -r
 - **Fórmula de custo do pré-registro** erra por fator 2.
 - **Tempos de troca degradaram** (MAE 1.7 → 4.16 passos) quando medidos em 320 linhas
   em vez de 8.
+
+---
+---
+
+# Célula `nulo-de-chaveamento`
+
+Data: 2026-09-11. Commit de partida: `89148dc` (grade v3, prereg `1bb2510`).
+
+## Aprovações
+
+```
+Grade v4 aprovada por Hudson em: ____________   (VAZIA -> não executada)
+```
+
+## Etapa 0 — comando de limpeza de órfãos, corrigido
+
+O comando que eu vinha registrando (`grep WindowsApps/python`) estava **errado por
+motivo pior do que eu pensava**: os 6 processos que "resistiam ao kill" não eram órfãos
+do bench. Eram 4 do servidor MCP blender, 2 da extensão Python do IDE e 2 de outro MCP.
+Minhas varreduras anteriores com `kill -9` provavelmente derrubaram serviços do ambiente.
+
+Comando correto, que mira pela LINHA DE COMANDO e não pelo caminho do executável:
+
+```powershell
+Get-CimInstance Win32_Process -Filter "Name LIKE '%python%'" |
+  Where-Object { $_.CommandLine -match 'mdaa_bench|sim\.recovery|make_figures|make_prereg|pytest' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+```
+
+Testado: encontra 0 processos do bench com a máquina ociosa e deixa os 8 do ambiente
+(MCP + IDE) intactos.
+
+## Etapa 1 — nulo de chaveamento no gate N
+
+`sim/switching_null.py` (novo). Ajusta o modelo de dois regimes, simula surrogates
+(regimes da cadeia ajustada, resíduos reamostrados por regime), recomputa a estatística
+do gate. Estabilidade por Lyapunov comum, com projeção por gamma quando o par ajustado
+não admite P.
+
+```
+20 sementes, T=600, ruído 0.05, contra o gate de dois nulos nas MESMAS sementes:
+  M1+H (falso alarme)  3/17 -> 2/17     alvo <=2/20  OK
+  M1+N (poder)         6/19 -> 5/19     alvo >=5/20  OK
+  M1   (falso alarme)  0/20 -> 0/20
+nulo vinculante: chaveamento em 15/20 dos M1+H, em 2/20 dos M1+N
+custo: uma detecção em seis; ganho: um falso alarme em três
+```
+
+Testes: 4 verdes em 5m23s (mais 1 de estabilidade dos surrogates, rodado à parte).
+
+## Etapa 2 — nulo de chaveamento em H3: ALVO NÃO ATINGIDO
+
+```
+20 sementes, 10 réplicas, T=600, ruído 0.05:
+  M1+H: M ativa 7/20 com nulo, 8/20 sem      alvo <=2/20  FALHOU
+  M1+M: M ativa 10/20 com nulo, 10/20 sem    alvo >=3/20  OK (poder intacto)
+```
+
+Verifiquei se o nulo estava mal especificado: **não está.** Os dwell times ajustados
+acompanham os plantados (60.6 vs 60, 53.3 vs 86, 43.4 vs 50, 73.3 vs 75, 41.3 vs 55,
+43.0 vs 46). O surrogate é um processo de chaveamento da velocidade certa; ele
+simplesmente não reproduz a estrutura de memória que a trajetória real de dois regimes
+carrega.
+
+`H3_NULL_TRAJ = 1`: dentro de um ensemble intra-pessoa as réplicas compartilham A, B e a
+estatística de regimes, então o nulo caracteriza o MUNDO, não a réplica. Calculá-lo uma
+vez é o objeto certo, não uma economia.
+
+## Etapa 3 — a pergunta da célula
+
+**M e H são separáveis a esta resolução.**
+
+```
+python scripts/m_vs_h.py     (40 mundos por nó, T=600, 10 réplicas, 3 ajustadas)
+
+M1+M   n=40  media +0.0810  mediana +0.0891  sd 0.1252  fracao>0 0.900
+M1+H   n=40  media -0.7009  mediana -0.2742  sd 1.4722  fracao>0 0.025
+Mann-Whitney z = +7.28
+sobreposicao: max(M1+H) = +0.0317   min(M1+M) = -0.3965
+figura: out_figuras/m_vs_h.svg
+```
+
+Só escolhi a frase depois de ver a figura, como o escopo manda. A primeira versão do
+gráfico estava dominada por outliers de M1+H (até −8.5) e escondia justamente a região
+onde as classes se separam; recortei o eixo em −1.0 e contei os 5 mundos abaixo na
+legenda.
+
+**A consequência é a coisa mais importante desta célula:** a confusão da grade v3 não
+vem das classes de modelo serem indistinguíveis — vem de o gate M nunca comparar contra
+um modelo de chaveamento. Ele compara o kernel de memória contra um espaço de estados
+LIVRE. Um mundo de dois regimes vence o espaço livre pelo mesmo motivo que um mundo com
+memória vence: ambos precisam de mais de um mapa linear. Por isso um nulo por fora não
+resolve, e é exatamente isso que o 7/20 da etapa 2 mostra. O conserto é estrutural: o
+modelo de chaveamento tem que virar COMPETIDOR dentro do contest do eixo M.
+
+## Etapa 4 — grade v4 e pré-registro v3
+
+`PREREGISTRO_v3.md` (119 linhas), gerado por `make_prereg.py`. `PREREGISTRO_v2.md`
+ficou intocado, como manda o escopo.
+
+```
+custo MEDIDO em 8 células reais (4 por T, quatro nós, ambos reps_per_person):
+  T=300: 25.9 s/célula     T=600: 42.8 s/célula
+  (era 11.7 / 23.6 antes do terceiro nulo — identify() ficou ~2x mais caro)
+grade v4: 1280 runs -> 12.2 h serial
+```
+
+Dois defeitos do pré-registro corrigidos nesta versão, ambos identificados por mim
+na célula anterior e agora consertados no gerador (o documento v2 fica como está):
+
+1. **A fórmula de custo errava por fator 2** (`(n/2)*(a+b)/2` dividia uma vez a mais).
+   Com a correção, 12.2 h em vez de 6.1 h.
+2. **Medir o tempo a cada geração tornava o documento não determinístico** — o teste
+   de coerência falharia por variação de cronômetro. O custo agora é congelado como
+   constante, com a proveniência escrita, e `measure_cost()` fica disponível para
+   quem quiser remedir.
+
+## Estacionamento
+
+- **Próxima célula: pôr o modelo de chaveamento dentro do contest do eixo M**, como
+  terceiro competidor ao lado do kernel de memória e do espaço de estados livre. É o que
+  a etapa 3 indica e o que o escopo desta célula não permitia fazer.
+- **Custo de `identify` triplicou** com o terceiro nulo (de ~5s para ~15s por chamada a
+  T=600). A grade v4 herda isso; o pré-registro v3 traz o custo medido em células reais.
+- O alvo `<=2/20` do H3 continua em aberto e agora com um diagnóstico: não é o nulo.

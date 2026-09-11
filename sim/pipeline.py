@@ -22,6 +22,7 @@ from .observe import Observed, regular_pairs, pair_times
 from .statespace import to_grid, em_fit, predict_mse, stochastic_null
 from .switching import fit_switching, switch_times
 from .wiener import wiener_null
+from .switching_null import switching_null
 from .memory import memory_contest, markov_null
 from .density import h3_memory, PASS, FAIL, UNIDENTIFIABLE
 
@@ -198,16 +199,23 @@ def identify(obs, seed=0, s_null: bool = True, m_null: bool = True) -> Fit:
     #   Wiener  — could a linear LATENT process seen through a static h have
     #             done this? (finding 5: a tanh observation map fabricates N)
     # The axis is earned only against the harder of the two.
+    gain_fn = _gain_fn(obs, ug, mg)
     _, m_n = fit_nonlinear(tr, te); g_n = (base - m_n) / base
     q_lin = float(np.quantile(nonlinear_null(tr, te, W_lin, rng), NULL_Q))
-    w_null, w_info = wiener_null(yg, ug, mg, kt, _gain_fn(obs, ug, mg), rng, N_SURR)
+    w_null, w_info = wiener_null(yg, ug, mg, kt, gain_fn, rng, N_SURR)
     q_wie = float(np.quantile(w_null, NULL_Q))
+    sw_null, sw_info = switching_null(yg, ug, mg, kt, gain_fn, rng, N_SURR, min_dur=MIN_SEG)
+    q_swi = float(np.quantile(sw_null, NULL_Q))
     fit.gains["N"] = g_n
     fit.gains["N_null_linear_q95"] = q_lin
     fit.gains["N_null_wiener_q95"] = q_wie
-    fit.gains["N_null_q95"] = max(q_lin, q_wie)                  # the binding one
-    fit.hardest["N"] = "wiener" if q_wie >= q_lin else "linear"
+    fit.gains["N_null_switching_q95"] = q_swi
+    qs = {"linear": q_lin, "wiener": q_wie, "switching": q_swi}
+    fit.hardest["N"] = max(qs, key=qs.get)                       # the binding one
+    fit.gains["N_null_q95"] = qs[fit.hardest["N"]]
     fit.notes.append(f"N wiener null: h={w_info['h_family']} r2={w_info['h_r2']}")
+    fit.notes.append(f"N switching null: gamma={sw_info['gamma']} "
+                     f"projected={sw_info['projected']} n={sw_info['n_used']}")
     fit.axes["N"] = bool(g_n > TOL and g_n > fit.gains["N_null_q95"])
     fit.verdicts["N"] = PASS if fit.axes["N"] else FAIL
 

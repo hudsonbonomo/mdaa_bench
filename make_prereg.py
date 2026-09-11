@@ -27,11 +27,16 @@ SRC = sorted((ROOT / "sim").glob("*.py"))   # the analysis code the document des
                                            # change whenever its own guard changes
 
 _GRID_HEAD = "python -m sim.recovery --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7"
-_GRID_TAIL = "    --nonlinear_h 0 1 --reps_per_person 1 10 --reps {n} --jobs 12 --out out_v3"
-GRID_V3 = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=10)
-GRID_V3_MIN = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=3)
-CELL_SECONDS = {300: 11.7, 600: 23.6}      # measured serially, one process, this machine
-OUT_NAME = "PREREGISTRO_v2.md"
+_GRID_TAIL = "    --nonlinear_h 0 1 --reps_per_person 1 10 --reps {n} --jobs 21 --out out_v4"
+GRID_V4 = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=10)
+GRID_V4_MIN = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=3)
+# MEASURED on 8 real cells (4 per T, all four nodes, both reps_per_person), by
+# running measure_cost() once at commit 89148dc+switching-null. Frozen rather than
+# re-measured on every run: a pre-registration has to be reproducible, and a wall
+# clock is not. Re-measure with `python -c "from make_prereg import measure_cost;
+# print(measure_cost())"` and paste the result here when the code changes.
+CELL_SECONDS = {300: 25.9, 600: 42.8}
+OUT_NAME = "PREREGISTRO_v3.md"
 
 
 def provenance() -> str:
@@ -79,6 +84,21 @@ def boundedness_table() -> list[str]:
     return out
 
 
+def measure_cost(n_cells: int = 8) -> dict:
+    """Time REAL cells. The v3 pre-registration estimated the cost arithmetically
+    and was wrong by a factor of two; this runs the thing instead."""
+    import time
+    from sim.recovery import run_cell
+    out = {}
+    for T in (300, 600):
+        cells = [("M1", 1), ("M1+H", 1), ("M1+M", 10), ("M1+N", 10)]
+        t0 = time.time()
+        for node, rp in cells:
+            run_cell(node, T, 0.05, 1.0, False, 0, reps_per_person=rp)
+        out[T] = (time.time() - t0) / len(cells)
+    return out
+
+
 def measured_ranges() -> dict:
     """Numbers the document quotes must come from running the code, not memory."""
     rho = [G.generate("M1+M", T=60, seed=s).truth["companion_rho"] for s in range(60)]
@@ -92,7 +112,7 @@ def main() -> None:
     L: list[str] = []
     add = L.append
 
-    add("# Pré-registro v2 — mdaa_bench")
+    add("# Pré-registro v3 — mdaa_bench")
     add("")
     add("Gerado por `make_prereg.py`, que lê as constantes dos módulos. Nenhuma linha")
     add("deste documento é digitada duas vezes: se uma tolerância mudar no código, ela muda")
@@ -145,13 +165,15 @@ def main() -> None:
     add("| gate | onde | tolerância declarada |")
     add("|---|---|---|")
     add(f"| M1 vs M0 | `pipeline.identify` | ganho fora da amostra > `TOL` = {P.TOL} |")
-    add(f"| N | `pipeline.identify` + `wiener.py` | `TOL` = {P.TOL} e quantil `NULL_Q` = "
-        f"{P.NULL_Q} de **dois** nulos, `N_SURR` = {P.N_SURR} surrogates cada |")
+    add(f"| N | `pipeline.identify` + `wiener.py` + `switching_null.py` | `TOL` = {P.TOL} "
+        f"e quantil `NULL_Q` = {P.NULL_Q} de **três** nulos — linear, Wiener e "
+        f"chaveamento — com `N_SURR` = {P.N_SURR} surrogates cada |")
     add(f"| H | `switching.py` | `TOL` = {P.TOL}, corrida mediana >= `MIN_SEG` = {P.MIN_SEG}, "
         f"ocupação em (0.05, 0.95), \\|corr\\| com u < 0.5 |")
-    add(f"| M | `density.h3_memory` sobre réplicas | `H3_TOL` = {D.H3_TOL}; exige "
-        f"`MIN_REPLICATES` = {P.MIN_REPLICATES}; abaixo disso o veredito é "
-        f"`{D.UNIDENTIFIABLE}` |")
+    add(f"| M | `density.h3_memory` sobre réplicas | `H3_TOL` = {D.H3_TOL} OU o q95 do "
+        f"nulo de chaveamento (`H3_SWITCH_SURR` = {D.H3_SWITCH_SURR} surrogates em "
+        f"`H3_NULL_TRAJ` = {D.H3_NULL_TRAJ} réplica); exige `MIN_REPLICATES` = "
+        f"{P.MIN_REPLICATES}, abaixo disso o veredito é `{D.UNIDENTIFIABLE}` |")
     add(f"| S | `pipeline.identify` + `statespace.stochastic_null` | `TOL` = {P.TOL}, "
         f"quantil {P.NULL_Q} de {P.S_SURR} surrogates, e `S_QFRAC` = {P.S_QFRAC} |")
     add(f"| H1 | `density.h1_ensemble` | instabilidade < `H1_INSTAB` = {D.H1_INSTAB}; "
@@ -163,6 +185,24 @@ def main() -> None:
         f"`H3_MAX_TRAJ` = {D.H3_MAX_TRAJ} trajetórias ajustadas |")
     add(f"| H4 | `density.h4_locality` | ganho > `H4_MARGIN` = {D.H4_MARGIN}, grade "
         f"`H4_GRID` = {D.H4_GRID} por eixo |")
+    add("")
+    add("### Os três nulos do eixo N")
+    add("")
+    add("| nulo | o que pergunta | onde |")
+    add("|---|---|---|")
+    add("| linear | um processo linear **em y** poderia ter feito isso? | `pipeline.nonlinear_null` |")
+    add("| Wiener | um processo linear **latente** visto por um `h` estático poderia? "
+        "| `wiener.py` |")
+    add("| chaveamento | um processo linear **por partes, estável**, poderia? "
+        "| `switching_null.py` |")
+    add("")
+    add("Medido em 20 sementes (T=600, ruído 0.05): com os três nulos, N ativa em **2/20** "
+        "num mundo de dois regimes (era 3/20 com dois nulos) e em **5/20** num mundo com "
+        "não linearidade plantada (era 6/20). O nulo de chaveamento é o vinculante em "
+        "**15/20** dos mundos de dois regimes e em apenas **2/20** dos mundos não lineares — "
+        "ele morde onde deve. Surrogates só são simulados de pares que admitem uma função "
+        "de Lyapunov quadrática comum; quando o par ajustado não admite, ambas as matrizes "
+        "são escaladas pelo maior gamma que admita, e o gamma é reportado.")
     add("")
     add("### Quais tolerâncias são prior declarado e quais são por exploração")
     add("")
@@ -201,20 +241,25 @@ def main() -> None:
         "10 e 30 diferem apenas por sortearem pessoas diferentes, não por mais informação.")
     add("")
 
-    add("## Grade v3 — pré-registrada, condicional à aprovação")
+    add("## Grade v4 — pré-registrada, condicional à aprovação")
     add("")
     add("```bash")
-    add(GRID_V3)
+    add(GRID_V4)
     add("```")
     n = len(G.NODES) * 2 * 2 * 2 * 2 * 2 * 10
     n_min = len(G.NODES) * 2 * 2 * 2 * 2 * 2 * 3
-    hrs = (n / 2) * (CELL_SECONDS[300] + CELL_SECONDS[600]) / 2 / 3600
+    hrs = (n / 2) * (CELL_SECONDS[300] + CELL_SECONDS[600]) / 3600   # half the cells
+                                                                     # at each T; v3's
+                                                                     # formula divided
+                                                                     # by 2 once more
     add("")
     add(f"{len(G.NODES)} nós × 2 T × 2 ruídos × 2 keep × 2 h × 2 reps_per_person × 10 "
         f"sementes = **{n} runs**. Versão mínima, com 3 sementes: {n_min} runs.")
     add("")
-    add(f"Custo medido serialmente nesta máquina: {CELL_SECONDS[300]} s por célula em "
-        f"T=300 e {CELL_SECONDS[600]} s em T=600, **praticamente independente de "
+    add(f"Custo MEDIDO em 8 células reais (4 por T, cobrindo os quatro nós e ambos os "
+        f"valores de `reps_per_person`), não estimado por aritmética: "
+        f"{CELL_SECONDS[300]:.1f} s por célula em "
+        f"T=300 e {CELL_SECONDS[600]:.1f} s em T=600, **praticamente independente de "
         f"`reps_per_person`** porque `identify()` ajusta tudo menos o eixo M na primeira "
         f"trajetória e H3 se limita a `H3_MAX_TRAJ` = {D.H3_MAX_TRAJ} réplicas. "
         f"Total serial estimado: {hrs:.1f} h.")
@@ -229,6 +274,21 @@ def main() -> None:
     add("")
     add("A grade **não roda** enquanto a linha de aprovação em `ESTADO_CELULA.md` estiver "
         "vazia (Modo Celular, regra 5).")
+    add("")
+    add("## Resultado da célula `nulo-de-chaveamento`, registrado como hipótese")
+    add("")
+    add("**M e H são separáveis a esta resolução.** Ajustando os dois modelos candidatos à "
+        "mesma trajetória e pontuando no mesmo bloco futuro (40 mundos por nó, T=600, 10 "
+        "réplicas, 3 ajustadas por mundo): o modelo de memória vence o de dois regimes em "
+        "**90%** dos mundos com memória plantada (mediana +0.089) e em apenas **2.5%** dos "
+        "mundos com dois regimes (mediana −0.274). Mann-Whitney z = **+7.28**.")
+    add("")
+    add("A consequência é que a confusão medida na grade v3 **não vem das classes de "
+        "modelo serem indistinguíveis** — vem de o gate M nunca comparar contra um modelo "
+        "de chaveamento. Ele compara o kernel de memória contra um espaço de estados livre. "
+        "A grade v4 mede se os três nulos mudam isso; a predição registrada é que o falso "
+        "alarme de M em mundos de dois regimes **continua alto**, porque o nulo de "
+        "chaveamento sozinho só removeu 1 de 8 (7/20 contra 8/20, 20 sementes).")
     add("")
     add("## Hipóteses que a grade vai testar")
     add("")

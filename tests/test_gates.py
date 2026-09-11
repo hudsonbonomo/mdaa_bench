@@ -108,17 +108,22 @@ def test_wiener_null_blocks_nonlinearity_made_by_the_observation_map():
     """Finding 5: a tanh observation map fabricates N. The linear surrogate is
     blind to it — it asks whether a linear process in y could have done this,
     and the honest answer is no. The Wiener null asks the right question."""
-    fired, bound_by_wiener = 0, 0
+    fired, bound_by_linear = 0, 0
     for seed in range(6):
         tj = generate("M1", T=600, seed=seed)
         fit = identify(observe(tj, meas_noise=0.05, nonlinear_h=True, seed=seed),
                        seed=seed, s_null=False, m_null=False)
         fired += int(bool(fit.axes["N"]))
-        bound_by_wiener += int(fit.hardest["N"] == "wiener")
+        bound_by_linear += int(fit.hardest["N"] == "linear")
         assert fit.gains["N_null_q95"] == max(fit.gains["N_null_linear_q95"],
-                                              fit.gains["N_null_wiener_q95"])
+                                              fit.gains["N_null_wiener_q95"],
+                                              fit.gains["N_null_switching_q95"])
     assert fired <= 1, f"N fired on {fired}/6 tanh-observed linear worlds"
-    assert bound_by_wiener >= 5, "the linear null should not be the binding one here"
+    # the claim is about the LINEAR null, and it is now stated directly: on a world
+    # whose nonlinearity lives in h, the parametric-linear surrogate is the weakest
+    # of the three and must never be the one the gate has to clear. Which of the two
+    # honest nulls binds is not the point and varies by seed.
+    assert bound_by_linear == 0, "the linear null should never be the binding one here"
 
 
 def test_wiener_null_does_not_cost_power_on_real_nonlinearity():
@@ -197,3 +202,71 @@ def test_replication_is_within_person():
     As = ens.truth["A_per_traj"]
     for A in As[1:]:
         assert np.allclose(A, As[0])
+
+
+# --- cell "switching null" step 1: the N gate gets a third null --------------
+
+def _n_fires(node, seeds, T=600, noise=0.05):
+    fired = 0
+    for s in seeds:
+        tj = generate(node, T=T, seed=s)
+        fit = identify(observe(tj, meas_noise=noise, seed=s), seed=s,
+                       s_null=False, m_null=False)
+        fired += int(bool(fit.axes.get("N")))
+    return fired
+
+
+def test_switching_null_blocks_N_on_a_two_regime_world():
+    """Grid v3's dominant finding: a two-regime world fires N on ~25% of runs.
+    Piecewise-linear dynamics are locally nonlinear — each regime has its own
+    slope — so a polynomial recovers what one linear map misses. The null asks
+    whether a stable linear SWITCHING process could have produced the data."""
+    assert _n_fires("M1+H", range(20)) <= 2
+
+
+def test_switching_null_leaves_real_nonlinearity_detectable():
+    """It must not cost the axis its reason to exist."""
+    assert _n_fires("M1+N", range(20)) >= 5
+
+
+def test_N_reports_which_of_the_three_nulls_bound_it():
+    tj = generate("M1+H", T=600, seed=0)
+    fit = identify(observe(tj, meas_noise=0.05, seed=0), seed=0,
+                   s_null=False, m_null=False)
+    qs = {k: fit.gains[f"N_null_{k}_q95"] for k in ("linear", "wiener", "switching")}
+    assert fit.hardest["N"] in qs
+    assert fit.gains["N_null_q95"] == max(qs.values())
+    assert qs[fit.hardest["N"]] == max(qs.values())
+
+
+def test_switching_surrogates_are_stable_switching_processes():
+    """A surrogate that diverges is a null of nothing. The fitted pair must admit
+    a common quadratic Lyapunov function, or be projected until it does."""
+    from sim.statespace import to_grid
+    from sim.switching_null import switching_null, project_to_stable, _A_of
+    from sim.stability import common_lyapunov
+    from sim.pipeline import _gain_fn
+    for seed in range(6):
+        tj = generate("M1+H", T=600, seed=seed)
+        ob = observe(tj, meas_noise=0.05, seed=seed)
+        y, u, mk = to_grid(ob)
+        kt = int(len(y) * 0.7)
+        g, info = switching_null(y, u, mk, kt, _gain_fn(ob, u, mk),
+                                 np.random.default_rng(seed), n_surr=5)
+        assert info["lyapunov_ok"], (seed, info)
+        assert np.all(np.isfinite(g))
+        assert 0.0 < info["gamma"] <= 1.0
+
+
+def test_projection_rescues_an_unstable_pair():
+    """Opposite shears have no common P; scaling them down until one exists is
+    what keeps a surrogate simulable."""
+    from sim.switching_null import project_to_stable, _A_of
+    from sim.stability import common_lyapunov
+    W = np.zeros((2, 4, 2))                      # Phi = [y(2), u(1), 1]
+    W[0][:2] = np.array([[0.9, 0.0], [5.0, 0.9]])
+    W[1][:2] = np.array([[0.9, 5.0], [0.0, 0.9]])
+    assert common_lyapunov(_A_of(W, 2))[0] is None
+    W2, gamma, ok = project_to_stable(W, 2)
+    assert ok and gamma < 1.0
+    assert common_lyapunov(_A_of(W2, 2))[0] is not None

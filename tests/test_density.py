@@ -187,3 +187,49 @@ def test_every_gate_reports_a_verdict_from_the_declared_set():
     for g in run_gates(ens, seed=0, max_traj=2).values():
         assert g.verdict in VERDICTS
         assert (g.verdict == PASS) == g.passed
+
+
+# --- cell "switching null" step 2: the M axis over replicates ----------------
+
+def test_h3_computes_and_reports_a_switching_null():
+    """The null must be present and reported, not merely intended."""
+    ens = generate_ensemble("M1+H", n_traj=10, mode="within", T=300, seed=0,
+                            meas_noise=0.05)
+    g = h3_memory(ens.obs, max_traj=2, seed=0, switch_null=True)
+    assert np.isfinite(g.detail["switching_q95"])
+    assert g.detail["n_nulls"] >= 1
+    assert "switching null" in g.note
+    off = h3_memory(ens.obs, max_traj=2, seed=0, switch_null=False)
+    assert off.detail["switching_q95"] == float("-inf")
+
+
+def test_h3_null_cannot_make_the_gate_stricter():
+    """The null only ever ADDS a way to pass (be judged Markov). A world the gate
+    already called Markov must never become non-Markov because a null was added."""
+    for node in ("M1", "M1+H", "M1+M"):
+        ens = generate_ensemble(node, n_traj=10, mode="within", T=300, seed=1,
+                                meas_noise=0.05)
+        off = h3_memory(ens.obs, max_traj=2, seed=1, switch_null=False)
+        on = h3_memory(ens.obs, max_traj=2, seed=1, switch_null=True)
+        if off.passed:
+            assert on.passed, (node, off.note, on.note)
+
+
+def test_h3_switching_null_does_not_rescue_the_M_axis_on_two_regime_worlds():
+    """A RECORDED NEGATIVE RESULT, not an aspiration.
+
+    The cell set out to bring M's false-alarm rate on two-regime worlds down to
+    <= 2/20. Measured over 20 seeds at T=600 with 10 replicates, the axis still
+    fires on 7 of 20 with the null against 8 of 20 without it. The null removes
+    one false alarm in eight. The fitted dwell times match the planted ones
+    (60.6 vs 60, 43.4 vs 50, ...), so the null is not mis-specified — a switching
+    surrogate simply does not reproduce the memory-like structure that the real
+    two-regime trajectory carries. This test pins the measured behaviour on a
+    smaller sample so the claim in the README cannot rot silently.
+    """
+    fires = 0
+    for seed in range(6):
+        ens = generate_ensemble("M1+H", n_traj=10, mode="within", T=600, seed=seed,
+                                meas_noise=0.05)
+        fires += int(h3_memory(ens.obs, max_traj=2, seed=seed).verdict == FAIL)
+    assert fires >= 1, "the false alarm has gone away; re-measure and update the README"

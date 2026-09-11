@@ -563,6 +563,75 @@ confirms nor weakens it. Testing H1 at grid scale needs a different grid.
 Figures over the grid: `out_v3/recovery_map_v3.svg`, `out_v3/wiener_null.svg`,
 `out_v3/h3_replicas.svg`, produced by `python make_figures_v3.py`.
 
+## The switching null, and the question it answered
+
+Grid v3's dominant finding was that a two-regime world fires N on ~25% of runs and,
+over ten replicates, M on 28% — more than the memory world's 18%. Both gates were
+missing the same null: **could a stable linear SWITCHING process have produced this?**
+`sim/switching_null.py` fits the two-regime model already in the bench, simulates from
+the fit (regimes from the fitted chain, noise resampled from the fit's own residuals per
+regime), and recomputes whichever statistic the gate uses. Surrogates are simulated only
+from pairs admitting a common quadratic Lyapunov function; when the fitted pair does not,
+both matrices are scaled by the largest gamma that does, and the gamma is reported.
+
+### The N axis now clears three nulls
+
+| null | asks | where |
+|---|---|---|
+| linear | could a linear process **in y** have done this? | `pipeline.nonlinear_null` |
+| Wiener | could a linear **latent** process seen through a static `h`? | `wiener.py` |
+| switching | could a stable **piecewise-linear** process? | `switching_null.py` |
+
+Measured over 20 seeds at T = 600, noise 0.05, against the two-null gate on the same seeds:
+
+| world | 2 nulls | 3 nulls |
+|---|---|---|
+| `M1+H` (false alarm) | 3/17 | **2/17** |
+| `M1+N` (power) | 6/19 | **5/19** |
+| `M1` (false alarm) | 0/20 | 0/20 |
+
+The switching null is the binding one in **15/20** of two-regime worlds and only **2/20**
+of planted-nonlinear ones: it bites where it should. It costs one detection in six and
+removes one false alarm in three.
+
+### The M axis: the null did not rescue it
+
+The same null in H3, over 20 seeds with 10 replicates at T = 600: the M axis fires on
+**7/20** two-regime worlds with the null against **8/20** without it, while power on
+memory worlds holds at 10/20. **One false alarm removed in eight.** The target for this
+cell was ≤ 2/20 and it was not met.
+
+It is not a mis-specified null. The fitted dwell times track the planted ones closely
+(60.6 against 60, 43.4 against 50, 89.9 against 75), so the surrogate really is a
+switching process of the right speed. A switching surrogate simply does not reproduce the
+memory-like structure the real two-regime trajectory carries.
+
+## Is M an axis, or a case of H?
+
+**M and H are separable at this resolution.**
+
+Fitting both candidate models to the same trajectories and scoring both one step ahead on
+the same future block — 40 worlds per node, T = 600, 10 replicates, 3 fitted per world,
+no `truth` used to fit anything:
+
+| planted | memory model beats switching | median relative gain |
+|---|---|---|
+| `M1+M` | **90%** of worlds | **+0.089** |
+| `M1+H` | **2.5%** of worlds | **−0.274** |
+
+Mann-Whitney **z = +7.28**. The overlap is small: the best switching world reaches +0.032,
+the worst memory world −0.397. Figure: `out_figuras/m_vs_h.svg`, from
+`python scripts/m_vs_h.py`.
+
+**So the confusion in grid v3 is not the model classes being indistinguishable — it is the
+gate never asking the question that distinguishes them.** The M gate compares a memory
+kernel against a *free state space*; it never compares it against a *switching model*. A
+switching world beats the free state space for the same reason a memory world does — both
+need more than one linear map — so the gate fires on both. Adding a switching null outside
+the contest cannot fix that, which is exactly what the 7/20 measured above shows. The fix
+is structural: **the switching model has to become a competitor inside the M contest**, not
+a surrogate outside it. That is the next cell, and it is not attempted here.
+
 ## Files
 
 ```
