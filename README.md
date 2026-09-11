@@ -478,6 +478,91 @@ steps** at ±10 tolerance.
     0.157 margin quoted in v3 was one person, 30 replicates, T = 400. Grid v3 is what turns
     any of this into a rate.
 
+## Grid v3 — EXECUTED, 1280 runs
+
+Pre-registration hash `1bb2510`, approval 2026-09-11. Started 15:43:54, finished 17:11:04:
+**1 h 27 min** at `--jobs 21` on 22 logical cores. Command exactly as pre-registered:
+
+```bash
+python -m sim.recovery --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7     --nonlinear_h 0 1 --reps_per_person 1 10 --reps 10 --jobs 21 --out out_v3
+```
+
+**The pre-registration's cost estimate was wrong by a factor of 2** — it said 3.1 h serial
+where the arithmetic gives 6.3 h (`(n/2)·(a+b)/2` divides by two once too often). The number
+is wrong in a document that was pre-registered before the run, so it stays wrong there and is
+corrected here rather than edited back. Nothing else in the pre-registration was affected.
+
+### Per node × replication factor
+
+| node | reps | n | exact | spurious | missed | undecided |
+|---|---|---|---|---|---|---|
+| M1 | 1 | 160 | 0.875 | 0.125 | 0.000 | 0.000 |
+| M1 | 10 | 160 | 0.875 | 0.125 | 0.000 | 0.000 |
+| M1+N | 1 | 160 | 0.256 | 0.075 | 0.725 | 0.000 |
+| M1+N | 10 | 160 | 0.181 | 0.231 | 0.725 | 0.000 |
+| M1+H | 1 | 160 | 0.312 | 0.256 | 0.531 | 0.000 |
+| M1+H | 10 | 160 | 0.225 | 0.412 | 0.506 | 0.000 |
+| M1+M | 1 | 160 | 0.000 | 0.188 | 0.000 | **1.000** |
+| M1+M | 10 | 160 | 0.119 | 0.188 | 0.819 | 0.000 |
+
+The pre-registration predicted the M axis would be `nao identificavel` in 100% of
+single-trajectory cells. It is: exactly 1.000, which is the one prediction the grid confirms
+without qualification.
+
+### False-alarm rate per axis on a linear world (node `M1`, n = 320)
+
+| axis | fires |
+|---|---|
+| N | 0.044 |
+| H | 0.081 |
+| M | 0.003 |
+| S | 0.637 (every world here is stochastic, so this is power, not false alarm) |
+
+Across all worlds where the axis is absent (n = 960): N 0.106, H 0.107, M 0.070.
+
+### What the grid says about each preliminary figure
+
+**`wiener_null` — confirms the false-alarm claim, weakens the power claim.** At the
+preliminary's own operating point (T = 600, noise 0.05, keep 1.0) the grid gives N firing
+**0/20** on tanh-observed linear worlds where the preliminary reported 1/6, and **0.30** power
+on planted nonlinearity where the preliminary reported 4/6 = 0.67. So the defence is better
+than advertised and the detection is half as good. The Wiener null is the binding one in
+**76.8%** of all 1280 runs, which confirms the preliminary's 23/29.
+
+**But the Wiener null does not do the job it was built for.** Over the whole grid, N's
+false-alarm rate is 0.096 under a linear observation and 0.120 under tanh — almost the same.
+The null was introduced to neutralise a confound specific to tanh; the grid shows N simply
+carries a ~10% false-alarm rate either way. And under tanh the false alarms concentrate on
+**`M1+H`: 0.225**, against 0.075 for `M1` and 0.056 for `M1+M`. Regime switching seen through
+a saturating sensor reads as nonlinearity. That is a new confound, not the one v2 was chasing.
+
+**`h3_replicas` — contradicts it.** The preliminary showed 3 of 3 planted-memory people
+ending above `H3_TOL` and all planted-Markov people below, and was captioned as the figure
+that justifies deciding M on the ensemble. Over 160 cells per node at 10 replicates the M
+axis fires on **18.1% of `M1+M`** — and on **28.1% of `M1+H`**, a world with no memory at all.
+The axis fires more often where memory is absent than where it is planted. It is close to
+clean on `M1` (0.6% false positives), so it is not noise: it is specifically confusing regime
+switching for memory. Three people were not a sample.
+
+**`h1_location_vs_law` — the grid cannot speak to it.** `out_v3` contains no between-person
+ensembles; `A_radius` and `loc_radius` never vary in the grid, which runs within-person
+replicates only. The preliminary figure stands on its own 8-point sweep and this run neither
+confirms nor weakens it. Testing H1 at grid scale needs a different grid.
+
+### Other rates worth recording
+
+* **H axis**: power 0.481, false alarm 0.107. Power tracks length and noise as expected —
+  0.750 at T = 600 / noise 0.05, down to 0.287 at T = 300 / noise 0.3.
+* **Switch timing** degraded badly against the 8-row v2 sample: recall 0.269 (was 0.58),
+  precision 0.433 (was 0.65), **timing MAE 4.16 steps (was 1.7)**, over 320 rows.
+* **S axis**: fires on 0.563 of worlds, all of which are stochastic — a 44% false-negative
+  rate, consistent with v1's finding that S is undecidable above measurement noise ≈ 0.1.
+* **`M1+H` is the worst node in the map**: exact 0.269, spurious 0.334. Its regime switching
+  is what the N axis and the M axis are both mistaking for their own signal.
+
+Figures over the grid: `out_v3/recovery_map_v3.svg`, `out_v3/wiener_null.svg`,
+`out_v3/h3_replicas.svg`, produced by `python make_figures_v3.py`.
+
 ## Files
 
 ```

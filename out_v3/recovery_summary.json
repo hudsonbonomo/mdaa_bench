@@ -1,0 +1,122 @@
+{
+ "by_node": {
+  "M1": {
+   "n": 320,
+   "exact": 0.875,
+   "spurious": 0.125,
+   "missed": 0.0,
+   "undecided": 0.0,
+   "s_correct": 0.637
+  },
+  "M1+N": {
+   "n": 320,
+   "exact": 0.219,
+   "spurious": 0.153,
+   "missed": 0.725,
+   "undecided": 0.0,
+   "s_correct": 0.537
+  },
+  "M1+H": {
+   "n": 320,
+   "exact": 0.269,
+   "spurious": 0.334,
+   "missed": 0.519,
+   "undecided": 0.0,
+   "s_correct": 0.494
+  },
+  "M1+M": {
+   "n": 320,
+   "exact": 0.059,
+   "spurious": 0.188,
+   "missed": 0.409,
+   "undecided": 0.5,
+   "s_correct": 0.584
+  }
+ },
+ "by_axis": {
+  "N": {
+   "n_planted": 320,
+   "fires_when_planted": 0.275,
+   "n_absent": 960,
+   "fires_when_absent": 0.106,
+   "undecidable": 0.0
+  },
+  "H": {
+   "n_planted": 320,
+   "fires_when_planted": 0.481,
+   "n_absent": 960,
+   "fires_when_absent": 0.107,
+   "undecidable": 0.0
+  },
+  "M": {
+   "n_planted": 320,
+   "fires_when_planted": 0.091,
+   "n_absent": 960,
+   "fires_when_absent": 0.07,
+   "undecidable": 0.509
+  },
+  "S": {
+   "n_planted": 1280,
+   "fires_when_planted": 0.563,
+   "n_absent": 0,
+   "fires_when_absent": null
+  }
+ },
+ "switch_timing": {
+  "n": 320,
+  "tol": 10,
+  "recall": 0.269,
+  "precision": 0.433,
+  "mae_steps": 4.158,
+  "planted": 6.825,
+  "recovered": 3.763
+ },
+ "m_verdicts": {
+  "passa": 96,
+  "falha": 533,
+  "nao identificavel": 651
+ },
+ "m_by_reps_per_person": {
+  "1": {
+   "passa": 0.0,
+   "falha": 0.0,
+   "nao identificavel": 1.0
+  },
+  "10": {
+   "passa": 0.15,
+   "falha": 0.833,
+   "nao identificavel": 0.017
+  }
+ },
+ "confusion": {
+  "M1 -> M1": 280,
+  "M1 -> M1+H": 25,
+  "M1 -> M1+H+M": 1,
+  "M1 -> M1+N": 14,
+  "M1+H -> M0": 15,
+  "M1+H -> M1": 112,
+  "M1+H -> M1+H": 86,
+  "M1+H -> M1+H+M": 19,
+  "M1+H -> M1+M": 14,
+  "M1+H -> M1+N": 24,
+  "M1+H -> M1+N+H": 38,
+  "M1+H -> M1+N+H+M": 11,
+  "M1+H -> M1+N+M": 1,
+  "M1+M -> M0": 2,
+  "M1+M -> M1": 239,
+  "M1+M -> M1+H": 39,
+  "M1+M -> M1+H+M": 7,
+  "M1+M -> M1+M": 19,
+  "M1+M -> M1+N": 9,
+  "M1+M -> M1+N+H": 2,
+  "M1+M -> M1+N+H+M": 1,
+  "M1+M -> M1+N+M": 2,
+  "M1+N -> M0": 6,
+  "M1+N -> M1": 195,
+  "M1+N -> M1+H": 18,
+  "M1+N -> M1+M": 13,
+  "M1+N -> M1+N": 70,
+  "M1+N -> M1+N+H": 10,
+  "M1+N -> M1+N+M": 8
+ }
+}

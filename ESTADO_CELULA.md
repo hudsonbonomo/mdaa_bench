@@ -655,3 +655,121 @@ artefato descartável ou parte do registro. A sugestão acima os ignora.
 - Nada de `sim/` foi tocado nesta célula, como manda o escopo.
 - A grade v3 continua preparada e não executada; o comando está no README e em
   `PREREGISTRO_v2.md`.
+
+---
+---
+
+# Célula `executar-grade-v3`
+
+Data: 2026-09-11.
+
+## Pré-condições — todas verificadas
+
+```
+1. git limpo            OK  (git status --porcelain vazio)
+2. aprovação preenchida OK  "Grade v3 aprovada por Hudson em: 2026-09-11"
+3. zero órfãos python   OK  (limpeza rodada antes)
+```
+
+## HASH PRÉ-REGISTRO (anterior à execução da grade)
+
+```
+1bb2510c20d0d62017d843a28072133432259356
+```
+
+`PREREGISTRO_v2.md` foi gerado a partir dele com proveniência **limpa**, sem marca de
+alterações pendentes, e `tests/test_prereg.py` passou (13/13) naquele momento — foi esse
+o documento que valeu como pré-registro da execução.
+
+**Nota sobre o documento depois da execução.** `test_document_is_regenerated_from_the_code`
+regenera o arquivo como efeito colateral, então ao rodar a suíte depois de escrever o
+README e o estado desta célula o documento passou a marcar *with uncommitted changes* —
+as pendências sendo justamente esses documentos, nunca `sim/`. Não existe ponto fixo para
+"documento que contém o hash do commit que o contém", então o artefato congelado é o par
+(commit final, hash `1bb2510` citado na mensagem do commit e nesta seção). Que `sim/` não
+mudou está verificado por `git diff 1bb2510 -- sim/`, vazio.
+
+### Um commit de saneamento foi necessário antes
+
+O escopo pede commit só no fim, mas o item 1 exige "hash do commit atual (**limpo**)",
+e isso era impossível: `make_prereg.py` contava a própria escrita do documento como
+árvore suja, então a proveniência saía sempre marcada com *uncommitted changes* mesmo
+num repositório limpo. Um pré-registro com essa marca não atesta nada.
+
+Corrigi o defeito (a checagem agora ignora o próprio arquivo de saída), corrigi o bloco
+"Grid v3" do README — que ainda trazia o comando antigo, sem `--reps_per_person`, por
+falha minha na célula anterior — e commitei os dois como `1bb2510`. **Nada em `sim/`
+foi tocado**, como manda o escopo; o commit anterior era `738c3ce`.
+
+## Execução da grade v3
+
+```
+comando literal (--jobs = núcleos − 1 = 21; o README trazia 12):
+python -m sim.recovery --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7     --nonlinear_h 0 1 --reps_per_person 1 10 --reps 10 --jobs 21 --out out_v3
+
+início   2026-09-11 15:43:54 -03:00
+fim      2026-09-11 17:11:04 -03:00
+duração  1 h 27 min 10 s
+saída    out_v3/, 1280 linhas no CSV, EXIT=0
+```
+
+Durante a execução verifiquei que não era looping, de duas formas: estruturalmente
+(todo laço do caminho tem teto fixo — `n_iter`, 40 passos de bisseção, 7 rodadas,
+`H_MAX_REDRAWS`=50, `N_SURR`/`S_SURR`/`M_SURR`, e `ex.map` sobre lista fixa) e
+empiricamente (350 s de CPU em 20 s de relógio = 17.5 núcleos ocupados).
+
+## Defeito no pré-registro, registrado e NÃO corrigido
+
+A estimativa de custo de `PREREGISTRO_v2.md` diz 3.1 h serial; a aritmética correta dá
+6.3 h. A fórmula `(n/2)*(a+b)/2` divide por 2 uma vez a mais. **Não corrigi o documento**:
+ele foi pré-registrado antes da execução e editá-lo depois anularia o sentido de haver
+pré-registro. A correção está no README e entra numa próxima célula.
+
+## Resultados — o que a grade fez com as figuras preliminares
+
+```
+wiener_null   CONFIRMA o falso alarme, ENFRAQUECE o poder
+              no ponto da preliminar: 0/20 de falso alarme (preliminar dizia 1/6)
+              e 0.30 de poder (preliminar dizia 4/6)
+              nulo de Wiener vinculante em 76.8% dos 1280 runs (preliminar: 23/29)
+              MAS: falso alarme de N é 0.096 com h linear e 0.120 com tanh — quase
+              igual. O nulo não resolveu o confundidor que motivou sua criação.
+              Sob tanh os falsos alarmes concentram em M1+H (0.225), não em M1 (0.075).
+
+h3_replicas   CONTRADIZ
+              preliminar: 3/3 pessoas com memória acima de H3_TOL, separação limpa
+              grade:      M dispara em 18.1% de M1+M e em 28.1% de M1+H
+              o eixo dispara MAIS onde a memória está ausente do que onde está plantada
+              em M1 é quase limpo (0.6%), então não é ruído: é confusão específica
+              entre troca de regime e memória
+
+h1_location   A GRADE NÃO FALA SOBRE ISSO
+              out_v3 não tem ensembles entre-pessoas; A_radius e loc_radius não variam
+              a preliminar continua valendo por conta própria
+```
+
+Predição do pré-registro que se confirmou sem ressalva: o eixo M é `nao identificavel`
+em **100%** das células de trajetória única (1.000, n=640).
+
+## Nota operacional corrigida
+
+O comando de limpeza de órfãos que eu havia registrado (`grep WindowsApps/python`)
+**não pega os workers**: eles aparecem como
+`C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13\python3.13.exe`.
+Isso explica por que a "limpeza" das células anteriores não resolvia a degradação.
+Comando correto:
+
+```
+ps -W | grep -i python | grep -iv "blender\|comfy" | awk '{print $1}' | xargs -r kill -9
+```
+
+## Estacionamento
+
+- **Eixo M confunde troca de regime com memória.** É o achado mais forte da grade e
+  a próxima coisa a atacar. NÃO corrigido aqui: `sim/` está fora do escopo desta
+  célula e a grade tem que corresponder ao hash `1bb2510`.
+- **Nulo de Wiener não neutraliza o confundidor de tanh** como se supunha; o falso
+  alarme de N é ~10% com qualquer observação. Também não corrigido.
+- **Fórmula de custo do pré-registro** erra por fator 2.
+- **Tempos de troca degradaram** (MAE 1.7 → 4.16 passos) quando medidos em 320 linhas
+  em vez de 8.
