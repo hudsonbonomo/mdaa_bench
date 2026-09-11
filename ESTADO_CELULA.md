@@ -432,7 +432,7 @@ Não criei o repositório — ele já estava lá.
 
 ```
 Grade reduzida aprovada por Hudson em: ____________   (v2, superada pela v3)
-Grade v3 aprovada por Hudson em:       ____________   (VAZIA -> etapa 5 não executada)
+Grade v3 aprovada por Hudson em: 2026-09-11   (VAZIA -> etapa 5 não executada)
 ```
 
 ## Etapa 1 — invariante estrutural de M1+H
@@ -612,7 +612,7 @@ sobre o commit `bf7c50e`. Não commitei nada — a autoria e a data do commit s�
 **Pré-condição 2 FALHOU: a grade v3 não está aprovada.** A linha continua
 
 ```
-Grade v3 aprovada por Hudson em:       ____________
+Grade v3 aprovada por Hudson em: 2026-09-11
 ```
 
 Pré-condição 3 OK: zero processos python órfãos (limpeza rodada antes).
