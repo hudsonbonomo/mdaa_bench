@@ -1,0 +1,92 @@
+{
+ "by_node": {
+  "M1": {
+   "n": 36,
+   "exact": 0.75,
+   "spurious": 0.25,
+   "missed": 0.0,
+   "s_correct": 0.806
+  },
+  "M1+N": {
+   "n": 36,
+   "exact": 0.25,
+   "spurious": 0.167,
+   "missed": 0.667,
+   "s_correct": 0.667
+  },
+  "M1+H": {
+   "n": 36,
+   "exact": 0.222,
+   "spurious": 0.333,
+   "missed": 0.472,
+   "s_correct": 0.5
+  },
+  "M1+M": {
+   "n": 36,
+   "exact": 0.028,
+   "spurious": 0.139,
+   "missed": 0.972,
+   "s_correct": 0.556
+  }
+ },
+ "by_axis": {
+  "N": {
+   "n_planted": 36,
+   "fires_when_planted": 0.333,
+   "n_absent": 108,
+   "fires_when_absent": 0.139
+  },
+  "H": {
+   "n_planted": 36,
+   "fires_when_planted": 0.528,
+   "n_absent": 108,
+   "fires_when_absent": 0.093
+  },
+  "M": {
+   "n_planted": 36,
+   "fires_when_planted": 0.028,
+   "n_absent": 108,
+   "fires_when_absent": 0.102
+  },
+  "S": {
+   "n_planted": 144,
+   "fires_when_planted": 0.632,
+   "n_absent": 0,
+   "fires_when_absent": null
+  }
+ },
+ "switch_timing": {
+  "n": 36,
+  "tol": 10,
+  "recall": 0.347,
+  "precision": 0.583,
+  "mae_steps": 3.298,
+  "planted": 8.722,
+  "recovered": 4.361
+ },
+ "confusion": {
+  "M1 -> M1": 27,
+  "M1 -> M1+H": 2,
+  "M1 -> M1+M": 2,
+  "M1 -> M1+N": 4,
+  "M1 -> M1+N+M": 1,
+  "M1+H -> M1": 16,
+  "M1+H -> M1+H": 8,
+  "M1+H -> M1+H+M": 4,
+  "M1+H -> M1+N": 1,
+  "M1+H -> M1+N+H": 5,
+  "M1+H -> M1+N+H+M": 2,
+  "M1+M -> M0": 1,
+  "M1+M -> M1": 29,
+  "M1+M -> M1+H": 3,
+  "M1+M -> M1+M": 1,
+  "M1+M -> M1+N": 2,
+  "M1+N -> M0": 3,
+  "M1+N -> M1": 18,
+  "M1+N -> M1+H": 2,
+  "M1+N -> M1+H+M": 1,
+  "M1+N -> M1+N": 9,
+  "M1+N -> M1+N+H": 2,
+  "M1+N -> M1+N+M": 1
+ }
+}

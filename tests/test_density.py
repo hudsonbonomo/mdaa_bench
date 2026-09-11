@@ -1,0 +1,189 @@
+"""Paper 3 branch: ensembles and gates H1-H4.
+
+Slow (H3 runs the M-axis contest per trajectory, three EM fits each): ~40 s.
+"""
+import numpy as np
+import pytest
+from sim.ensemble import generate_ensemble, pooled_window, windows
+from sim.density import (h1_ensemble, h2_geometry, h3_memory, h4_locality, run_gates,
+                         PASS, FAIL, VERDICTS, H1_BETWEEN_WITHIN,
+                         H1_INSTAB, H2_SCALE_RATIO, H4_MARGIN)
+
+
+# --- the ensemble itself -----------------------------------------------------
+
+def test_within_mode_is_one_person_sampled_twice():
+    """Replicates share the structure and differ only in realisation. If this
+    fails, `within` is silently a between-person ensemble and H1 means nothing."""
+    ens = generate_ensemble("M1", n_traj=6, mode="within", T=200, seed=0)
+    As = ens.truth["A_per_traj"]
+    for A in As[1:]:
+        assert np.allclose(A, As[0])
+    ys = [o.y for o in ens.obs]
+    assert not np.allclose(ys[0], ys[1])
+
+
+def test_between_mode_disperses_the_dynamics():
+    ens = generate_ensemble("M1", n_traj=6, mode="between", T=200, seed=0, A_radius=0.5, loc_radius=0.5)
+    As = ens.truth["A_per_traj"]
+    assert not np.allclose(As[0], As[1])
+    for A in As:                                  # dispersion changes shape, never stability
+        assert max(abs(np.linalg.eigvals(A))) < 1.0
+
+
+def test_gates_never_receive_truth():
+    """`truth` lives on the Ensemble for recovery.py. The gates take `obs` and
+    the design facts an analyst actually has."""
+    ens = generate_ensemble("M1", n_traj=4, mode="between", T=200, seed=0, A_radius=0.5, loc_radius=0.5)
+    assert set(ens.design()) == {"mode", "n_traj"}
+    for key in ("A_mean", "A_per_traj", "set_points", "A_radius", "loc_radius", "process_noise"):
+        assert key in ens.truth and key not in ens.design()
+    for o in ens.obs:
+        assert not hasattr(o, "truth") and not hasattr(o, "x")
+
+
+def test_windows_do_not_interpolate():
+    ens = generate_ensemble("M1", n_traj=5, mode="within", T=200, seed=0, keep_frac=0.5)
+    total = sum(len(pooled_window(ens.obs, a, b)) for a, b in windows(ens.obs, 5))
+    assert total == sum(len(o.t) for o in ens.obs)     # every point once, none invented
+
+
+# --- H1-H4 on a world where all four should pass -----------------------------
+
+@pytest.fixture(scope="module")
+def m1_within():
+    return generate_ensemble("M1", n_traj=30, mode="within", T=400, seed=0, meas_noise=0.05)
+
+
+def test_h1_h2_h4_pass_on_a_clean_within_person_ensemble(m1_within):
+    h1 = h1_ensemble(m1_within.obs, "within", seed=0)
+    h2 = h2_geometry(m1_within.obs)
+    h4 = h4_locality(m1_within.obs)
+    assert h1.passed and h1.stat < H1_INSTAB, h1.note
+    assert h2.passed and h2.stat <= H2_SCALE_RATIO, h2.note
+    assert h4.passed and h4.stat > 0, h4.note
+    for g in (h1, h2, h4):                        # every gate states its stopping rule
+        assert isinstance(g.passed, bool) and g.note and np.isfinite(g.stat)
+
+
+def test_h3_passes_on_markov_and_fails_on_planted_memory():
+    """The payoff of the ensemble. On ONE trajectory this contest is swamped by
+    estimation noise (see the README); over replicates of the same person it
+    separates the two worlds with no overlap."""
+    mk = generate_ensemble("M1", n_traj=30, mode="within", T=400, seed=0, meas_noise=0.05)
+    me = generate_ensemble("M1+M", n_traj=30, mode="within", T=400, seed=0, meas_noise=0.05)
+    g_mk = h3_memory(mk.obs, max_traj=6)
+    g_me = h3_memory(me.obs, max_traj=6)
+    assert g_mk.passed, g_mk.note
+    assert not g_me.passed, g_me.note
+    assert max(g_mk.detail["per_traj"]) < min(g_me.detail["per_traj"])
+
+
+# --- H1 and the comparability objection --------------------------------------
+
+def test_h1_fails_when_set_points_disperse():
+    """Molenaar: a pooled density over people who sit in different places
+    describes nobody. Small dispersion pools fine; large must be caught."""
+    near = generate_ensemble("M1", n_traj=30, mode="between", T=400, seed=0,
+                             meas_noise=0.05, A_radius=0.0, loc_radius=0.2)
+    far = generate_ensemble("M1", n_traj=30, mode="between", T=400, seed=0,
+                            meas_noise=0.05, A_radius=0.0, loc_radius=1.5)
+    g_near = h1_ensemble(near.obs, "between", seed=0)
+    g_far = h1_ensemble(far.obs, "between", seed=0)
+    assert g_near.passed, g_near.note
+    assert not g_far.passed, g_far.note
+    assert g_far.detail["between_within"] > g_near.detail["between_within"]
+
+
+def test_h2_catches_an_undeclared_scale_mismatch():
+    """H2 is a bookkeeping gate: it fails when one KDE bandwidth would mean two
+    different things on the two axes."""
+    ens = generate_ensemble("M1", n_traj=8, mode="within", T=200, seed=0)
+    for o in ens.obs:
+        o.y[:, 1] *= 50.0                          # an undeclared unit change
+    g = h2_geometry(ens.obs)
+    assert not g.passed and g.stat > H2_SCALE_RATIO, g.note
+    assert h2_geometry(ens.obs, normalised=True).passed   # declaring it is the fix
+
+
+def test_run_gates_returns_all_four_with_stopping_rules(m1_within):
+    res = run_gates(m1_within, seed=0, max_traj=3)
+    assert set(res) == {"H1", "H2", "H3", "H4"}
+    for name, g in res.items():
+        assert g.name == name and isinstance(g.passed, bool) and g.note
+
+
+def test_h4_fails_when_the_drift_is_not_a_function_of_position():
+    """Negative control, without which H4 would be satisfied by any implementation
+    that returns True. Each trajectory carries its OWN constant drift and they all
+    occupy the same box (reflecting walls), so every cell of the grid contains
+    trajectories going every way: the local flow field averages to the global one
+    and has nothing left to win with.
+
+    A first attempt used a random walk under a global time-varying push. That one
+    passed H4 — with an unbounded walk, position encodes elapsed time, so the
+    local field is a clock and legitimately predicts. The box is what removes it.
+    """
+    from sim.observe import Observed
+    rng = np.random.default_rng(0)
+    T, n = 400, 24
+    obs = []
+    for _ in range(n):
+        v = rng.normal(scale=0.25, size=2)
+        x = np.zeros((T, 2)); x[0] = rng.uniform(-3, 3, size=2)
+        for t in range(1, T):
+            q = x[t - 1] + v + rng.normal(scale=0.05, size=2)
+            for c in range(2):
+                if q[c] > 3:
+                    q[c] = 6 - q[c]; v[c] = -v[c]
+                elif q[c] < -3:
+                    q[c] = -6 - q[c]; v[c] = -v[c]
+            x[t] = q
+        obs.append(Observed(t=np.arange(T), y=x, u=np.zeros((T, 1)),
+                            pause=np.zeros(T, bool)))
+    g = h4_locality(obs)
+    assert not g.passed, g.note
+    assert g.detail["mse_local"] >= g.detail["mse_nonlocal"] * (1 - H4_MARGIN), g.note
+
+
+# --- cell "boundedness": the two dispersion radii are not interchangeable -----
+
+def test_shape_dispersion_alone_never_breaks_pooling():
+    """Finding 11 of v2, now that the two radii can be moved independently:
+    people moving under different laws does NOT make a pooled density lie, at
+    any radius, because every density stays centred on the same point."""
+    for A_r in (0.3, 0.6, 0.9):
+        ens = generate_ensemble("M1", n_traj=30, mode="between", T=400, seed=0,
+                                meas_noise=0.05, A_radius=A_r, loc_radius=0.0)
+        g = h1_ensemble(ens.obs, "between", seed=0)
+        assert g.passed, (A_r, g.note)
+        assert g.detail["between_within"] < 0.1, (A_r, g.detail)
+
+
+def test_location_dispersion_is_what_breaks_pooling():
+    """The same ensemble size and node, with the laws held identical and only
+    the set points scattered."""
+    ens = generate_ensemble("M1", n_traj=30, mode="between", T=400, seed=0,
+                            meas_noise=0.05, A_radius=0.0, loc_radius=1.5)
+    g = h1_ensemble(ens.obs, "between", seed=0)
+    assert not g.passed and g.verdict == FAIL, g.note
+    assert g.detail["between_within"] > H1_BETWEEN_WITHIN, g.detail
+
+
+def test_h1_boundary_in_loc_radius_is_a_number():
+    """The README quotes a boundary; this pins it down so the quote cannot rot.
+    Measured by bisection on four seeds: 0.65 to 1.01, median ~0.84."""
+    def verdict(loc, seed):
+        ens = generate_ensemble("M1", n_traj=30, mode="between", T=400, seed=seed,
+                                meas_noise=0.05, A_radius=0.0, loc_radius=loc)
+        return h1_ensemble(ens.obs, "between", seed=seed).verdict
+    for seed in (0, 1):
+        assert verdict(0.30, seed) == PASS, seed          # well below the boundary
+        assert verdict(1.50, seed) == FAIL, seed          # well above it
+
+
+def test_every_gate_reports_a_verdict_from_the_declared_set():
+    ens = generate_ensemble("M1", n_traj=10, mode="within", T=200, seed=0)
+    for g in run_gates(ens, seed=0, max_traj=2).values():
+        assert g.verdict in VERDICTS
+        assert (g.verdict == PASS) == g.passed

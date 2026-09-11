@@ -1,0 +1,81 @@
+{
+ "by_node": {
+  "M1": {
+   "n": 8,
+   "exact": 0.875,
+   "spurious": 0.125,
+   "missed": 0.0,
+   "s_correct": 0.625
+  },
+  "M1+N": {
+   "n": 8,
+   "exact": 0.25,
+   "spurious": 0.0,
+   "missed": 0.75,
+   "s_correct": 0.5
+  },
+  "M1+H": {
+   "n": 8,
+   "exact": 0.375,
+   "spurious": 0.125,
+   "missed": 0.625,
+   "s_correct": 0.625
+  },
+  "M1+M": {
+   "n": 8,
+   "exact": 0.125,
+   "spurious": 0.0,
+   "missed": 0.875,
+   "s_correct": 0.5
+  }
+ },
+ "by_axis": {
+  "N": {
+   "n_planted": 8,
+   "fires_when_planted": 0.25,
+   "n_absent": 24,
+   "fires_when_absent": 0.0
+  },
+  "H": {
+   "n_planted": 8,
+   "fires_when_planted": 0.375,
+   "n_absent": 24,
+   "fires_when_absent": 0.042
+  },
+  "M": {
+   "n_planted": 8,
+   "fires_when_planted": 0.125,
+   "n_absent": 24,
+   "fires_when_absent": 0.042
+  },
+  "S": {
+   "n_planted": 32,
+   "fires_when_planted": 0.562,
+   "n_absent": 0,
+   "fires_when_absent": null
+  }
+ },
+ "switch_timing": {
+  "n": 8,
+  "tol": 10,
+  "recall": 0.577,
+  "precision": 0.654,
+  "mae_steps": 1.707,
+  "planted": 5.0,
+  "recovered": 3.875
+ },
+ "confusion": {
+  "M1 -> M1": 7,
+  "M1 -> M1+H": 1,
+  "M1+H -> M0": 1,
+  "M1+H -> M1": 3,
+  "M1+H -> M1+H": 3,
+  "M1+H -> M1+M": 1,
+  "M1+M -> M0": 1,
+  "M1+M -> M1": 6,
+  "M1+M -> M1+M": 1,
+  "M1+N -> M0": 1,
+  "M1+N -> M1": 5,
+  "M1+N -> M1+N": 2
+ }
+}
