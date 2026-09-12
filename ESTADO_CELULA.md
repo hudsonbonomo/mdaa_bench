@@ -805,7 +805,7 @@ Data: 2026-09-11. Commit de partida: `89148dc` (grade v3, prereg `1bb2510`).
 ## Aprovações
 
 ```
-Grade v4 aprovada por Hudson em: ____________   (VAZIA -> não executada)
+Grade v4 aprovada por Hudson em: 2026-09-12   (VAZIA -> não executada)
 ```
 
 ## Etapa 0 — comando de limpeza de órfãos, corrigido
@@ -930,7 +930,7 @@ Data: 2026-09-12. Commit de partida: `d3403fc` (nulo de chaveamento, prereg v3).
 ## Aprovações
 
 ```
-Grade v4 aprovada por Hudson em: ____________   (VAZIA -> não executada; parei na etapa 4)
+Grade v4 aprovada por Hudson em: 2026-09-12   (VAZIA -> não executada; parei na etapa 4)
 ```
 
 ## Etapa 0 — o comando de limpeza estava errado de novo, e agora sei por quê
