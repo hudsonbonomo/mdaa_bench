@@ -30,6 +30,8 @@ from dataclasses import dataclass, field
 import numpy as np
 from .ensemble import pooled_window, windows
 from .memory import memory_contest
+from .observe import regular_pairs, pair_times
+from .switching import fit_switching
 from .switching_null import switching_null
 from .statespace import to_grid
 
@@ -48,9 +50,12 @@ H3_NULL_TRAJ = 1        # replicates that get a switching null. Within-person
                         # null characterises the WORLD, not the replicate: computing
                         # it once is the right object, not a saving.
 H3_SWITCH_SURR = 9      # switching surrogates per trajectory for the M null.
-                        # Grid v3: the M axis fired on 28% of two-regime worlds
-                        # against 18% of memory worlds — pooled across regimes,
-                        # piecewise-linear dynamics look history-dependent.
+                        # DIAGNOSTIC ONLY since the three-way contest: the null was
+                        # built to fix the false alarm below and did not (7/20 against
+                        # 8/20). Kept, off by default, so the negative result stays
+                        # reproducible rather than being quietly deleted.
+H3_MIN_DUR = 25         # minimum regime dwell for the switching competitor; same
+                        # MIN_SEG the H axis uses, so the two gates fit the same model
 H4_GRID = 6             # cells per axis for the local flow field
 H4_MARGIN = 0.05        # local must win by a declared margin, not by a hair: the
                         # non-local competitor emits one drift per window against the
@@ -207,49 +212,115 @@ def h2_geometry(obs_list, normalised: bool = False) -> GateResult:
                       dict(scale_ratio=ratio, sd=sd.tolist()))
 
 
-def h3_memory(obs_list, p: int = 6, max_traj: int = H3_MAX_TRAJ, n_iter: int = 25,
-              switch_null: bool = True, seed: int = 0) -> GateResult:
-    """The memory-kernel gain, averaged over replicates, against a SWITCHING null.
+def switching_competitor(o, kt, min_dur: int = H3_MIN_DUR, K: int = 2) -> float:
+    """One-step-ahead MSE of the two-regime model on the future block.
 
-    Without the null this gate fired more often on two-regime worlds than on
-    memory worlds (grid v3: 28% against 18%). A regime path is itself a slow
-    hidden state, so pooling across regimes makes yesterday predict today — which
-    is exactly the signature the memory kernel is looking for. The null asks
-    whether a stable linear switching process, fitted to this very trajectory,
-    would produce the same gain.
+    This is the fit `scripts/m_vs_h.py` used to answer whether M and H are even
+    separable; it is imported from here rather than copied, so the figure and the
+    gate score the same competitor. Pairs come from `regular_pairs`, which drops
+    gaps instead of interpolating, and the split is put on the ORIGINAL clock so
+    the switching model and the memory model see the same future.
     """
-    gains, nulls = [], []
+    y0, y1, uu = regular_pairs(o)
+    ts = pair_times(o)
+    k = int(np.searchsorted(ts, kt))
+    if k < 10 or len(y0) - k < 5:
+        return float("nan")
+    tr = (y0[:k], y1[:k], uu[:k])
+    te = (y0[k:], y1[k:], uu[k:])
+    mse = fit_switching(tr, te, K=K, min_dur=min_dur).mse_test
+    return float(mse) if mse > 0 and np.isfinite(mse) else float("nan")
+
+
+def h3_memory(obs_list, p: int = 6, max_traj: int = H3_MAX_TRAJ, n_iter: int = 25,
+              switch_null: bool = False, three_way: bool = True,
+              seed: int = 0) -> GateResult:
+    """The memory kernel against TWO competitors, both scored on the future block.
+
+    Grid v3 found the M axis firing on 28% of two-regime worlds and 18% of memory
+    worlds. The diagnosis took two cells. It is not that the classes are
+    indistinguishable — fitted head to head they separate at z = +7.28 — and it is
+    not a missing null: a switching null on the outside removed one false alarm in
+    eight. It is the COMPARATOR. The old contest asked only
+
+        does an AR(p) kernel beat a free linear-Gaussian state space?
+
+    and a two-regime world answers yes for the same reason a memory world does:
+    one linear map is not enough for either. So the question a memory claim has to
+    survive is now asked with both rivals present:
+
+        does the kernel beat the free state space AND the two-regime model,
+        each by at least H3_TOL?
+
+    PASS still means "effectively Markov after augmentation", so the gate passes as
+    soon as EITHER rival holds the kernel to within tolerance. The binding rival is
+    reported: a memory claim that only just cleared the switching model is a
+    different object from one that cleared it easily.
+
+    `three_way=False` restores the pre-cell rule, kept so the figure can show the
+    two gates side by side on the same worlds and so the recorded negative result
+    about the null stays reproducible.
+    """
+    gains, sw_gains, nulls = [], [], []
     rng = np.random.default_rng(seed + 41_000)
     used = obs_list[:max_traj]
     for o in used:
         y, u, m = to_grid(o)
         kt = max(int(len(y) * 0.7), 20)
         idx = o.t[o.t >= kt]
-        g = memory_contest(y, u, m, kt, idx, p=p, n_iter=n_iter)["gain"]
+        con = memory_contest(y, u, m, kt, idx, p=p, n_iter=n_iter)
+        g = con["gain"]
         if not np.isfinite(g):
             continue
+        g_sw = float("nan")
+        if three_way:
+            mse_sw = switching_competitor(o, kt)
+            if np.isfinite(mse_sw):
+                # the memory MSE is the one memory_contest already paid for; refitting
+                # it here would be a second answer to a question already answered
+                g_sw = (mse_sw - con["mse_memory"]) / mse_sw
+            if not np.isfinite(g_sw):
+                continue          # no switching fit, no three-way verdict on this replicate
+            sw_gains.append(float(g_sw))
         gains.append(g)
         if switch_null and len(nulls) < H3_NULL_TRAJ:
             def mem_gain(ys, _y=y, _u=u, _m=m, _kt=kt, _idx=idx):
                 r = memory_contest(ys, _u, _m, _kt, _idx, p=p, n_iter=n_iter)["gain"]
                 return r if np.isfinite(r) else float("nan")
             q, _ = switching_null(y, u, m, kt, mem_gain, rng,
-                                  n_surr=H3_SWITCH_SURR, min_dur=25)
+                                  n_surr=H3_SWITCH_SURR, min_dur=H3_MIN_DUR)
             nulls.append(float(np.quantile(q, 0.95)))
     if not gains:
-        return GateResult("H3", UNIDENTIFIABLE, float("nan"), "no trajectory yielded a usable contest")
-    stat = float(np.mean(gains))
+        why = ("no trajectory yielded both a usable contest and a switching fit"
+               if three_way else "no trajectory yielded a usable contest")
+        return GateResult("H3", UNIDENTIFIABLE, float("nan"), why)
+
+    g_ss = float(np.mean(gains))
+    g_sw = float(np.mean(sw_gains)) if sw_gains else float("nan")
     q_switch = float(np.mean(nulls)) if nulls else float("-inf")
-    # PASS means "effectively Markov": the gain must clear BOTH the tolerance and
-    # what a switching world would have produced by itself.
-    passed = bool(stat <= H3_TOL or stat <= q_switch)
-    note = (f"mean memory-kernel gain over {len(gains)} trajectories (of {len(obs_list)}; "
-            f"capped at {max_traj}, each costs three EM fits) = {stat:+.3f}; PASS means "
-            f"effectively Markov after augmentation, i.e. gain <= {H3_TOL} OR gain <= the "
-            f"switching null's q95 = {q_switch:+.3f}. Failing sends the analysis to the "
-            f"generalised (non-Markov) branch.")
+    if three_way:
+        # the binding rival is the one that held the kernel to the smaller gain
+        hardest = "state_space" if g_ss <= g_sw else "switching"
+        stat = min(g_ss, g_sw)
+        passed = bool(stat <= H3_TOL)
+        note = (f"memory kernel against TWO rivals over {len(gains)} trajectories "
+                f"(of {len(obs_list)}; capped at {max_traj}): gain over the free state "
+                f"space {g_ss:+.3f}, over the two-regime model {g_sw:+.3f}. The binding "
+                f"one is the {hardest} model at {stat:+.3f}. PASS means effectively "
+                f"Markov, i.e. the kernel failed to beat at least one rival by "
+                f"{H3_TOL}. Failing sends the analysis to the generalised branch.")
+    else:
+        hardest = "state_space"
+        stat = g_ss
+        passed = bool(stat <= H3_TOL or stat <= q_switch)
+        note = (f"mean memory-kernel gain over {len(gains)} trajectories (of "
+                f"{len(obs_list)}; capped at {max_traj}) = {stat:+.3f}; PASS means gain "
+                f"<= {H3_TOL} OR gain <= the switching null's q95 = {q_switch:+.3f}. "
+                f"PRE-CELL RULE, kept for comparison only.")
     return GateResult("H3", PASS if passed else FAIL, stat, note,
-                      dict(mean_gain=stat, per_traj=gains, switching_q95=q_switch,
+                      dict(mean_gain=g_ss, per_traj=gains, switching_gain=g_sw,
+                           per_traj_switching=sw_gains, hardest=hardest,
+                           three_way=three_way, switching_q95=q_switch,
                            n_nulls=len(nulls)))
 
 

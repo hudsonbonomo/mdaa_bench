@@ -4,7 +4,7 @@ Gerado por `make_prereg.py`, que lê as constantes dos módulos. Nenhuma linha
 deste documento é digitada duas vezes: se uma tolerância mudar no código, ela muda
 aqui na próxima execução. O que o código não implementa, não aparece.
 
-**Proveniência:** git commit `89148dc9ab43af57e3b5ef166354a4106b829838` **with uncommitted changes**
+**Proveniência:** git commit `d3403fc84654ec24020a0347d3a7cecb04610c92` **with uncommitted changes**
 
 **Sementes:** CRC32 da tupla da célula (`zlib.crc32(repr((node, T, noise, keep, nonlinear_h, rep)))`), de modo que o mapa
 independe do número de processos. Verificado por diff entre `--jobs 1` e `--jobs 4`.
@@ -50,7 +50,7 @@ Cada gate devolve `(veredito, estatística, nota de parada)`. O veredito pertenc
 | M1 vs M0 | `pipeline.identify` | ganho fora da amostra > `TOL` = 0.03 |
 | N | `pipeline.identify` + `wiener.py` + `switching_null.py` | `TOL` = 0.03 e quantil `NULL_Q` = 0.95 de **três** nulos — linear, Wiener e chaveamento — com `N_SURR` = 49 surrogates cada |
 | H | `switching.py` | `TOL` = 0.03, corrida mediana >= `MIN_SEG` = 25, ocupação em (0.05, 0.95), \|corr\| com u < 0.5 |
-| M | `density.h3_memory` sobre réplicas | `H3_TOL` = 0.03 OU o q95 do nulo de chaveamento (`H3_SWITCH_SURR` = 9 surrogates em `H3_NULL_TRAJ` = 1 réplica); exige `MIN_REPLICATES` = 10, abaixo disso o veredito é `nao identificavel` |
+| M | `density.h3_memory` sobre réplicas | contest de TRÊS: o kernel de memória tem de vencer o espaço de estados livre **e** o modelo de dois regimes de `switching.py`, cada um por `H3_TOL` = 0.03, no mesmo bloco futuro; exige `MIN_REPLICATES` = 10, abaixo disso o veredito é `nao identificavel` |
 | S | `pipeline.identify` + `statespace.stochastic_null` | `TOL` = 0.03, quantil 0.95 de 15 surrogates, e `S_QFRAC` = 0.5 |
 | H1 | `density.h1_ensemble` | instabilidade < `H1_INSTAB` = 0.25; bimodalidade > `H1_BIMODAL_SEP` = 2.0; entre/intra > `H1_BETWEEN_WITHIN` = 1.0 |
 | H2 | `density.h2_geometry` | razão de escalas <= `H2_SCALE_RATIO` = 10.0 |
@@ -97,7 +97,9 @@ python -m sim.recovery --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7 \
 
 4 nós × 2 T × 2 ruídos × 2 keep × 2 h × 2 reps_per_person × 10 sementes = **1280 runs**. Versão mínima, com 3 sementes: 384 runs.
 
-Custo MEDIDO em 8 células reais (4 por T, cobrindo os quatro nós e ambos os valores de `reps_per_person`), não estimado por aritmética: 25.9 s por célula em T=300 e 42.8 s em T=600, **praticamente independente de `reps_per_person`** porque `identify()` ajusta tudo menos o eixo M na primeira trajetória e H3 se limita a `H3_MAX_TRAJ` = 8 réplicas. Total serial estimado: 12.2 h.
+Custo MEDIDO em 8 células reais (4 por T, cobrindo os quatro nós e ambos os valores de `reps_per_person`), não estimado por aritmética: 13.8 s por célula em T=300 e 30.1 s em T=600, **praticamente independente de `reps_per_person`** porque `identify()` ajusta tudo menos o eixo M na primeira trajetória e H3 se limita a `H3_MAX_TRAJ` = 8 réplicas. Total serial estimado: 7.8 h.
+
+A célula **ficou mais barata**, não mais cara: o pré-registro anterior media 25.9 e 42.8 s. O eixo M deixou de rodar o nulo de chaveamento por padrão (nove surrogates, cada um com três ajustes EM) e ganhou em troca um único ajuste de dois regimes por réplica, que é barato. Medir com a máquina ocupada dá 48.8 e 96.2 — inflado cerca de três vezes; os números acima vêm de uma máquina ociosa.
 
 O fator `reps_per_person` é o que esta grade adiciona: em 1 o eixo M é `nao identificavel` por construção; em 10 ele recebe veredito de H3. Sem esse fator a grade não diria nada sobre memória.
 
@@ -105,16 +107,29 @@ Colunas registradas por `recovery.run_cell`: `exact`, `spurious`, `missed`, `und
 
 A grade **não roda** enquanto a linha de aprovação em `ESTADO_CELULA.md` estiver vazia (Modo Celular, regra 5).
 
-## Resultado da célula `nulo-de-chaveamento`, registrado como hipótese
+## O comparador do eixo M, trocado nesta versão
 
-**M e H são separáveis a esta resolução.** Ajustando os dois modelos candidatos à mesma trajetória e pontuando no mesmo bloco futuro (40 mundos por nó, T=600, 10 réplicas, 3 ajustadas por mundo): o modelo de memória vence o de dois regimes em **90%** dos mundos com memória plantada (mediana +0.089) e em apenas **2.5%** dos mundos com dois regimes (mediana −0.274). Mann-Whitney z = **+7.28**.
+A grade v3 mediu o eixo M disparando em 28% dos mundos de dois regimes contra 18% dos mundos com memória. Duas células diagnosticaram a causa, e não é a que parecia. **As classes são separáveis**: ajustados cara a cara no mesmo bloco futuro, o modelo de memória vence o de dois regimes em 90% dos mundos com memória e em 2.5% dos mundos de dois regimes, Mann-Whitney z = +7.28. **E não era um nulo faltando**: um nulo de chaveamento por fora do contest removeu um falso alarme em oito (7/20 contra 8/20).
 
-A consequência é que a confusão medida na grade v3 **não vem das classes de modelo serem indistinguíveis** — vem de o gate M nunca comparar contra um modelo de chaveamento. Ele compara o kernel de memória contra um espaço de estados livre. A grade v4 mede se os três nulos mudam isso; a predição registrada é que o falso alarme de M em mundos de dois regimes **continua alto**, porque o nulo de chaveamento sozinho só removeu 1 de 8 (7/20 contra 8/20, 20 sementes).
+Era o COMPARADOR. O contest antigo perguntava só se um kernel AR(p) vence um espaço de estados linear-gaussiano livre, e um mundo de dois regimes responde que sim pelo mesmo motivo que um mundo com memória: nenhum dos dois cabe em um único mapa linear. Agora a pergunta é feita com os dois rivais presentes, e `PASS` (efetivamente markoviano) acontece assim que QUALQUER um dos rivais segura o kernel dentro da tolerância. O rival vinculante é registrado no `Fit`.
+
+Medido em 40 mundos por nó (T=600, 10 réplicas, 3 ajustadas), os dois gates nas mesmas sementes:
+
+| plantado | gate antigo | gate novo | |
+|---|---|---|---|
+| `M1+H` | 11/40 = 0.275 | **1/40 = 0.025** | falso alarme |
+| `M1+M` | 20/40 = 0.500 | 21/40 = 0.525 | poder |
+
+O rival vinculante diz por quê: em mundos de dois regimes é o modelo de chaveamento em **40 de 40**; em mundos com memória é o espaço de estados livre em **39 de 40**. O competidor novo morde exatamente onde deve e em nenhum outro lugar. O custo é limitado por construção — a estatística nova é o `min` dos dois ganhos, então todo mundo em que o gate novo dispara o antigo também disparava — e medido, é 1 mundo em 40.
+
+**Alvo de poder declarado e NÃO atingido, registrado em vez de afrouxado.** A célula declarou 12/20 antes de medir; o contest de três dispara em 10/20 com 3 réplicas ajustadas e 9/20 com 8. Mais réplicas não ajudam, então não é tamanho de amostra: sete das vinte estatísticas caem entre +0.002 e +0.028, logo abaixo de `H3_TOL` = 0.03. Como o comparador antigo tinha o mesmo ~50% de poder, a diferença não é do rival novo — é uma questão sobre `H3_TOL` e sobre T, e a grade v4 é o que a transforma em taxa.
+
+O nulo de chaveamento sobre M (`H3_SWITCH_SURR` = 9 surrogates) saiu da regra e continua no código como **diagnóstico**, desligado por padrão, para que o resultado negativo continue reproduzível em vez de sumir.
 
 ## Hipóteses que a grade vai testar
 
 1. Taxa de falso alarme de N sob `nonlinear_h=1` cai em relação ao v1 (0.204) — o nulo de Wiener é a defesa; o v2 mediu 1/6 em 6 sementes, a grade mede em 240.
 2. Poder de H cresce com T e cai com ruído; tempos de troca mantêm MAE < 5 passos onde o gate dispara.
-3. O eixo M é `nao identificavel` em **100%** das células, porque toda célula da grade é de trajetória única. Esta é uma predição do desenho, não um resultado.
+3. Em `reps_per_person` = 1 o eixo M é `nao identificavel` em **100%** das células — predição do desenho, não resultado. Em `reps_per_person` = 10, a HIPÓTESE REGISTRADA do comparador novo: **falso alarme de M em `M1+H` <= 0.05 e poder em `M1+M` >= 0.50, a T=600 com ruído 0.05.** Os dois números vêm das 40 sementes acima (0.025 e 0.525) e a grade os mede em 80 células por nó.
 4. O eixo S tem poder decrescente em ruído de medida, com 0 falsos no controle determinístico.
 

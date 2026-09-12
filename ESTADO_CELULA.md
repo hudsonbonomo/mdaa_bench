@@ -919,3 +919,175 @@ na célula anterior e agora consertados no gerador (o documento v2 fica como est
 - **Custo de `identify` triplicou** com o terceiro nulo (de ~5s para ~15s por chamada a
   T=600). A grade v4 herda isso; o pré-registro v3 traz o custo medido em células reais.
 - O alvo `<=2/20` do H3 continua em aberto e agora com um diagnóstico: não é o nulo.
+
+---
+---
+
+# Célula `comparador-M-e-grade-v4`
+
+Data: 2026-09-12. Commit de partida: `d3403fc` (nulo de chaveamento, prereg v3).
+
+## Aprovações
+
+```
+Grade v4 aprovada por Hudson em: ____________   (VAZIA -> não executada; parei na etapa 4)
+```
+
+## Etapa 0 — o comando de limpeza estava errado de novo, e agora sei por quê
+
+O comando da célula anterior mira a LINHA DE COMANDO procurando `mdaa_bench|sim.recovery|
+pytest|...`. Fui olhar a linha de comando de um filho real de `ProcessPoolExecutor`:
+
+```
+"...python.exe" "-c" "from multiprocessing.spawn import spawn_main;
+   spawn_main(parent_pid=10552, pipe_handle=1072)" "--multiprocessing-fork"
+```
+
+**Nenhuma dessas palavras aparece.** O comando antigo matava o PAI e deixava os 12 filhos
+vivos — que é exatamente a patologia registrada desde a célula v3 ("interromper uma tarefa
+de background não mata os processos python filhos"). Também: o nome do processo é
+`python3.13.exe`, não `python.exe`, então filtrar por `Name='python.exe'` não pega nada.
+
+A regra certa não precisa adivinhar nome nem caminho. Um órfão do bench é um worker
+`--multiprocessing-fork` cujo `parent_pid` — escrito na própria linha de comando — já
+morreu:
+
+```powershell
+function Get-BenchOrphans {
+  Get-CimInstance Win32_Process -Filter "Name LIKE '%python%'" |
+    Where-Object { $_.CommandLine -match '--multiprocessing-fork' } |
+    Where-Object {
+      $_.CommandLine -match 'parent_pid=(\d+)' -and
+      -not (Get-Process -Id ([int]$Matches[1]) -ErrorAction SilentlyContinue)
+    }
+}
+Get-BenchOrphans | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+```
+
+Servidor MCP e extensão do IDE não são filhos de multiprocessing, então ficam fora por
+construção — não por lista de exceções. Corrida em andamento também fica fora, porque o
+pai está vivo.
+
+Testado com prova de não-vacuidade (spawn de 3 workers, pai morto à mão):
+
+```
+com o pai vivo                 0 órfãos   (não toca em corrida legítima)
+depois de matar só o pai       3 órfãos   (acha o que o comando antigo não achava)
+depois da limpeza              0 órfãos
+processos de ambiente vivos   10          (4 blender-MCP, 4 comfy-MCP, 2 IDE) intactos
+```
+
+## Etapa 1 — H3 vira contest de três
+
+`sim/density.py`: o kernel de memória agora tem de vencer **os dois** rivais, cada um por
+`H3_TOL`, no mesmo bloco futuro — o espaço de estados linear-gaussiano aumentado (que já
+era o competidor) e o modelo de dois regimes de `switching.py`. `PASS` continua sendo
+"efetivamente markoviano", então basta UM dos rivais segurar o kernel para o gate passar. A
+estatística que decide passou a ser o `min` dos dois ganhos, e o rival vinculante vai para
+o `Fit` (`M_h3_vs_state_space`, `M_h3_vs_switching`, `hardest["M"]`).
+
+O ajuste do rival novo é o de `scripts/m_vs_h.py`, movido para `density.switching_competitor`
+e importado de lá pelo script — os dois pontuam literalmente o mesmo competidor. O MSE de
+memória é o que `memory_contest` já pagou; refazer o ajuste seria uma segunda resposta a
+uma pergunta já respondida.
+
+O nulo de chaveamento sobre M **saiu da regra** e ficou como diagnóstico, desligado por
+padrão (`switch_null=False`). O código continua e o resultado negativo continua medido.
+
+Alvos declarados no escopo, antes de medir (20 sementes, 10 réplicas, T=600, ruído 0.05):
+
+```
+no        max_traj=3   max_traj=8   alvo        veredito
+M1+H          0/20         0/20     <=1/20      ATINGIDO
+M1            0/20         0/20     0/20        ATINGIDO
+M1+M         10/20         9/20     >=12/20     NÃO ATINGIDO
+```
+
+**O alvo de poder não foi atingido e o número está registrado, não o limiar afrouxado.**
+Mais réplicas não ajudam (9/20 com 8 contra 10/20 com 3), então não é tamanho de amostra:
+sete das vinte estatísticas caem entre +0.002 e +0.028, logo abaixo de `H3_TOL` = 0.03. E o
+comparador ANTIGO tinha o mesmo poder (20/40), então a diferença não é do rival novo. É uma
+questão sobre `H3_TOL` e sobre T, que não pertence a esta célula.
+
+O que ficou provado no lugar, de forma estrita: a estatística nova é o `min` das duas, logo
+**toda detecção nova é também detecção antiga**, e o custo do segundo rival é 1 mundo em 40.
+É esse o teto de preço que o teste crava.
+
+## Etapa 2 — trajetória única
+
+Nenhum teste editado; 5 verdes em `test_gates.py` (`reps_per_person`, veredito indecidível,
+coluna do `recovery`). O comparador novo não alcança o caminho de trajetória única porque o
+veredito já é `nao identificavel` antes do contest.
+
+## Etapa 3 — os dois gates nas mesmas sementes
+
+`scripts/m_vs_h.py` mudou de pergunta: respondia "M e H são separáveis?" (respondido, z=+7.28)
+e agora responde "o comparador novo separa?". 40 mundos por nó, T=600, 10 réplicas, 3
+ajustadas, os dois gates nas MESMAS sementes:
+
+```
+no        gate antigo   gate novo   papel
+M1+H         11/40         1/40      falso alarme   (0.275 -> 0.025)
+M1+M         20/40        21/40      poder          (0.500 -> 0.525)
+
+competidor vinculante em M1+H: chaveamento 40/40
+competidor vinculante em M1+M: espaço de estados 39/40, chaveamento 1/40
+```
+
+**Falso alarme cai por um fator onze e o poder não se move.** O competidor vinculante diz
+por quê: o modelo de chaveamento morde em todos os mundos de dois regimes e em quase nenhum
+mundo com memória. Isto é o diagnóstico da célula anterior confirmado por construção.
+
+A figura (`out_figuras/m_vs_h.svg`, dois painéis) teve de ser refeita duas vezes. A primeira
+nem compilou — escrevi `\n` dentro de um heredoc e a quebra virou literal, então o script
+morreu e a figura ANTIGA continuou no disco parecendo nova. A segunda empilhava 15 mundos
+recortados num bin da borda que estourava o topo do quadro, com `sharey` travado no máximo
+do painel esquerdo. A versão final conta os recortes por nó na legenda e reserva espaço.
+
+## Etapa 4 — grade v4 e pré-registro v3
+
+`PREREGISTRO_v3.md` regenerado (135 linhas). Descreve o comparador novo na tabela de gates,
+traz a tabela dos dois gates lado a lado, e registra a hipótese que a grade vai testar:
+
+```
+com o contest de três, em reps_per_person = 10, T=600, ruído 0.05:
+  falso alarme de M em M1+H  <= 0.05      (40 sementes deram 0.025)
+  poder de M em M1+M         >= 0.50      (40 sementes deram 0.525)
+a grade mede os dois em 80 células por nó
+```
+
+**A grade ficou mais barata, não mais cara.** Custo remedido em 8 células reais:
+
+```
+T=300: 13.8 s/célula   (era 25.9)     T=600: 30.1 s/célula   (era 42.8)
+grade v4: 1280 runs -> 7.8 h serial   (era 12.2 h)
+```
+
+O eixo M deixou de rodar o nulo por padrão — nove surrogates, cada um com três ajustes EM —
+e ganhou em troca um único ajuste de dois regimes por réplica, que é barato.
+
+**Uma medição de custo foi descartada no caminho.** A primeira rodada deu 48.8 e 96.2 s, o
+dobro do valor anterior, e eu quase congelei isso no documento. Estava contaminada: lancei a
+medição com o script da figura (12 processos) e a suíte de density rodando ao mesmo tempo —
+exatamente a armadilha de máquina degradada que este arquivo registra desde a célula v3.
+Remedida com a máquina livre, deu 13.8 e 30.1. O comentário em `make_prereg.py` agora manda
+medir com a máquina ociosa e cita os dois números, para o erro não se repetir em silêncio.
+
+## Etapa 5 — NÃO executada
+
+A linha de aprovação da grade v4 está vazia. Parei na etapa 4, conforme o escopo. O comando
+está no README e em `PREREGISTRO_v3.md`.
+
+## Estacionamento
+
+- **`H3_TOL` = 0.03 é o que limita o poder do eixo M**, não o comparador. Sete de vinte
+  mundos com memória plantada produzem estatística entre +0.002 e +0.028. Baixar o limiar
+  sem medir o falso alarme correspondente seria trocar um erro pelo outro; a grade v4 dá os
+  dois em 80 células por nó, e é ela que deve decidir.
+- **O eixo N não recebeu o mesmo tratamento.** O gate N ainda se defende por três nulos, e a
+  grade v3 mostrou que o de Wiener não neutraliza o confundidor de tanh (falso alarme ~10%
+  com qualquer observação). A lição desta célula — nulo por fora não conserta comparador
+  errado — se aplica ali e não foi aplicada.
+- **`density.py` foi a 399 linhas**, o dobro do limite da casa. O contest de três cabe ali
+  conceitualmente, mas o arquivo agora carrega quatro gates e dois competidores.
+- Célula 6 segue fechada, motivo inalterado: falta um nulo para `h` não monotônico.

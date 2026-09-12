@@ -31,11 +31,14 @@ _GRID_TAIL = "    --nonlinear_h 0 1 --reps_per_person 1 10 --reps {n} --jobs 21 
 GRID_V4 = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=10)
 GRID_V4_MIN = _GRID_HEAD + " \\\n" + _GRID_TAIL.format(n=3)
 # MEASURED on 8 real cells (4 per T, all four nodes, both reps_per_person), by
-# running measure_cost() once at commit 89148dc+switching-null. Frozen rather than
-# re-measured on every run: a pre-registration has to be reproducible, and a wall
-# clock is not. Re-measure with `python -c "from make_prereg import measure_cost;
-# print(measure_cost())"` and paste the result here when the code changes.
-CELL_SECONDS = {300: 25.9, 600: 42.8}
+# running measure_cost() once at commit d3403fc+three-way-contest. Frozen rather
+# than re-measured on every run: a pre-registration has to be reproducible, and a
+# wall clock is not. Re-measure with `python -c "from make_prereg import
+# measure_cost; print(measure_cost())"` and paste the result here when the code
+# changes — ON AN IDLE MACHINE. Measuring this while a 12-worker job was running
+# gave 48.8 / 96.2, inflated roughly threefold, which would have tripled the
+# budget written into the document.
+CELL_SECONDS = {300: 13.8, 600: 30.1}
 OUT_NAME = "PREREGISTRO_v3.md"
 
 
@@ -170,10 +173,11 @@ def main() -> None:
         f"chaveamento — com `N_SURR` = {P.N_SURR} surrogates cada |")
     add(f"| H | `switching.py` | `TOL` = {P.TOL}, corrida mediana >= `MIN_SEG` = {P.MIN_SEG}, "
         f"ocupação em (0.05, 0.95), \\|corr\\| com u < 0.5 |")
-    add(f"| M | `density.h3_memory` sobre réplicas | `H3_TOL` = {D.H3_TOL} OU o q95 do "
-        f"nulo de chaveamento (`H3_SWITCH_SURR` = {D.H3_SWITCH_SURR} surrogates em "
-        f"`H3_NULL_TRAJ` = {D.H3_NULL_TRAJ} réplica); exige `MIN_REPLICATES` = "
-        f"{P.MIN_REPLICATES}, abaixo disso o veredito é `{D.UNIDENTIFIABLE}` |")
+    add(f"| M | `density.h3_memory` sobre réplicas | contest de TRÊS: o kernel de memória "
+        f"tem de vencer o espaço de estados livre **e** o modelo de dois regimes de "
+        f"`switching.py`, cada um por `H3_TOL` = {D.H3_TOL}, no mesmo bloco futuro; exige "
+        f"`MIN_REPLICATES` = {P.MIN_REPLICATES}, abaixo disso o veredito é "
+        f"`{D.UNIDENTIFIABLE}` |")
     add(f"| S | `pipeline.identify` + `statespace.stochastic_null` | `TOL` = {P.TOL}, "
         f"quantil {P.NULL_Q} de {P.S_SURR} surrogates, e `S_QFRAC` = {P.S_QFRAC} |")
     add(f"| H1 | `density.h1_ensemble` | instabilidade < `H1_INSTAB` = {D.H1_INSTAB}; "
@@ -264,6 +268,12 @@ def main() -> None:
         f"trajetória e H3 se limita a `H3_MAX_TRAJ` = {D.H3_MAX_TRAJ} réplicas. "
         f"Total serial estimado: {hrs:.1f} h.")
     add("")
+    add("A célula **ficou mais barata**, não mais cara: o pré-registro anterior media 25.9 "
+        "e 42.8 s. O eixo M deixou de rodar o nulo de chaveamento por padrão (nove "
+        "surrogates, cada um com três ajustes EM) e ganhou em troca um único ajuste de "
+        "dois regimes por réplica, que é barato. Medir com a máquina ocupada dá 48.8 e "
+        "96.2 — inflado cerca de três vezes; os números acima vêm de uma máquina ociosa.")
+    add("")
     add(f"O fator `reps_per_person` é o que esta grade adiciona: em 1 o eixo M é "
         f"`{D.UNIDENTIFIABLE}` por construção; em 10 ele recebe veredito de H3. Sem esse "
         f"fator a grade não diria nada sobre memória.")
@@ -275,20 +285,49 @@ def main() -> None:
     add("A grade **não roda** enquanto a linha de aprovação em `ESTADO_CELULA.md` estiver "
         "vazia (Modo Celular, regra 5).")
     add("")
-    add("## Resultado da célula `nulo-de-chaveamento`, registrado como hipótese")
+    add("## O comparador do eixo M, trocado nesta versão")
     add("")
-    add("**M e H são separáveis a esta resolução.** Ajustando os dois modelos candidatos à "
-        "mesma trajetória e pontuando no mesmo bloco futuro (40 mundos por nó, T=600, 10 "
-        "réplicas, 3 ajustadas por mundo): o modelo de memória vence o de dois regimes em "
-        "**90%** dos mundos com memória plantada (mediana +0.089) e em apenas **2.5%** dos "
-        "mundos com dois regimes (mediana −0.274). Mann-Whitney z = **+7.28**.")
+    add("A grade v3 mediu o eixo M disparando em 28% dos mundos de dois regimes contra 18% "
+        "dos mundos com memória. Duas células diagnosticaram a causa, e não é a que "
+        "parecia. **As classes são separáveis**: ajustados cara a cara no mesmo bloco "
+        "futuro, o modelo de memória vence o de dois regimes em 90% dos mundos com memória "
+        "e em 2.5% dos mundos de dois regimes, Mann-Whitney z = +7.28. **E não era um nulo "
+        "faltando**: um nulo de chaveamento por fora do contest removeu um falso alarme em "
+        "oito (7/20 contra 8/20).")
     add("")
-    add("A consequência é que a confusão medida na grade v3 **não vem das classes de "
-        "modelo serem indistinguíveis** — vem de o gate M nunca comparar contra um modelo "
-        "de chaveamento. Ele compara o kernel de memória contra um espaço de estados livre. "
-        "A grade v4 mede se os três nulos mudam isso; a predição registrada é que o falso "
-        "alarme de M em mundos de dois regimes **continua alto**, porque o nulo de "
-        "chaveamento sozinho só removeu 1 de 8 (7/20 contra 8/20, 20 sementes).")
+    add("Era o COMPARADOR. O contest antigo perguntava só se um kernel AR(p) vence um "
+        "espaço de estados linear-gaussiano livre, e um mundo de dois regimes responde que "
+        "sim pelo mesmo motivo que um mundo com memória: nenhum dos dois cabe em um único "
+        "mapa linear. Agora a pergunta é feita com os dois rivais presentes, e `PASS` "
+        "(efetivamente markoviano) acontece assim que QUALQUER um dos rivais segura o "
+        "kernel dentro da tolerância. O rival vinculante é registrado no `Fit`.")
+    add("")
+    add("Medido em 40 mundos por nó (T=600, 10 réplicas, 3 ajustadas), os dois gates nas "
+        "mesmas sementes:")
+    add("")
+    add("| plantado | gate antigo | gate novo | |")
+    add("|---|---|---|---|")
+    add("| `M1+H` | 11/40 = 0.275 | **1/40 = 0.025** | falso alarme |")
+    add("| `M1+M` | 20/40 = 0.500 | 21/40 = 0.525 | poder |")
+    add("")
+    add("O rival vinculante diz por quê: em mundos de dois regimes é o modelo de "
+        "chaveamento em **40 de 40**; em mundos com memória é o espaço de estados livre em "
+        "**39 de 40**. O competidor novo morde exatamente onde deve e em nenhum outro "
+        "lugar. O custo é limitado por construção — a estatística nova é o `min` dos dois "
+        "ganhos, então todo mundo em que o gate novo dispara o antigo também disparava — e "
+        "medido, é 1 mundo em 40.")
+    add("")
+    add(f"**Alvo de poder declarado e NÃO atingido, registrado em vez de afrouxado.** A "
+        f"célula declarou 12/20 antes de medir; o contest de três dispara em 10/20 com 3 "
+        f"réplicas ajustadas e 9/20 com {D.H3_MAX_TRAJ}. Mais réplicas não ajudam, então "
+        f"não é tamanho de amostra: sete das vinte estatísticas caem entre +0.002 e +0.028, "
+        f"logo abaixo de `H3_TOL` = {D.H3_TOL}. Como o comparador antigo tinha o mesmo ~50% "
+        f"de poder, a diferença não é do rival novo — é uma questão sobre `H3_TOL` e sobre "
+        f"T, e a grade v4 é o que a transforma em taxa.")
+    add("")
+    add(f"O nulo de chaveamento sobre M (`H3_SWITCH_SURR` = {D.H3_SWITCH_SURR} surrogates) "
+        f"saiu da regra e continua no código como **diagnóstico**, desligado por padrão, "
+        f"para que o resultado negativo continue reproduzível em vez de sumir.")
     add("")
     add("## Hipóteses que a grade vai testar")
     add("")
@@ -296,8 +335,11 @@ def main() -> None:
         "nulo de Wiener é a defesa; o v2 mediu 1/6 em 6 sementes, a grade mede em 240.")
     add("2. Poder de H cresce com T e cai com ruído; tempos de troca mantêm MAE < 5 passos "
         "onde o gate dispara.")
-    add(f"3. O eixo M é `{D.UNIDENTIFIABLE}` em **100%** das células, porque toda célula da "
-        "grade é de trajetória única. Esta é uma predição do desenho, não um resultado.")
+    add(f"3. Em `reps_per_person` = 1 o eixo M é `{D.UNIDENTIFIABLE}` em **100%** das "
+        "células — predição do desenho, não resultado. Em `reps_per_person` = 10, a "
+        "HIPÓTESE REGISTRADA do comparador novo: **falso alarme de M em `M1+H` <= 0.05 e "
+        "poder em `M1+M` >= 0.50, a T=600 com ruído 0.05.** Os dois números vêm das 40 "
+        "sementes acima (0.025 e 0.525) e a grade os mede em 80 células por nó.")
     add("4. O eixo S tem poder decrescente em ruído de medida, com 0 falsos no controle "
         "determinístico.")
     add("")

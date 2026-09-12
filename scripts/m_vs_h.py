@@ -1,23 +1,22 @@
-"""Is M an axis, or a case of H?
+"""Does the three-way contest stop a two-regime world from buying a memory claim?
 
-Grid v3 forced the question: the memory axis fired on 28% of two-regime worlds and
-18% of memory worlds. Either the M gate is broken, or the two model classes are
-not distinguishable at this resolution — and those call for different repairs.
+The earlier version of this script answered a prior question — are M and H even
+separable? — and found that they are, decisively (memory wins 90% of memory worlds
+and 2.5% of two-regime worlds head to head, Mann-Whitney z = +7.28). That answer
+is what motivated this cell: the classes separate, so the confusion measured in
+grid v3 came from the COMPARATOR. The old M gate asked only whether an AR(p)
+kernel beats a free linear-Gaussian state space, and a two-regime world beats that
+for the same reason a memory world does.
 
-The measurement is symmetric and does not use `truth` to fit anything. For each
-planted world, fit BOTH candidate models to the same trajectory and score both one
-step ahead on the same future block:
+So this script now scores the two gates on the SAME worlds and the same seeds:
 
-    (a) memory   — companion AR(p) kernel with measurement noise (`memory.py`)
-    (b) switching — two-regime linear model, sticky EM (`switching.py`)
+    old gate   gain over the free state space, with the switching null
+               (the rule as committed at d3403fc)
+    new gate   the BINDING gain — the smaller of (over the free state space)
+               and (over the two-regime model of switching.py)
 
-The statistic is the relative gain of (a) over (b) per trajectory:
-
-    delta = (mse_switching - mse_memory) / mse_switching
-
-positive when the memory model predicts better. On a planted-memory world delta
-should be positive; on a planted-switching world it should be negative. If both
-distributions sit on the same side of zero, one class absorbs the other.
+The M axis fires when the statistic clears H3_TOL. False alarm is M1+H above the
+line; power is M1+M above it. Neither gate sees `truth`.
 
     python scripts/m_vs_h.py            # writes out_figuras/m_vs_h.svg + .png
 """
@@ -30,105 +29,87 @@ from concurrent.futures import ProcessPoolExecutor
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sim.ensemble import generate_ensemble
-from sim.statespace import to_grid
-from sim.memory import memory_model
-from sim.switching import fit_switching
-from sim.observe import regular_pairs, pair_times
-from sim.pipeline import MEM_P, M_ITERS, MIN_SEG
+from sim.density import h3_memory, H3_TOL, FAIL
 
 N_SEEDS = 40
 N_REPL = 10
 T = 600
 NOISE = 0.05
-MAX_TRAJ = 3          # replicates fitted per world; both models see the same ones
-
-
-def _delta_one(o, seed):
-    """Memory model against switching model on one trajectory, same future block."""
-    y, u, m = to_grid(o)
-    kt = max(int(len(y) * 0.7), 20)
-    idx = o.t[o.t >= kt]
-    if len(idx) < 5:
-        return np.nan
-    mse_mem, _ = memory_model(y, u, m, kt, idx, p=MEM_P, n_iter=M_ITERS)
-
-    y0, y1, uu = regular_pairs(o)
-    ts = pair_times(o)
-    k = int(np.searchsorted(ts, kt))
-    if k < 10 or len(y0) - k < 5:
-        return np.nan
-    tr = (y0[:k], y1[:k], uu[:k])
-    te = (y0[k:], y1[k:], uu[k:])
-    mse_sw = fit_switching(tr, te, min_dur=MIN_SEG).mse_test
-    if not (mse_sw > 0 and np.isfinite(mse_mem)):
-        return np.nan
-    return (mse_sw - mse_mem) / mse_sw
+MAX_TRAJ = 3          # replicates fitted per world; both gates see the same ones
+NODES = ("M1+M", "M1+H")
 
 
 def one_world(a):
+    """Both gates on one planted world. Returns the statistic each one decides on."""
     node, seed = a
     ens = generate_ensemble(node, n_traj=N_REPL, mode="within", T=T, seed=seed,
                             meas_noise=NOISE)
-    ds = [_delta_one(o, seed) for o in ens.obs[:MAX_TRAJ]]
-    ds = [d for d in ds if np.isfinite(d)]
-    return node, seed, (float(np.mean(ds)) if ds else np.nan)
+    old = h3_memory(ens.obs, max_traj=MAX_TRAJ, seed=seed,
+                    three_way=False, switch_null=True)
+    new = h3_memory(ens.obs, max_traj=MAX_TRAJ, seed=seed, three_way=True)
+    return (node, seed, float(old.stat), float(new.stat),
+            int(old.verdict == FAIL), int(new.verdict == FAIL),
+            new.detail.get("hardest", ""))
 
 
 def main():
-    jobs = [(n, s) for n in ("M1+M", "M1+H") for s in range(N_SEEDS)]
+    jobs = [(n, s) for n in NODES for s in range(N_SEEDS)]
     with ProcessPoolExecutor(max_workers=12) as ex:
         res = list(ex.map(one_world, jobs))
-    data = {n: np.array([d for nd, _, d in res if nd == n and np.isfinite(d)])
-            for n in ("M1+M", "M1+H")}
 
-    for n, v in data.items():
-        print(f"{n:6s} n={len(v):3d}  media {v.mean():+.4f}  mediana {np.median(v):+.4f}  "
-              f"sd {v.std(ddof=1):.4f}  fracao>0 {np.mean(v > 0):.3f}")
-    a, b = data["M1+M"], data["M1+H"]
-    # Mann-Whitney U, normal approximation: are the two distributions even distinct?
-    allv = np.concatenate([a, b])
-    ranks = allv.argsort().argsort().astype(float) + 1
-    ra = ranks[:len(a)].sum()
-    U = ra - len(a) * (len(a) + 1) / 2
-    mu = len(a) * len(b) / 2
-    sd = np.sqrt(len(a) * len(b) * (len(a) + len(b) + 1) / 12)
-    z = (U - mu) / sd
-    print(f"\nMann-Whitney z = {z:+.2f}  (|z| > 1.96 => distribuicoes distintas)")
-    print(f"sobreposicao: max(M1+H) = {b.max():+.4f}  min(M1+M) = {a.min():+.4f}")
+    stats, fires = {}, {}
+    for node in NODES:
+        r = [x for x in res if x[0] == node]
+        stats[node] = (np.array([x[2] for x in r]), np.array([x[3] for x in r]))
+        fires[node] = (sum(x[4] for x in r), sum(x[5] for x in r), len(r))
+
+    print(f"eixo M sobre {N_SEEDS} mundos por no (T={T}, {N_REPL} replicas, "
+          f"{MAX_TRAJ} ajustadas, ruido {NOISE})\n")
+    print(f"{'no':7}{'gate antigo':>14}{'gate novo':>12}   papel")
+    for node, papel in (("M1+H", "falso alarme"), ("M1+M", "poder")):
+        a, b, n = fires[node]
+        print(f"{node:7}{a:>8}/{n:<5}{b:>7}/{n:<5}   {papel}")
+    hard = [x[6] for x in res if x[0] == "M1+H"]
+    print(f"\ncompetidor vinculante em M1+H: "
+          f"{ {h: hard.count(h) for h in set(hard)} }")
+    hard_m = [x[6] for x in res if x[0] == "M1+M"]
+    print(f"competidor vinculante em M1+M: "
+          f"{ {h: hard_m.count(h) for h in set(hard_m)} }")
 
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    # a handful of switching worlds are catastrophic for the memory model (down to
-    # -8); plotting the full range hides the region where the two classes actually
-    # separate, so the tail is clipped into the edge bin and counted in the legend
-    lo, hi = -1.0, 0.4
-    n_clip_a = int(np.sum(a < lo)); n_clip_b = int(np.sum(b < lo))
-    ac, bc = np.clip(a, lo, hi), np.clip(b, lo, hi)
-    fig, ax = plt.subplots(figsize=(7.4, 4.2), dpi=150)
-    bins = np.linspace(lo, hi, 36)
-    ax.hist(ac, bins=bins, alpha=0.72, color="#2a9d8f",
-            label=f"planted M1+M (n={len(a)}, median {np.median(a):+.3f})")
-    ax.hist(bc, bins=bins, alpha=0.72, color="#8d99ae",
-            label=f"planted M1+H (n={len(b)}, median {np.median(b):+.3f}, "
-                  f"{n_clip_b} below {lo})")
-    ax.axvline(0, color="#e76f51", lw=1.4, ls="--",
-               label="0 = the two models predict equally well")
-    for v, c in ((a, "#2a9d8f"), (b, "#8d99ae")):
-        ax.axvline(np.median(v), color=c, lw=1.8)
-    ax.set_xlim(lo, hi)
-    ax.set_xlabel("relative gain of the memory model over the two-regime model\n"
-                  "(positive: memory predicts better)")
-    ax.set_ylabel("worlds")
-    ax.set_title("Is M an axis, or a case of H?\n"
-                 f"Both models fitted to the same trajectories, scored on the same future "
-                 f"block; T = {T}, {N_REPL} replicates, {MAX_TRAJ} fitted per world; "
-                 f"Mann-Whitney z = {z:+.2f}", fontsize=9)
-    ax.legend(fontsize=8); ax.grid(alpha=0.3)
+    lo, hi = -0.35, 0.25
+    fig, axes = plt.subplots(1, 2, figsize=(10.4, 4.3), dpi=150, sharey=True)
+    bins = np.linspace(lo, hi, 30)
+    top = 0
+    panels = (("gate antigo", "só contra o espaço de estados livre", 0),
+              ("gate novo", "contra ambos; ganho vinculante", 1))
+    for ax, (head, sub, col) in zip(axes, panels):
+        for node, color in (("M1+M", "#2a9d8f"), ("M1+H", "#8d99ae")):
+            v = stats[node][col]
+            out = int(np.sum((v < lo) | (v > hi)))
+            f = fires[node][col]
+            # the out-of-range worlds pile into the edge bin rather than vanishing;
+            # saying how many, per node, keeps that bar from reading as a mode
+            h, _, _ = ax.hist(np.clip(v, lo, hi), bins=bins, alpha=0.72, color=color,
+                              label=f"{node}: dispara {f}/{fires[node][2]}"
+                                    + (f", {out} recortados na borda" if out else ""))
+            top = max(top, h.max())
+        ax.axvline(H3_TOL, color="#e76f51", lw=1.5, ls="--",
+                   label=f"H3_TOL = {H3_TOL} (à direita, M dispara)")
+        ax.set_title(head + "\n(" + sub + ")", fontsize=9)
+        ax.set_xlim(lo, hi); ax.grid(alpha=0.3); ax.legend(fontsize=8, loc="upper center")
+        ax.set_xlabel("estatística que o gate decide")
+    axes[0].set_ylim(0, top * 1.45)      # headroom for the legend AND the edge bin
+    axes[0].set_ylabel("mundos")
+    fig.suptitle("O eixo M com um competidor e com dois — mesmas 40 sementes por nó",
+                 fontsize=11)
+    fig.tight_layout()
     os.makedirs("out_figuras", exist_ok=True)
     for ext in ("svg", "png"):
         fig.savefig(f"out_figuras/m_vs_h.{ext}", bbox_inches="tight")
-    print("out_figuras/m_vs_h.svg + .png")
+    print("\nout_figuras/m_vs_h.svg + .png")
 
 
 if __name__ == "__main__":

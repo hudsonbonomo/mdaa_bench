@@ -263,8 +263,12 @@ def identify(obs, seed=0, s_null: bool = True, m_null: bool = True) -> Fit:
         fit.verdicts["M"] = (UNIDENTIFIABLE if h3.verdict == UNIDENTIFIABLE
                              else (FAIL if h3.passed else PASS))
         fit.gains["M_h3"] = h3.stat
+        fit.gains["M_h3_vs_state_space"] = float(h3.detail.get("mean_gain", float("nan")))
+        fit.gains["M_h3_vs_switching"] = float(h3.detail.get("switching_gain", float("nan")))
         fit.notes.append("M decided over replicates: " + h3.note)
-        fit.hardest["M"] = "h3_over_replicates"
+        # which RIVAL held the kernel down, not which null — the M axis stopped
+        # being decided by a null when the contest gained its second competitor
+        fit.hardest["M"] = h3.detail.get("hardest", "state_space")
     else:
         fit.verdicts["M"] = UNIDENTIFIABLE
         why = ("single trajectory" if ens_list is None
