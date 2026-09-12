@@ -761,7 +761,10 @@ M1+M, reps 10, noise 0.05    median gain vs state space   vs switching   binding
 the scoring is symmetric by construction, and `M1+H` still fires on 1 of 76 replicated runs
 there. The defect costs power under missingness; it does not manufacture the win.
 
-Figure: `out_figuras/recovery_map_v4.svg`, from `python scripts/recovery_map_v4.py`.
+Figures: `out_figuras/axes_v3_vs_v4.svg` (the four axes across the two grids, and
+the M axis by design cell), from `python scripts/recovery_map_v4.py`; and
+`out_v4/recovery_map_v4.svg`, the node-level map, redrawn from the grid's own rows by
+`python scripts/replot_v4.py`.
 
 ## Files
 

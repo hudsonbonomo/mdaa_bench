@@ -116,7 +116,7 @@ def main(argv=None):
         json.dump(summary, f, indent=1)
     plot(rows, a.out)
     plot_observation(rows, a.out)
-    plot_recovery_v2(rows, a.out)
+    plot_recovery_v4(rows, a.out)
     print(json.dumps({k: summary[k] for k in
                       ("by_node", "by_axis", "switch_timing", "m_by_reps_per_person")}, indent=1))
 
@@ -215,11 +215,18 @@ def plot_observation(rows, out):
 
 
 
-def plot_recovery_v2(rows, out):
+def plot_recovery_v4(rows, out):
     """Exact / spurious / missed / UNDECIDED per node, with the third value of the
     M axis drawn rather than folded into 'missed'. An axis the design cannot
     decide is a fourth outcome and the bar chart has to show it, otherwise the map
-    reads as if the pipeline had correctly rejected something it never tested."""
+    reads as if the pipeline had correctly rejected something it never tested.
+
+    The title states the design it was actually run on. It used to say "every cell
+    is a single trajectory", which was true of the v2 grid and false of every grid
+    since v3 added `--reps_per_person`; a caption that describes the wrong design
+    makes the undecidable bar look like a result instead of an arithmetic
+    consequence of how many cells could not test the axis at all.
+    """
     import matplotlib; matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     keys = ("exact", "spurious", "missed", "undecided")
@@ -234,11 +241,25 @@ def plot_recovery_v2(rows, out):
     ax.set_xticks(xs); ax.set_xticklabels(nodes)
     ax.set_ylim(0, 1.05); ax.set_ylabel("rate"); ax.grid(axis="y", alpha=0.3)
     und = _mean([r["undecided"] for r in rows]) or 0.0
-    ax.set_title(f"Recovery map v2 — every cell is a single trajectory, so the M axis is "
-                 f"undecidable in {und:.0%} of them", fontsize=9)
+    solo = [r for r in rows if int(r.get("reps_per_person", 1)) == 1]
+    reps = [r for r in rows if int(r.get("reps_per_person", 1)) > 1]
+    # `undecided` in the bars is the share of a run's AXES that could not be decided,
+    # so it reads 25% when exactly one of four is undecidable. The caption quotes the
+    # M verdict itself, which is the thing a reader wants to know.
+    def m_und(rs):
+        u = [r for r in rs if str(r.get("m_verdict", "")).startswith("nao")]
+        return len(u) / len(rs) if rs else 0.0
+    if solo and reps:
+        sub = (f"{len(solo) / len(rows):.0%} of cells are single-trajectory, where the M "
+               f"axis is undecidable by design in {m_und(solo):.0%} of them; with "
+               f"replicates, {m_und(reps):.0%}")
+    else:
+        sub = (f"every cell is a single trajectory, so the M axis is undecidable in "
+               f"{m_und(rows):.0%} of them")
+    ax.set_title(f"Recovery map — {len(rows)} runs" + "\n" + sub, fontsize=9)
     ax.legend(fontsize=8, ncol=4)
-    fig.savefig(os.path.join(out, "recovery_map_v2.svg"), bbox_inches="tight")
-    fig.savefig(os.path.join(out, "recovery_map_v2.png"), bbox_inches="tight")
+    fig.savefig(os.path.join(out, "recovery_map_v4.svg"), bbox_inches="tight")
+    fig.savefig(os.path.join(out, "recovery_map_v4.png"), bbox_inches="tight")
     plt.close(fig)
 
 
