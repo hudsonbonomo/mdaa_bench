@@ -258,15 +258,24 @@ def test_the_contest_has_two_rivals_and_names_the_binding_one():
 
 
 def test_switching_competitor_is_scored_on_the_same_future_block():
-    """Both rivals must be answering the same question, or the margin is fiction."""
+    """Both rivals must be answering the same question, or the margin is fiction.
+
+    The rival no longer chooses its own rows: the contest hands it the steps. The
+    claim is therefore checkable exactly — it scores those steps and no others,
+    and every step it scores really has its predecessor in the data.
+    """
+    from sim.observe import scorable_steps
     ens = generate_ensemble("M1+M", n_traj=2, mode="within", T=600, seed=0,
                             meas_noise=0.05)
     o = ens.obs[0]
-    kt = max(int(len(to_grid(o)[0]) * 0.7), 20)
-    mse = switching_competitor(o, kt)
+    y, _, m = to_grid(o)
+    kt = max(int(len(y) * 0.7), 20)
+    steps = scorable_steps(m, o.t[o.t >= kt])
+    mse, used = switching_competitor(o, kt, steps)
     assert np.isfinite(mse) and mse > 0
-    ts = pair_times(o)
-    assert ts[int(np.searchsorted(ts, kt))] >= kt      # split on the original clock
+    assert np.array_equal(used, steps[steps >= kt])
+    assert all(m[t] and m[t - 1] for t in used)        # never crosses a gap
+    assert used.min() >= kt                            # split on the original clock
 
 
 @pytest.mark.parametrize("node,target", [
@@ -312,3 +321,62 @@ def test_the_second_rival_costs_almost_no_power_on_planted_memory():
         assert not (fired_new and not fired_old), "the new statistic cannot exceed the old"
         lost += int(fired_old and not fired_new)
     assert lost <= 1, f"the switching rival cost {lost}/20 detections on planted memory"
+
+
+# --- cell "simetrizar-comparador": one scoring problem for all three models ----
+
+def _contest_pieces(node, seed, keep):
+    """The three competitors of the M contest on one trajectory, plus the steps
+    each of them was actually scored on."""
+    from sim.generators import generate
+    from sim.observe import observe
+    from sim.memory import memory_contest
+    tj = generate(node, T=600, seed=seed)
+    o = observe(tj, meas_noise=0.05, keep_frac=keep, seed=seed)
+    y, u, m = to_grid(o)
+    kt = max(int(len(y) * 0.7), 20)
+    idx = o.t[o.t >= kt]
+    con = memory_contest(y, u, m, kt, idx, p=6, n_iter=12)
+    mse_sw, sw_idx = switching_competitor(o, kt, con["scored_idx"])
+    return con, sw_idx, mse_sw
+
+
+def test_all_three_models_are_scored_on_exactly_the_same_steps():
+    """The debt this cell pays. Under keep=0.7 the memory model was predicting
+    across gaps while the switching model only ever predicted one step from a
+    measured value, so the two were answering different questions and the easier
+    one won. Equality of INDEX SETS, not of counts: same length with different
+    steps would still be two different problems.
+    """
+    for node in ("M1+M", "M1+H"):
+        con, sw_idx, _ = _contest_pieces(node, 0, keep=0.7)
+        scored = np.asarray(con["scored_idx"])
+        assert len(scored) > 10, f"{node}: only {len(scored)} scorable steps"
+        assert np.array_equal(scored, np.asarray(sw_idx)), (
+            f"{node}: memory scored {len(scored)} steps, switching {len(sw_idx)}, "
+            f"first mismatch at {np.flatnonzero(scored[:len(sw_idx)] != sw_idx[:len(scored)])[:3]}")
+
+
+def test_the_predicate_drops_exactly_the_steps_whose_predecessor_is_missing():
+    """Non-vacuity of the predicate itself: it must bite under keep=0.7 and be a
+    no-op under keep=1.0, and it must never interpolate a missing predecessor."""
+    from sim.generators import generate
+    from sim.observe import observe, scorable_steps
+    tj = generate("M1+M", T=600, seed=1)
+    full = observe(tj, meas_noise=0.05, keep_frac=1.0, seed=1)
+    holes = observe(tj, meas_noise=0.05, keep_frac=0.7, seed=1)
+    for o, shrinks in ((full, False), (holes, True)):
+        y, _, m = to_grid(o)
+        kt = max(int(len(y) * 0.7), 20)
+        idx = o.t[o.t >= kt]
+        keep_idx = scorable_steps(m, idx)
+        assert set(keep_idx) <= set(idx)
+        for t in keep_idx:
+            assert m[t] and m[t - 1], t                 # both ends really observed
+        dropped = set(idx) - set(keep_idx)
+        for t in dropped:
+            assert t == 0 or not m[t - 1], t            # dropped for one reason only
+        if shrinks:
+            assert len(keep_idx) < len(idx), "the predicate is vacuous under keep=0.7"
+        else:
+            assert len(keep_idx) == len(idx), "the predicate must be a no-op at keep=1.0"

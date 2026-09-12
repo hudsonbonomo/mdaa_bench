@@ -26,6 +26,7 @@ Nothing here sees `truth`.
 """
 from __future__ import annotations
 import numpy as np
+from .observe import scorable_steps
 from .statespace import SSM, kalman, rts, predict_mse
 
 Q_FLOOR = 1e-9          # keeps the companion shift blocks invertible for the smoother
@@ -175,15 +176,24 @@ def kernel_profile(s: SSM, d: int, p: int):
 def memory_contest(y, u, mask, kt, idx, p=6, ks=(1, 2), n_iter=12):
     """The M gate. Returns a dict; the caller applies TOL to `gain`."""
     if len(idx) < 5 or kt < 20:
-        return dict(gain=float("nan"), note="future block or train span too short")
+        return dict(gain=float("nan"), note="future block or train span too short",
+                    scored_idx=np.empty(0, int))
+    # ONE scoring problem for every competitor, including the switching rival that
+    # `density.switching_competitor` will run on exactly these steps. See
+    # `observe.scorable_steps` for why this is not each model's own best effort.
+    idx = scorable_steps(mask, idx)
+    if len(idx) < 5:
+        return dict(gain=float("nan"), scored_idx=idx,
+                    note="too few steps whose predecessor was also observed")
     m_mk, k_best, per_k = markov_baseline(y, u, mask, kt, idx, ks, n_iter)
     m_mem, s_mem = memory_model(y, u, mask, kt, idx, p, n_iter)
     d = y.shape[1]
     gain = (m_mk - m_mem) / m_mk if m_mk > 0 else float("nan")
     return dict(gain=float(gain), mse_markov=float(m_mk), mse_memory=float(m_mem),
                 k_best=int(k_best), per_k={int(k): float(v) for k, v in per_k.items()},
-                profile=kernel_profile(s_mem, d, p),
-                note=f"AR({p}) kernel vs best free SSM of latent dim d+{k_best}")
+                profile=kernel_profile(s_mem, d, p), scored_idx=idx,
+                note=f"AR({p}) kernel vs best free SSM of latent dim d+{k_best}, "
+                     f"both scored on the same {len(idx)} steps")
 
 
 def _simulate(s, u, mask, rng, d):

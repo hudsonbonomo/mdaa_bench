@@ -175,7 +175,8 @@ def main() -> None:
         f"ocupação em (0.05, 0.95), \\|corr\\| com u < 0.5 |")
     add(f"| M | `density.h3_memory` sobre réplicas | contest de TRÊS: o kernel de memória "
         f"tem de vencer o espaço de estados livre **e** o modelo de dois regimes de "
-        f"`switching.py`, cada um por `H3_TOL` = {D.H3_TOL}, no mesmo bloco futuro; exige "
+        f"`switching.py`, cada um por `H3_TOL` = {D.H3_TOL}, **nos mesmos passos** "
+        f"(`observe.scorable_steps`: t e t-1 ambos observados); exige "
         f"`MIN_REPLICATES` = {P.MIN_REPLICATES}, abaixo disso o veredito é "
         f"`{D.UNIDENTIFIABLE}` |")
     add(f"| S | `pipeline.identify` + `statespace.stochastic_null` | `TOL` = {P.TOL}, "
@@ -328,6 +329,27 @@ def main() -> None:
     add(f"O nulo de chaveamento sobre M (`H3_SWITCH_SURR` = {D.H3_SWITCH_SURR} surrogates) "
         f"saiu da regra e continua no código como **diagnóstico**, desligado por padrão, "
         f"para que o resultado negativo continue reproduzível em vez de sumir.")
+    add("")
+    add("## Pontuação simétrica sob amostragem irregular")
+    add("")
+    add("A grade v4 rodou com os competidores do contest de M pontuados em problemas "
+        "DIFERENTES quando havia faltantes: `predict_mse` roda o filtro sobre a grade "
+        "inteira e pontua nos tempos observados, então com `keep` = 0.7 o modelo de "
+        "memória frequentemente previa atravessando um buraco, enquanto o rival de "
+        "chaveamento só pontuava em pares (t, t+1) com as duas pontas medidas. O problema "
+        "mais fácil vencia: o rival vinculava em 31 de 40 mundos com memória em "
+        "`keep` = 0.7, contra 2 de 40 com dados completos.")
+    add("")
+    add("Existe agora **um predicado de elegibilidade**, `observe.scorable_steps`, usado por "
+        "todos os competidores: um passo entra na pontuação só se `t` e `t-1` estão ambos "
+        "observados, que é o que o modelo mais exigente precisa. Nada é interpolado — o "
+        "passo sai do SCORE, não é reconstruído — e cada modelo continua AJUSTANDO com o "
+        "que a própria verossimilhança alcançar.")
+    add("")
+    add("Remedido em 192 mundos (3 nós × 2 T × 2 ruídos × 2 keep × 8 sementes, 10 réplicas): "
+        "o poder em `M1+M` com `keep` = 0.7 e ruído 0.05 vai de **0.05 para 0.31**, e com "
+        "`keep` = 1.0 fica inalterado em 0.250, que é a regressão exigida. **Os números de "
+        "M da grade v4 valem para aquela grade e não descrevem o gate atual.**")
     add("")
     add("## Hipóteses que a grade vai testar")
     add("")

@@ -766,6 +766,97 @@ the M axis by design cell), from `python scripts/recovery_map_v4.py`; and
 `out_v4/recovery_map_v4.svg`, the node-level map, redrawn from the grid's own rows by
 `python scripts/replot_v4.py`.
 
+## The M axis, re-measured on one scoring problem
+
+The v4 grid's power figure for M was **not interpretable**, and the fault was mine. Under
+irregular sampling the competitors were scored on different problems: `predict_mse` runs the
+Kalman filter across the whole grid and scores at observed times, so with `keep` = 0.7 the
+memory model was often predicting across a gap, while the switching rival scored only on
+(t, t+1) pairs with both ends measured — always one step from a measured value. The easier
+problem won: the switching rival was the binding one in 31 of 40 memory worlds at
+`keep` = 0.7, against 2 of 40 with complete data.
+
+There is now **one eligibility predicate**, `observe.scorable_steps`, used by every
+competitor in the contest: a step counts only if t and t−1 are both observed, which is what
+the most demanding model needs. Nothing is interpolated — a step whose predecessor was never
+measured is dropped from the *score*, not reconstructed, and models still *fit* on whatever
+their own likelihood can reach.
+
+### Before and after, per design cell
+
+`M1` × `M1+H` × `M1+M` at T {300, 600} × noise {0.05, 0.3} × keep {1.0, 0.7}, 10 replicates,
+linear `h`. Before is the v4 grid's matching cell (10 seeds); after is
+`python scripts/remeasure_m.py` (8 seeds). The two runs draw different seeds, so single
+cells are noisy and the aggregates are the thing to read.
+
+| planted | T | noise | keep | before (v4) | after | |
+|---|---|---|---|---|---|---|
+| `M1+M` | 300 | 0.05 | 1.0 | 5/10 = 0.50 | 4/8 = 0.50 | power |
+| `M1+M` | 300 | 0.05 | 0.7 | 1/10 = 0.10 | **3/8 = 0.38** | power |
+| `M1+M` | 600 | 0.05 | 1.0 | 4/10 = 0.40 | 4/8 = 0.50 | power |
+| `M1+M` | 600 | 0.05 | 0.7 | 0/10 = 0.00 | **2/8 = 0.25** | power |
+| `M1+M` | 300 | 0.3 | 1.0 | 0/10 = 0.00 | 0/8 = 0.00 | power |
+| `M1+M` | 300 | 0.3 | 0.7 | 2/10 = 0.20 | 0/8 = 0.00 | power |
+| `M1+M` | 600 | 0.3 | 1.0 | 1/10 = 0.10 | 0/8 = 0.00 | power |
+| `M1+M` | 600 | 0.3 | 0.7 | 0/10 = 0.00 | 1/8 = 0.12 | power |
+| `M1+H` | 300 | 0.3 | 1.0 | 0/10 = 0.00 | 2/8 = 0.25 | false alarm |
+| `M1+H` | 300 | 0.3 | 0.7 | 1/10 = 0.10 | 2/8 = 0.25 | false alarm |
+| `M1+H` | all other cells | | | 0/60 | 0/48 | false alarm |
+| `M1` | every cell | | | 0/80 | 0/64 | false alarm |
+
+Aggregated, which is what the sample sizes support:
+
+```
+                        before (v4)        after
+M1+M  keep 1.0           0.250             0.250      regression: unchanged, as required
+M1+M  keep 0.7           0.075             0.188      the artefact, removed
+M1+M  keep 0.7, noise 0.05   0.050         0.312      where the asymmetry actually bit
+switching binds in M1+M, keep 0.7:  31/40  ->  4/16
+median gain over the switching rival there:  -0.085  ->  +0.073
+```
+
+### Which explanation survives
+
+**(a) and (b), in different cells: the missing-data power WAS an artefact of the asymmetry
+and rose fourfold once the scoring was symmetrised (0.05 → 0.31 at noise 0.05), and what
+remains is a real threshold effect — with complete data the statistics land continuously
+around `H3_TOL` = 0.03 (median +0.034, with five of sixteen between 0 and the threshold), so
+the gate stops where the threshold is put.**
+
+(c) is not needed for those, but it is needed for one thing the threshold cannot fix: at
+noise 0.3 a minority of planted-memory worlds produce a *negative* statistic — the memory
+model loses outright — and no threshold turns a loss into a detection.
+
+### The threshold curve, not a threshold
+
+Since (b) is part of the answer, the sweep is owed. Each world's binding statistic is
+recorded, so the sweep costs no refits: the axis fires exactly when `stat > tol`.
+
+| `H3_TOL` | power `M1+M` | false alarm `M1+H` | false alarm `M1` | |
+|---|---|---|---|---|
+| 0.01 | 0.516 | 0.281 | 0.094 | all cells |
+| 0.02 | 0.359 | 0.109 | 0.016 | |
+| **0.03** | **0.219** | **0.062** | **0.000** | current |
+| 0.05 | 0.156 | 0.047 | 0.000 | |
+| 0.01 | **0.688** | **0.000** | 0.000 | noise 0.05 only |
+| 0.02 | 0.562 | 0.000 | 0.000 | |
+| **0.03** | **0.406** | **0.000** | 0.000 | current |
+| 0.05 | 0.312 | 0.000 | 0.000 | |
+
+**At noise 0.05 the false alarm is zero at every threshold down to 0.01, so lowering the
+threshold there would buy 0.406 → 0.688 of power for nothing.** The entire cost of a lower
+threshold comes from the noise 0.3 cells. No threshold is chosen here: choosing one is a
+statement about which error is worse, which is not a measurement.
+Figure: `out_figuras/h3_tol_tradeoff.svg`, from `python scripts/h3_tol_sweep.py`.
+
+### This contradicts the number above
+
+**The grid v4 block above reports M-axis power of 0.15 and the registered hypothesis as
+contradicted. With symmetric scoring the comparable figure is 0.25, and at noise 0.05 with
+complete data it is 0.50.** The v4 numbers stand as what that pre-registered grid produced;
+they are not what the gate does now, and the paper should quote neither as "the power of the
+M axis" without the sampling condition attached.
+
 ## Files
 
 ```

@@ -212,24 +212,33 @@ def h2_geometry(obs_list, normalised: bool = False) -> GateResult:
                       dict(scale_ratio=ratio, sd=sd.tolist()))
 
 
-def switching_competitor(o, kt, min_dur: int = H3_MIN_DUR, K: int = 2) -> float:
-    """One-step-ahead MSE of the two-regime model on the future block.
+def switching_competitor(o, kt, steps, min_dur: int = H3_MIN_DUR, K: int = 2):
+    """The two-regime rival, scored on the steps the contest hands it.
 
-    This is the fit `scripts/m_vs_h.py` used to answer whether M and H are even
-    separable; it is imported from here rather than copied, so the figure and the
-    gate score the same competitor. Pairs come from `regular_pairs`, which drops
-    gaps instead of interpolating, and the split is put on the ORIGINAL clock so
-    the switching model and the memory model see the same future.
+    `steps` comes from `memory_contest`, which got it from
+    `observe.scorable_steps`. Passing it in rather than choosing a test block here
+    is the whole point: before this cell the rival picked its own rows from
+    `regular_pairs` and ended up scoring an easier problem than the memory model
+    whenever data were missing. Returns (mse, steps_used).
+
+    Fitting still uses every consecutive pair in the train block — a model may
+    learn from whatever its likelihood can reach; it is the SCORE that has to be
+    the same question.
     """
-    y0, y1, uu = regular_pairs(o)
-    ts = pair_times(o)
-    k = int(np.searchsorted(ts, kt))
-    if k < 10 or len(y0) - k < 5:
-        return float("nan")
-    tr = (y0[:k], y1[:k], uu[:k])
-    te = (y0[k:], y1[k:], uu[k:])
-    mse = fit_switching(tr, te, K=K, min_dur=min_dur).mse_test
-    return float(mse) if mse > 0 and np.isfinite(mse) else float("nan")
+    steps = np.asarray(steps, dtype=int)
+    prev_ok = np.diff(o.t) == 1
+    tr_tgt = o.t[1:][prev_ok & (o.t[1:] < kt)]
+    te_tgt = steps[steps >= kt]
+    if len(tr_tgt) < 10 or len(te_tgt) < 5:
+        return float("nan"), np.empty(0, int)
+
+    def rows(times):
+        pos = np.searchsorted(o.t, times)
+        return o.y[pos - 1], o.y[pos], o.u[pos - 1]
+
+    mse = fit_switching(rows(tr_tgt), rows(te_tgt), K=K, min_dur=min_dur).mse_test
+    ok = mse > 0 and np.isfinite(mse)
+    return (float(mse) if ok else float("nan")), te_tgt
 
 
 def h3_memory(obs_list, p: int = 6, max_traj: int = H3_MAX_TRAJ, n_iter: int = 25,
@@ -274,7 +283,7 @@ def h3_memory(obs_list, p: int = 6, max_traj: int = H3_MAX_TRAJ, n_iter: int = 2
             continue
         g_sw = float("nan")
         if three_way:
-            mse_sw = switching_competitor(o, kt)
+            mse_sw, _ = switching_competitor(o, kt, con["scored_idx"])
             if np.isfinite(mse_sw):
                 # the memory MSE is the one memory_contest already paid for; refitting
                 # it here would be a second answer to a question already answered

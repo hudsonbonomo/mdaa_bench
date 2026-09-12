@@ -1182,3 +1182,115 @@ quatro eixos v3 -> v4 num painel e o eixo M decomposto por célula de desenho no
 - **`density.py` foi a 399 linhas**, o dobro do limite da casa. O contest de três cabe ali
   conceitualmente, mas o arquivo agora carrega quatro gates e dois competidores.
 - Célula 6 segue fechada, motivo inalterado: falta um nulo para `h` não monotônico.
+
+---
+---
+
+# Célula `simetrizar-comparador-e-remedir-poder`
+
+Data: 2026-09-12. Commit de partida: `fd6adbc` (grade v4 executada).
+
+## Etapa 1 — um só predicado de elegibilidade
+
+`observe.scorable_steps(mask, idx)`: um passo entra na PONTUAÇÃO só se `t` e `t-1` estão
+ambos observados — o que o competidor mais exigente precisa. O de chaveamento prevê `y_t` a
+partir do `y_{t-1}` medido e nunca pode atravessar um buraco; os de espaço de estados PODEM,
+porque o filtro de Kalman simplesmente propaga sem atualização. Era exatamente essa a
+assimetria.
+
+Nada é interpolado. Um passo cujo predecessor nunca foi medido sai do SCORE, não é
+reconstruído; os modelos continuam AJUSTANDO com o que a verossimilhança deles alcançar.
+
+Religação: `memory_contest` filtra `idx` e devolve `scored_idx`; `switching_competitor`
+recebe esses passos em vez de escolher os seus e devolve os que usou. O rival deixou de
+poder escolher a própria prova.
+
+Testes (4 verdes): igualdade de CONJUNTOS DE ÍNDICES entre os três modelos em keep=0.7 —
+não de contagens, porque mesmo tamanho com passos diferentes continuaria sendo dois
+problemas; não-vacuidade do predicado (morde em keep=0.7, é identidade em keep=1.0); e todo
+passo pontuado tem o predecessor de fato na base.
+
+## Etapa 2 — remedição
+
+`scripts/remeasure_m.py`, 192 mundos (3 nós × 2 T × 2 ruídos × 2 keep × 8 sementes), 10
+réplicas cada. Agregados:
+
+```
+                              antes (v4)     depois
+M1+M  keep 1.0                  0.250        0.250     regressão: inalterado, como exigido
+M1+M  keep 0.7                  0.075        0.188     o artefato, removido
+M1+M  keep 0.7, ruído 0.05      0.050        0.312     onde a assimetria de fato mordia
+M1    todas as células          0.000        0.000
+
+chaveamento vincula em M1+M, keep 0.7:        31/40  ->  4/16
+mediana do ganho contra ele ali:             -0.085  ->  +0.073
+```
+
+**Resposta: (a) e (b), em células diferentes.** O poder sob faltantes ERA artefato da
+assimetria e subiu quatro vezes com a pontuação simétrica; o que sobra é limiar — com dados
+completos as estatísticas atravessam `H3_TOL` continuamente (mediana +0.034, cinco de
+dezesseis entre 0 e o limiar). (c) é necessária para uma coisa só, que limiar nenhum
+conserta: em ruído 0.3 uma minoria dos mundos com memória plantada produz estatística
+NEGATIVA — o modelo de memória perde de fato — e não há limiar que transforme derrota em
+detecção.
+
+Ressalva metodológica registrada: as duas corridas sorteiam sementes diferentes (a grade usa
+CRC32 da tupla, a remedição usa 0–7), então células isoladas são ruidosas e só os agregados
+sustentam leitura. O 2/8 de falso alarme em M1+H (T=300, ruído 0.3) contra 0/10 do v4 está
+dentro disso — as duas estatísticas ali são 0.031 e 0.052, colando no limiar de 0.03.
+
+## Etapa 3 — a curva do limiar, não o limiar
+
+Feita porque (b) faz parte da resposta. Custo zero em ajustes: a estatística vinculante de
+cada mundo está no CSV, então o eixo dispara exatamente quando `stat > tol`.
+
+```
+H3_TOL     poder M1+M   falso M1+H   falso M1
+           todas as células
+0.01         0.516        0.281       0.094
+0.02         0.359        0.109       0.016
+0.03         0.219        0.062       0.000   <- atual
+0.05         0.156        0.047       0.000
+           ruído 0.05 apenas
+0.01         0.688        0.000       0.000
+0.03         0.406        0.000       0.000   <- atual
+```
+
+**Com ruído 0.05 o falso alarme é zero em todos os limiares testados**, então baixar o
+limiar ali compraria 0.406 -> 0.688 de poder de graça. Todo o custo de um limiar menor vem
+das células de ruído 0.3. Nenhum limiar escolhido: escolher é uma afirmação sobre qual erro
+é pior, e isso não é medição.
+
+## Etapa 4 — higiene de nomes (commit separado, `7b576b7`)
+
+O título dizia "Recovery map v2 — every cell is a single trajectory, so the M axis is
+undecidable in 25% of them". Duas falsidades numa linha: a grade não é toda de trajetória
+única desde a v3, e os 25% eram EIXOS (1 de 4 por execução), não execuções. Corrigido para
+citar o veredito de M direto: 50% das células são de trajetória única, M é indecidível em
+100% delas e em 2% das com réplicas. Regenerado de `out_v4/recovery_rows.csv` por
+`scripts/replot_v4.py`, sem rerodar a grade.
+
+Resolvi também uma colisão que eu mesmo criei: `out_figuras/recovery_map_v4.*` não é mapa de
+recuperação, é a comparação dos quatro eixos entre as grades — virou `axes_v3_vs_v4.*`.
+
+## Estacionamento
+
+- **Dívida do eixo N, herdada e NÃO tocada (fora do escopo desta célula):** o N se defende
+  por três nulos e um comparador só. A lição que esta célula acabou de pagar — nulo por fora
+  não conserta comparador errado, e comparadores têm de responder à mesma pergunta — se
+  aplica ali inteira. É a próxima célula natural.
+- **`H3_TOL` = 0.03 agora tem uma curva atrás.** Com ruído 0.05 ele custa 0.28 de poder e não
+  compra falso alarme nenhum. A decisão é de quem escreve o paper, não do bench.
+- **Ruído 0.3 apaga o eixo M**, e não por limiar: as estatísticas ficam negativas. Nenhuma
+  célula até agora perguntou por quê.
+- **A grade v4 no README continua reportando 0.15 de poder.** É o que aquela grade
+  pré-registrada produziu e fica como está; a linha de contradição está escrita ao lado, com
+  os dois números.
+- **O guardião do pré-registro não tem ponto fixo, e isso é estrutural.** A proveniência do
+  documento é `git rev-parse HEAD`, então regenerá-lo e commitá-lo muda o HEAD e torna o
+  documento obsoleto por um commit — `test_document_is_regenerated_from_the_code` só pode
+  estar verde no instante ANTES do commit. Ele pegou exatamente isso nesta célula (documento
+  dizia `d3403fc`, HEAD era `7b576b7`) e foi útil: a regeneração revelou que o gate M tinha
+  mudado de forma material sem o documento acompanhar. O artefato congelado da grade v4
+  continua sendo o objeto git em `9586e72` (sha256 `471d67e5...`), não o arquivo em disco.
+- Célula 6 segue fechada, motivo inalterado.

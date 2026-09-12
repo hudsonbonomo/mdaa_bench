@@ -4,7 +4,7 @@ Gerado por `make_prereg.py`, que lê as constantes dos módulos. Nenhuma linha
 deste documento é digitada duas vezes: se uma tolerância mudar no código, ela muda
 aqui na próxima execução. O que o código não implementa, não aparece.
 
-**Proveniência:** git commit `d3403fc84654ec24020a0347d3a7cecb04610c92` **with uncommitted changes**
+**Proveniência:** git commit `7b576b7b8dc261607d1af1a5bc1271f9828dde4e` **with uncommitted changes**
 
 **Sementes:** CRC32 da tupla da célula (`zlib.crc32(repr((node, T, noise, keep, nonlinear_h, rep)))`), de modo que o mapa
 independe do número de processos. Verificado por diff entre `--jobs 1` e `--jobs 4`.
@@ -50,7 +50,7 @@ Cada gate devolve `(veredito, estatística, nota de parada)`. O veredito pertenc
 | M1 vs M0 | `pipeline.identify` | ganho fora da amostra > `TOL` = 0.03 |
 | N | `pipeline.identify` + `wiener.py` + `switching_null.py` | `TOL` = 0.03 e quantil `NULL_Q` = 0.95 de **três** nulos — linear, Wiener e chaveamento — com `N_SURR` = 49 surrogates cada |
 | H | `switching.py` | `TOL` = 0.03, corrida mediana >= `MIN_SEG` = 25, ocupação em (0.05, 0.95), \|corr\| com u < 0.5 |
-| M | `density.h3_memory` sobre réplicas | contest de TRÊS: o kernel de memória tem de vencer o espaço de estados livre **e** o modelo de dois regimes de `switching.py`, cada um por `H3_TOL` = 0.03, no mesmo bloco futuro; exige `MIN_REPLICATES` = 10, abaixo disso o veredito é `nao identificavel` |
+| M | `density.h3_memory` sobre réplicas | contest de TRÊS: o kernel de memória tem de vencer o espaço de estados livre **e** o modelo de dois regimes de `switching.py`, cada um por `H3_TOL` = 0.03, **nos mesmos passos** (`observe.scorable_steps`: t e t-1 ambos observados); exige `MIN_REPLICATES` = 10, abaixo disso o veredito é `nao identificavel` |
 | S | `pipeline.identify` + `statespace.stochastic_null` | `TOL` = 0.03, quantil 0.95 de 15 surrogates, e `S_QFRAC` = 0.5 |
 | H1 | `density.h1_ensemble` | instabilidade < `H1_INSTAB` = 0.25; bimodalidade > `H1_BIMODAL_SEP` = 2.0; entre/intra > `H1_BETWEEN_WITHIN` = 1.0 |
 | H2 | `density.h2_geometry` | razão de escalas <= `H2_SCALE_RATIO` = 10.0 |
@@ -125,6 +125,14 @@ O rival vinculante diz por quê: em mundos de dois regimes é o modelo de chavea
 **Alvo de poder declarado e NÃO atingido, registrado em vez de afrouxado.** A célula declarou 12/20 antes de medir; o contest de três dispara em 10/20 com 3 réplicas ajustadas e 9/20 com 8. Mais réplicas não ajudam, então não é tamanho de amostra: sete das vinte estatísticas caem entre +0.002 e +0.028, logo abaixo de `H3_TOL` = 0.03. Como o comparador antigo tinha o mesmo ~50% de poder, a diferença não é do rival novo — é uma questão sobre `H3_TOL` e sobre T, e a grade v4 é o que a transforma em taxa.
 
 O nulo de chaveamento sobre M (`H3_SWITCH_SURR` = 9 surrogates) saiu da regra e continua no código como **diagnóstico**, desligado por padrão, para que o resultado negativo continue reproduzível em vez de sumir.
+
+## Pontuação simétrica sob amostragem irregular
+
+A grade v4 rodou com os competidores do contest de M pontuados em problemas DIFERENTES quando havia faltantes: `predict_mse` roda o filtro sobre a grade inteira e pontua nos tempos observados, então com `keep` = 0.7 o modelo de memória frequentemente previa atravessando um buraco, enquanto o rival de chaveamento só pontuava em pares (t, t+1) com as duas pontas medidas. O problema mais fácil vencia: o rival vinculava em 31 de 40 mundos com memória em `keep` = 0.7, contra 2 de 40 com dados completos.
+
+Existe agora **um predicado de elegibilidade**, `observe.scorable_steps`, usado por todos os competidores: um passo entra na pontuação só se `t` e `t-1` estão ambos observados, que é o que o modelo mais exigente precisa. Nada é interpolado — o passo sai do SCORE, não é reconstruído — e cada modelo continua AJUSTANDO com o que a própria verossimilhança alcançar.
+
+Remedido em 192 mundos (3 nós × 2 T × 2 ruídos × 2 keep × 8 sementes, 10 réplicas): o poder em `M1+M` com `keep` = 0.7 e ruído 0.05 vai de **0.05 para 0.31**, e com `keep` = 1.0 fica inalterado em 0.250, que é a regressão exigida. **Os números de M da grade v4 valem para aquela grade e não descrevem o gate atual.**
 
 ## Hipóteses que a grade vai testar
 

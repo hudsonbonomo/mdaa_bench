@@ -52,3 +52,28 @@ def pair_times(obs: Observed):
     """Source time of each pair returned by `regular_pairs` — lets a gate put
     its train/test boundary on the original clock rather than on a row count."""
     return obs.t[np.flatnonzero(np.diff(obs.t) == 1)]
+
+
+def scorable_steps(mask, idx):
+    """Steps a one-step-ahead score may use, for EVERY model in a contest.
+
+    THE SINGLE ELIGIBILITY PREDICATE. A step t counts only if t and t-1 are both
+    observed, which is what the most demanding competitor needs: the switching
+    regression predicts y_t from the measured y_{t-1}, so it can never be asked
+    to cross a gap. The state-space models CAN cross one — the Kalman filter
+    simply propagates without an update — and that is precisely the asymmetry
+    this predicate removes. Letting each model score on what it happens to be
+    able to do compares them on different problems, and under keep=0.7 the
+    easier problem won: the switching rival bound 31 of 40 memory worlds against
+    2 of 40 with complete data.
+
+    Nothing is interpolated. A step whose predecessor was never measured is
+    dropped from the SCORE, not reconstructed; models may still FIT on whatever
+    their own likelihood can use.
+    """
+    import numpy as np
+    idx = np.asarray(idx, dtype=int)
+    if len(idx) == 0:
+        return idx
+    ok = (idx >= 1) & mask[idx] & mask[np.maximum(idx - 1, 0)]
+    return idx[ok]
