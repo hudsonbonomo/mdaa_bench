@@ -805,7 +805,7 @@ Data: 2026-09-11. Commit de partida: `89148dc` (grade v3, prereg `1bb2510`).
 ## Aprovações
 
 ```
-Grade v4 aprovada por Hudson em: 2026-09-12   (VAZIA -> não executada)
+Grade v4 aprovada por Hudson em: 2026-09-12   (preenchida depois; ver a célula de execução)
 ```
 
 ## Etapa 0 — comando de limpeza de órfãos, corrigido
@@ -930,7 +930,7 @@ Data: 2026-09-12. Commit de partida: `d3403fc` (nulo de chaveamento, prereg v3).
 ## Aprovações
 
 ```
-Grade v4 aprovada por Hudson em: 2026-09-12   (VAZIA -> não executada; parei na etapa 4)
+Grade v4 aprovada por Hudson em: 2026-09-12   (preenchida depois; ver a etapa 5 abaixo)
 ```
 
 ## Etapa 0 — o comando de limpeza estava errado de novo, e agora sei por quê
@@ -1073,17 +1073,108 @@ exatamente a armadilha de máquina degradada que este arquivo registra desde a c
 Remedida com a máquina livre, deu 13.8 e 30.1. O comentário em `make_prereg.py` agora manda
 medir com a máquina ociosa e cita os dois números, para o erro não se repetir em silêncio.
 
-## Etapa 5 — NÃO executada
+## Etapa 5 — EXECUTADA
 
-A linha de aprovação da grade v4 está vazia. Parei na etapa 4, conforme o escopo. O comando
-está no README e em `PREREGISTRO_v3.md`.
+A célula fechou nas etapas 1-4 com a linha de aprovação vazia. Hudson preencheu a data
+(`2026-09-12`) e empurrou; a condição da etapa 5 passou a valer e a grade rodou.
+
+O `-replace` que preencheu a data deixou as anotações entre parênteses intactas, então as
+duas linhas passaram a dizer `2026-09-12` e `(VAZIA -> não executada)` ao mesmo tempo.
+Corrigido aqui.
+
+```
+comando literal do pré-registro, --jobs = núcleos - 1 = 21
+pré-registro   PREREGISTRO_v3.md, sha256 471d67e5...9a8c79, commit 9586e72
+início         2026-09-12 06:33:49 -03:00
+fim            2026-09-12 07:53:59 -03:00
+duração        1 h 20 min 10 s      (estimativa serial era 7.8 h -> 5.8x em 21 processos)
+saída          out_v4/, 1280 linhas, EXIT=0
+git diff 9586e72 -- sim/   vazio
+```
+
+Pré-condições verificadas antes de disparar: árvore limpa, aprovação preenchida, `sim/`
+idêntico ao commit do pré-registro, `out_v4/` inexistente, zero órfãos pelo comando novo.
+
+### A hipótese registrada: metade confirmada, metade contradita
+
+```
+em reps_per_person=10, T=600, ruído 0.05:
+  falso alarme de M em M1+H   registrado <= 0.05   medido 0.000 (0/40)   CONFIRMADO
+  poder de M em M1+M          registrado >= 0.50   medido 0.150 (6/40)   CONTRADITO
+```
+
+### Uma frase por eixo, v3 -> v4
+
+```
+N  CONFIRMA, e agora o preço aparece
+   falso alarme 0.106 -> 0.058 (o terceiro nulo), poder 0.275 -> 0.200,
+   M1+N que erram o eixo por completo 0.725 -> 0.800
+
+H  INALTERADO ate a terceira casa
+   0.481 plantado / 0.107 ausente nos dois; recall 0.269, precisão 0.433, MAE 4.158
+   nada nas duas últimas células tocou o caminho do H, e a grade diz isso
+
+M  CONFIRMA o falso alarme, CONTRADIZ o poder
+   dispara com a estrutura ausente 0.070 -> 0.013; em M1+H o rótulo espúrio
+   0.334 -> 0.113 e o exato 0.269 -> 0.409
+   mas com memória plantada 0.091 -> 0.078 (0.150 -> 0.058 nos desenhos replicados)
+
+S  INALTERADO
+   0.563 -> 0.562, sem células ausentes contra as quais testar
+```
+
+### Por que a predição de poder errou — e uma delas é culpa minha
+
+**Generalizei do canto mais fácil.** O 0.525 que virou hipótese veio de 40 sementes em
+T=600, ruído 0.05, keep=1.0, h linear — UMA célula do desenho. A célula correspondente da
+grade dá 4/10, compatível com 0.525 nesse tamanho. O resto do desenho é pior:
+
+```
+keep  1.0  0.225     keep  0.7  0.087      faltantes custam mais que tudo
+ruído 0.05 0.250     ruído 0.3  0.062
+T     300  0.212     T     600  0.100      MAIS dados BAIXAM o poder
+h  linear  0.163     h    tanh  0.150      o mapa de observação quase não pesa
+```
+
+T=600 ser pior que T=300 não é bug: o contest é relativo, então uma série mais longa deixa o
+espaço de estados livre ajustar um modelo melhor também, e a margem do kernel encolhe.
+
+**O segundo rival não é pontuado de forma justa com dados faltantes. Isso é um defeito do
+que eu construí nesta célula.** `memory_contest` pontua o modelo de memória com
+`predict_mse`, que roda o filtro de Kalman sobre a grade inteira e pontua nos tempos
+observados — com keep=0.7 ele frequentemente prevê VÁRIOS passos à frente, atravessando um
+buraco. O rival de chaveamento é pontuado em `regular_pairs`, que guarda só pares (t, t+1)
+ambos observados — sempre UM passo a partir de um valor medido. Com faltantes os dois
+respondem a perguntas diferentes, e o mais fácil ganha:
+
+```
+M1+M, reps=10, ruído 0.05   mediana vs espaço de estados   vs chaveamento   vinculante
+  keep 1.0                          +0.017                    +0.092         SSM 38/40
+  keep 0.7                          +0.012                    -0.085         chav 31/40
+```
+
+**O resultado de falso alarme não depende disso.** Em keep=1.0 não há buracos, a pontuação é
+simétrica por construção, e M1+H ainda dispara em 1 de 76 execuções replicadas ali. O defeito
+custa poder com faltantes; ele não fabrica a vitória.
+
+Figura: `out_figuras/recovery_map_v4.svg` (`python scripts/recovery_map_v4.py`), com os
+quatro eixos v3 -> v4 num painel e o eixo M decomposto por célula de desenho no outro.
 
 ## Estacionamento
 
-- **`H3_TOL` = 0.03 é o que limita o poder do eixo M**, não o comparador. Sete de vinte
-  mundos com memória plantada produzem estatística entre +0.002 e +0.028. Baixar o limiar
-  sem medir o falso alarme correspondente seria trocar um erro pelo outro; a grade v4 dá os
-  dois em 80 células por nó, e é ela que deve decidir.
+- **DÍVIDA NOVA, e é a mais importante: o rival de chaveamento não é pontuado de forma
+  justa quando há faltantes.** `predict_mse` prevê atravessando buracos; `regular_pairs`
+  nunca atravessa. Com keep=0.7 o rival de chaveamento ganha um problema mais fácil e passa
+  a vincular em 31/40 dos mundos com memória, contra 2/40 em keep=1.0. O conserto é pontuar
+  os dois na MESMA grade de tempos — ou dar ao modelo de chaveamento a mesma penalidade de
+  propagação. Nada disso afeta o resultado de falso alarme, que se sustenta em keep=1.0.
+- **`H3_TOL` = 0.03 limita o poder do eixo M**, e a grade mostrou que não é a única coisa
+  que limita. Com keep=1.0 e ruído 0.05 o poder é 0.425; com faltantes cai para 0.087. Baixar
+  o limiar sem medir o falso alarme correspondente seria trocar um erro pelo outro — mas
+  agora há um alvo melhor: consertar a pontuação antes de mexer no limiar.
+- **Mais dados baixam o poder do eixo M** (T=300 dá 0.212, T=600 dá 0.100). O contest é
+  relativo: uma série mais longa também deixa o espaço de estados livre ajustar melhor. Isso
+  vale para qualquer gate construído como contest e não estava registrado em lugar nenhum.
 - **O eixo N não recebeu o mesmo tratamento.** O gate N ainda se defende por três nulos, e a
   grade v3 mostrou que o de Wiener não neutraliza o confundidor de tanh (falso alarme ~10%
   com qualquer observação). A lição desta célula — nulo por fora não conserta comparador

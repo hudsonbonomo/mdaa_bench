@@ -674,6 +674,95 @@ seven of the twenty statistics land between +0.002 and +0.028, just under `H3_TO
 Since the old comparator had the same ~50% power, the shortfall is not the new rival's
 doing — it is a question about `H3_TOL` and about T, and it is not attempted here.
 
+## Grid v4 — EXECUTED, 1280 runs
+
+```
+python -m sim.recovery --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7 \
+    --nonlinear_h 0 1 --reps_per_person 1 10 --reps 10 --jobs 21 --out out_v4
+
+pre-registration   PREREGISTRO_v3.md, sha256 471d67e5...9a8c79, committed at 9586e72
+start              2026-09-12 06:33:49 -03:00
+end                2026-09-12 07:53:59 -03:00
+wall               1 h 20 min 10 s        serial estimate was 7.8 h
+output             out_v4/, 1280 rows, EXIT=0
+```
+
+`git diff 9586e72 -- sim/` is empty: the code that ran is the code the pre-registration
+describes.
+
+### The registered hypothesis
+
+Pre-registered before the run, at `reps_per_person` = 10, T = 600, noise 0.05:
+**false alarm of M on `M1+H` ≤ 0.05 and power on `M1+M` ≥ 0.50.**
+
+| | registered | measured | |
+|---|---|---|---|
+| false alarm `M1+H` | ≤ 0.05 | **0.000** (0/40) | **confirmed** |
+| power `M1+M` | ≥ 0.50 | **0.150** (6/40) | **contradicted** |
+
+The false alarm is confirmed decisively and the power prediction is wrong by more than a
+factor of three. Both halves are worth reading, and the second one is mine to answer for.
+
+### One sentence per axis, v3 → v4
+
+**N — confirms, and the price is now visible.** False alarm 0.106 → **0.058**, nearly
+halved by the third null, exactly the direction the 20-seed preliminary showed; the cost is
+real and was also predicted — power 0.275 → 0.200, and `M1+N` runs that miss the axis
+entirely go from 0.725 to 0.800.
+
+**H — unchanged, to three decimals.** Fires 0.481 when planted and 0.107 when absent in
+both grids, with identical switch-timing recall (0.269), precision (0.433) and MAE (4.158
+steps); nothing in the last two cells touched the H path, and the grid says so rather than
+leaving it assumed.
+
+**M — confirms the false alarm, contradicts the power.** Firing when the structure is
+absent collapses 0.070 → **0.013**, and on `M1+H` specifically the spurious-label rate goes
+0.334 → **0.113** while exact identification rises 0.269 → 0.409; but firing when memory IS
+planted falls 0.091 → 0.078 (0.150 → 0.058 among replicated designs), so the second rival
+bought a threefold drop in false alarms at a real cost in detections.
+
+**S — unchanged.** 0.563 → 0.562 with no absent cells to test against, which is the same
+non-statement the v3 grid made and remains the weakest axis in the bench.
+
+### Why the power prediction was wrong
+
+Two reasons, and only the first is a measurement artefact.
+
+**I generalised from the easiest corner.** The 0.525 that went into the hypothesis came
+from 40 seeds at T = 600, noise 0.05, `keep` = 1.0, linear `h` — one cell of the design.
+The grid's matching cell gives 4/10, compatible with 0.525 at that sample size. Everywhere
+else is worse, and the marginals say why:
+
+```
+keep  1.0  0.225      keep  0.7  0.087        missingness costs the most
+noise 0.05 0.250      noise 0.3  0.062
+T     300  0.212      T     600  0.100        MORE data LOWERS power
+h  linear  0.163      h    tanh  0.150        the observation map barely matters
+```
+
+That T = 600 is *worse* than T = 300 is not a bug: the contest is relative, so a longer
+series lets the free state space fit a better model too, and the memory kernel's margin
+over it shrinks.
+
+**The second rival is not scored fairly when data are missing.** `memory_contest` scores
+the memory model with `predict_mse`, which runs the Kalman filter across the whole grid and
+scores at observed times — so with `keep` = 0.7 it is often predicting several steps ahead,
+across a gap. The switching rival is scored on `regular_pairs`, which keeps only (t, t+1)
+pairs where both are observed — always exactly one step from a measured value. Under
+missingness the two rivals are answering different questions, and the easier one wins:
+
+```
+M1+M, reps 10, noise 0.05    median gain vs state space   vs switching   binding rival
+  keep 1.0                            +0.017                  +0.092      state space 38/40
+  keep 0.7                            +0.012                  -0.085      switching    31/40
+```
+
+**The false-alarm result does not depend on this.** At `keep` = 1.0 there are no gaps, so
+the scoring is symmetric by construction, and `M1+H` still fires on 1 of 76 replicated runs
+there. The defect costs power under missingness; it does not manufacture the win.
+
+Figure: `out_figuras/recovery_map_v4.svg`, from `python scripts/recovery_map_v4.py`.
+
 ## Files
 
 ```
