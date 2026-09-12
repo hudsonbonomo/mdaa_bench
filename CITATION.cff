@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this bench, please cite it as below."
+type: software
+title: "mdaa_bench: simulation bench for blind identification of latent dynamical structure (MDAA)"
+version: v4.0.0
+date-released: 2026-09-12
+license: CC-BY-4.0
+repository-code: "https://github.com/hudsonbonomo/mdaa_bench"
+authors:
+  - family-names: Bonomo
+    given-names: Hudson A. R.
+    affiliation: "TMU-LAB — The Machine Unconscious Lab, Rio de Janeiro, Brazil"
+    orcid: "https://orcid.org/0000-0003-0656-7641"
+abstract: >-
+  Test bench in which trajectories are generated from known lattice nodes, observed
+  through a noisy and irregularly sampled observation map, and handed blind to an
+  identification pipeline. The output is a recovery map: how often the pipeline
+  recovers the planted node, activates a spurious axis, or misses a planted one,
+  across measurement noise, series length, sampling density and observation
+  nonlinearity. The bench validates the pipeline, never the construct.
+keywords:
+  - dynamical systems
+  - system identification
+  - state-space models
+  - switching linear systems
+  - simulation benchmark
+  - pre-registration
+  - reproducibility
+  - MDAA
