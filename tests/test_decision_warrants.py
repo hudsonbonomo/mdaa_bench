@@ -7,6 +7,7 @@ carries the same hash the code verifies.
 """
 import pathlib
 import shutil
+import subprocess
 
 import pytest
 import yaml
@@ -32,6 +33,38 @@ def lam(items, t=5, window=1):
 def test_the_frozen_hash_matches_the_file_on_disk():
     assert chi_hash() == frozen_hash()
     assert load_chi().sha256 == frozen_hash()
+
+
+def test_git_is_not_allowed_to_rewrite_the_bytes_chi_is_frozen_by():
+    """chi is frozen BY ITS BYTES, and `* text=auto` in .gitattributes would let a
+    clone with core.autocrlf=true receive `warrants.yaml` with CRLF: different
+    bytes, different hash, FrozenChiViolation on every load — a line-ending
+    artefact wearing the costume of a tampered chi. `-text` pins the bytes.
+
+    This test exists so that the attribute cannot be removed without the suite
+    going red. The first two assertions need no git, so it stays a guard even in
+    a checkout where git is unavailable."""
+    rules = [ln.split() for ln in (ROOT / ".gitattributes").read_text(encoding="utf-8")
+             .splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
+    pinned = [r for r in rules if r[0] == "decision/warrants.yaml" and "-text" in r[1:]]
+    assert pinned, ".gitattributes no longer unsets `text` for decision/warrants.yaml"
+
+    raw = CHI_PATH.read_bytes()
+    assert b"\r\n" not in raw, "chi already carries CRLF: the freeze is broken, not at risk"
+
+    # non-vacuity: the attribute is load-bearing, not hygiene. The same file with
+    # CRLF hashes to something else, which is exactly what a clone would produce.
+    import hashlib
+    crlf = raw.replace(b"\n", b"\r\n")
+    assert hashlib.sha256(crlf).hexdigest() != frozen_hash()
+
+    git = shutil.which("git")
+    if git is None:
+        pytest.skip("git unavailable; the textual guard above still ran")
+    out = subprocess.run([git, "check-attr", "text", "--", "decision/warrants.yaml"],
+                         cwd=ROOT, capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.strip().endswith(": text: unset"), out.stdout
 
 
 def test_a_changed_chi_is_refused(tmp_path):

@@ -1,2 +1,10 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# chi is FROZEN BY ITS BYTES: decision/warrants.sha256 records the sha256 of
+# decision/warrants.yaml and decision/warrant.py verifies it on every load. The
+# rule above would let a clone with core.autocrlf=true receive that file with
+# CRLF, changing its bytes, changing the hash, and raising FrozenChiViolation on
+# every load -- a line-ending artefact wearing the costume of a tampered chi.
+# -text keeps the bytes verbatim in every working copy, on every platform.
+decision/warrants.yaml -text
