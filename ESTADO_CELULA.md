@@ -1549,3 +1549,126 @@ consertado um dia, é esse o desenho.
 - **A dívida do eixo N continua intocada**, pelo terceiro estacionamento seguido. Fora do
   escopo desta célula, e a lição que esta bancada acabou de aplicar por conta própria — o
   comparador tem de responder à mesma pergunta que o rival — é a mesma que falta lá.
+
+---
+
+# Célula `grade-de-decisao-execucao` — BLOQUEADA, grade NÃO executada
+
+Data: 2026-09-14. Commit de partida: `33c6133`.
+
+## Pré-condições
+
+**1. Árvore limpa e pré-registro sem a marca de sujeira — FALHOU na entrada, CUMPRIDA aqui.**
+`git status --porcelain` devolvia 14 entradas (2 modificadas, 12 não rastreadas), todas da
+célula `bancada-de-decisao` imediatamente anterior, e `PREREGISTRO_v4.md` trazia
+`**with uncommitted changes**`. O escopo desta célula instrui explicitamente o remédio —
+commitar tudo, regenerar o documento, commitar a regeneração — e foi o que foi feito, nessa
+ordem:
+
+```
+fac1faa  bancada de decisao: quatro familias de mundo, tres modelos, chi congelado
+771327a  pre-registro v4 regenerado sobre arvore limpa
+```
+
+`PREREGISTRO_v4.md` agora diz `git commit fac1faa3143a4b82a472673f614d515472435608`, **sem**
+a marca de sujeira. O hash de χ no documento não mudou e não podia mudar:
+`689752ec2d696995e40e3f6b3871a111d65e022dc90494d128e5ed03fcb783c6`.
+
+Nada foi empurrado. O repositório tem remoto (`github.com/hudsonbonomo/mdaa_bench.git`) e
+publicar é decisão de Hudson, não consequência de um commit local.
+
+**2. Aprovação da grade — FALHOU. É o bloqueio.** A linha continua
+
+```
+Grade de decisão aprovada por Hudson em: ____________
+```
+
+Vazia. Regra 5 do Modo Celular: a grade não roda. **Não rodei a grade, não gerei figura
+nova, não escrevi número nenhum no README, e nada em `decision/` ou `sim/` foi alterado.** O
+escopo 1–4 desta célula está inteiramente por fazer e não foi iniciado.
+
+Preencher essa linha é de Hudson e de mais ninguém. Preenchê-la eu seria forjar exatamente a
+autorização que a regra existe para exigir. É a mesma decisão que a célula `executar-grade-v3`
+tomou quando esta pré-condição falhou lá.
+
+**3. Processos órfãos — OK, antes e depois.** `Get-BenchOrphans` (o comando corrigido, que
+mira `--multiprocessing-fork` com `parent_pid` já morto) devolveu **0 antes** e **0 depois**.
+12 processos python do ambiente vivos e intactos nos dois momentos — servidores MCP e
+extensão do IDE, que não são filhos de multiprocessing e ficam fora por construção.
+
+## Suíte: 131 testes, 130 verdes, 1 vermelho — e o vermelho é estrutural
+
+```
+1 failed, 130 passed in 986.80s (0:16:26)
+FAILED tests/test_prereg.py::test_document_is_regenerated_from_the_code
+```
+
+**O vermelho é anterior a esta célula e não foi causado por ela.** O documento commitado
+nomeia `7b576b7`; o `HEAD` de partida era `33c6133`. Com a árvore limpa no commit de
+partida, a comparação já falhava.
+
+**A regra desta célula — «130 verdes» E «árvore limpa» — não pode valer ao mesmo tempo
+enquanto `tests/test_prereg.py` existir na forma atual.** Ele roda `make_prereg.py`, que
+escreve `PREREGISTRO_v3.md` com `git rev-parse HEAD` mais a marca de sujeira, e compara com
+o que estava em disco. Logo:
+
+- rodar a suíte **suja a árvore**;
+- deixar o documento no estado commitado deixa o teste vermelho;
+- commitar o documento regenerado grava um pré-registro que diz «lido de uma árvore suja»,
+  que é exatamente o que a pré-condição 1 proíbe.
+
+Devolvi `PREREGISTRO_v3.md` ao estado commitado. Regenerá-lo aqui apontaria o registro da
+OUTRA bancada para o commit da bancada de decisão, o que é pior que deixá-lo velho: `7b576b7`
+é onde o trabalho do eixo M de fato aterrissou, e `fac1faa` não é.
+
+Não corrigi o guardião, porque o escopo manda anotar e não corrigir. O desenho da correção
+já está escrito e verde ao lado:
+`tests/test_decision_warrants.py::test_the_pre_registration_is_regenerated_from_the_code`
+exclui da comparação exatamente a linha que não pode ter ponto fixo, compara todo o resto e
+**restaura o arquivo em `finally`** — rodar a suíte não edita pré-registro nenhum. É uma
+célula de dez minutos e desbloqueia «verde e limpo ao mesmo tempo» para sempre.
+
+## O comando pré-registrado, conferido literal
+
+```bash
+python -m decision.bench --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7 \
+    --flip 0.05 0.25 --reps 20 --jobs 8 --out out_decision_v4
+```
+
+Idêntico, caractere a caractere, ao que está em `PREREGISTRO_v4.md` linha 138 e ao que o
+escopo desta célula cita. 1280 células, 5120 linhas, ~8.6 min serial pelo custo medido em 8
+células reais.
+
+## O que falta para desbloquear
+
+```
+# em ESTADO_CELULA.md, seção Aprovações da célula `bancada-de-decisao`:
+Grade de decisão aprovada por Hudson em: 2026-__-__
+```
+
+Com a data preenchida não sobra pré-condição pendente: a árvore está limpa, o pré-registro
+aponta para um commit limpo e sem marca de sujeira, e χ está congelado no hash que a grade
+vai carimbar em cada uma das 5120 linhas.
+
+## Estacionamento
+
+- **BUG ENCONTRADO E NÃO CORRIGIDO (escopo manda anotar): `* text=auto` no `.gitattributes`
+  ameaça o congelamento de χ.** O hash é sobre os BYTES de `decision/warrants.yaml`. Hoje o
+  blob no índice e a cópia de trabalho são LF e o hash bate. Mas `text=auto` autoriza o git a
+  escrever CRLF na cópia de trabalho de um clone novo em Windows com `core.autocrlf=true` —
+  e aí os bytes mudam, o sha256 muda, e `load_chi` levanta `FrozenChiViolation` em toda
+  carga. **A bancada ficaria inexecutável para quem clonar, e o sintoma pareceria adulteração
+  de χ quando é normalização de fim de linha.** O conserto é uma linha
+  (`decision/warrants.yaml -text` no `.gitattributes`) e não muda byte nenhum do arquivo,
+  logo não muda o hash; mas mexer na configuração do repositório durante o congelamento é
+  decisão de célula própria, não de execução. **Vale fazer ANTES de rodar a grade**, senão o
+  `out_decision_v4` publicado carimba um hash que um clone não consegue reproduzir.
+- **A asserção de χ sobre as 5120 linhas está pronta e não foi exercida.** `bench.run_cell`
+  chama `load_chi()` por célula — que verifica o hash congelado e levanta se divergir — e
+  grava `chi_sha256` em cada linha. Verificar que a coluna tem um único valor é uma linha
+  sobre o CSV, e é o que a célula de execução deve reportar.
+- **Nada de `decision/` nem de `sim/` foi tocado**, como manda o escopo.
+- O piloto de 64 células e a figura que ele produziu continuam no repositório, rotulados como
+  piloto em toda citação. Quando a grade rodar, a figura é regenerada sobre `out_decision_v4`
+  com `M1+pausa` como QUARTA BARRA e não como traço: a ablação deixou de ser nota de rodapé
+  e virou o achado.
