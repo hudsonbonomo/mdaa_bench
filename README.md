@@ -919,66 +919,158 @@ on every load and on every grid cell, and the same hash is written into
 (D8), turned into an invariant: a rule cannot be adjusted after seeing a result without
 leaving a commit that says so.
 
-### What the pilot says — 64 cells, not the grid
-
-`python -m decision.bench --T 300 --flip 0.05 0.25 --reps 8`, one T and one measurement
-noise. Figure: [decision_M0_M1_M2.svg](out_figuras/decision_M0_M1_M2.svg), one panel per
-family, three bars, the external criterion of that family, with the ablation drawn as a tick
-across the M2 bar.
-
-| family | primary external criterion | M0 | M1 | M2 | M1+pausa |
-|---|---|---|---|---|---|
-| `W-absence` | `request_resolution_rate` ↑ | 0.644 | 0.644 | **0.688** | 0.644 |
-| `W-conflict` | `request_resolution_rate` ↑ | 0.561 | 0.561 | **0.603** | 0.561 |
-| `W-scope` | `deficit_inference_rate` ↓ | 1.000 | **0.243** | **0.243** | 0.243 |
-| `W-pause` | `pause_violation_rate` ↓ | 1.000 | 1.000 | **0.000** | **0.000** |
-
-Accuracy against the planted action, with the record ceiling in brackets: `W-absence`
-0.945 / 0.945 / **1.000** (1.0); `W-conflict` 0.944 / 0.944 / **1.000** (1.0); `W-scope`
-0.110 / 0.724 / **0.756** (0.756); `W-pause` 0.163 / 0.163 / **1.000** (1.0), with the
-ablation at 0.957.
-
-### The sentence the paper asks for, written from the numbers
-
-**Λ earns its place on exactly one family of four.** On `W-absence` and `W-conflict` M1 and
-M0 are identical to three decimals on every criterion, because a scalar aggregate that
-carries the item count already separates N from B. The whole operational case for the
-propositional layer, in this bench, is `W-scope`: a condition difference and a conflict have
-the same aggregate, and only a layer that keeps C can tell them apart. M0 reads **every**
-condition difference as a property of S — `deficit_inference_rate` 1.000 against M1's 0.243 —
-and the probe it then issues cannot resolve what it asked. That is a real result and a narrow
-one, and it was predicted in the pre-registration before it was measured.
-
-**ω survives, but not for the reason it is usually argued for.** On `pause_violation_rate`
-M2 and `M1+pausa` are both exactly 0.000: on the pause criterion itself, the warrant layer
-buys nothing a boolean flag would not have bought, and if that were Ω's only claim it should
-be removed and replaced by the flag. What separates them is the other clause — provenance.
-M2 refuses to act when no admissible item followed a support that was actually given
-(`unsupported_counterfactual_rate` 0.000 against 0.044 for both M1 and the ablation), and
-that clause binds in the two families where no pause exists at all. **So: ω stays, and the
-pause is not what pays for it.** If the grid removes the provenance gap, ω reduces to a flag
-check and leaves.
-
-The third number worth writing down is the one that limits both claims: evidence noise. At
-`flip_p` = 0.25, M1's `deficit_inference_rate` on `W-scope` goes from 0.093 to 0.394. The
-layer does not stop working; the sensor does. And the `W-scope` record ceiling is 0.756, not
-1.0, because a cross-condition disagreement on a record may be a flipped item and no reader
-of the record can tell — M2 sits exactly on that ceiling.
-
-### Grid — PREPARED, NOT RUN
+### Grid — EXECUTED, 1280 cells, 5120 rows
 
 ```bash
 python -m decision.bench --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7 \
     --flip 0.05 0.25 --reps 20 --jobs 8 --out out_decision_v4
 ```
 
-4 families x 2 T x 2 measurement noises x 2 `keep` x 2 `flip_p` x 20 seeds = 1280 cells,
-5120 rows. Cost **measured on 8 real cells**, idle machine: 0.27 s at T=300 and 0.54 s at
-T=600, so 8.6 min serial — two orders of magnitude below the dynamics grid, because a cell
-fits one state space and the rest is policy. Reported per family and never pooled: pooling
-would let the family where the warrant layer is decisive pay for the families where it
-changes nothing. It does not run until the approval line in `ESTADO_CELULA.md` carries a
-date (Modo Celular, rule 5).
+4 families x 2 T x 2 measurement noises x 2 `keep` x 2 `flip_p` x 20 seeds. Ran in **106.2 s**
+on 8 workers, exit 0, against pre-registration [PREREGISTRO_v4.md](PREREGISTRO_v4.md) at
+commit `e4bc3e0`. **All 5120 rows carry the same χ stamp, `689752ec2d69`** — asserted over the
+CSV, not assumed: `load_chi()` re-verifies the frozen hash once per cell, so a χ edited
+mid-run would have stopped the grid rather than produced a mixed file. Data:
+[out_decision_v4/](out_decision_v4/). Figure:
+[decision_M0_M1_M2.svg](out_figuras/decision_M0_M1_M2.svg), four bars per panel — the
+ablation is no longer a tick, because the grid made it the finding.
+
+Everything below is over 320 cells per family. The pilot numbers this section used to carry
+were reproduced to within 0.01 everywhere.
+
+### The five registered hypotheses, one sentence each
+
+**H1 — `W-absence`, M1 = M0. CONFIRMED, and more exactly than registered.** The prediction
+was |M1 − M0| ≤ 0.01; the measured difference is **0.000000** on accuracy (0.9405 both),
+on request resolution (0.6377 both) and on every other criterion except calibration, in all
+16 design cells. The identity is of ACTIONS and not only of rates: replaying 48 worlds that
+span all 16 cells, **M1 and M0 chose the same action at all 32179 eligible steps, 0 divergences**.
+
+**H2 — `W-conflict`, M1 = M0. CONFIRMED, identically.** Accuracy 0.9416 for both, request
+resolution 0.5552 for both, zero divergence in every cell.
+
+**The one thing Λ does buy in those two families, and it is not an action.** M1's Brier score
+is **0.0576 against M0's 0.0840** in `W-absence` and **0.0567 against 0.0748** in `W-conflict`:
+the propositional labels are better calibrated about whether intervening is right, while
+prescribing exactly the same intervention. That was not registered in advance and is
+reported here as an unregistered observation, not as a hypothesis that passed.
+
+**H3 — `W-scope`, M1 ≫ M0. CONFIRMED at both noise levels.** `deficit_inference_rate` is
+**1.000 for M0 and 0.095 for M1** at `flip_p` = 0.05 (registered: M0 ≥ 0.95, M1 ≤ 0.30), and
+**1.000 against 0.378** at `flip_p` = 0.25 (registered: M1 ≤ 0.50) — M0 reads every single
+condition difference as a property of S, in all 320 cells, and the probe it then issues
+resolves 0.006 of steps against M1's 0.488.
+
+**H4 — the pause violation does NOT separate Ω from a flag check. CONFIRMED, exactly.**
+`pause_violation_rate` is **0.000 for M2 and 0.000 for M1+pausa**, in all 16 cells, with no
+cell in which they differ by anything; on that criterion the warrant layer buys nothing a
+boolean would not have bought.
+
+**H5 — Ω's second tooth survives where no pause exists. CONFIRMED, so ω stays.** In
+`W-absence` and `W-conflict` — families with no authorization anywhere — M2 drives
+`unsupported_counterfactual_rate` from **0.0595 to 0.000** and from **0.0584 to 0.000**, and
+accuracy from 0.9405 and 0.9416 to **1.000**, while M1+pausa stays at M1's numbers; the gain
+did not disappear, so ω is not reducible to the flag and does not leave the architecture.
+
+### Every criterion, per family, never pooled
+
+320 cells per family, 4 models each. Bold marks the criterion that family was built to expose.
+
+**`W-absence`** — record ceiling 1.000
+
+| model | accuracy | request resolution ↑ | unsupported cf ↓ | contradicted ↓ | Brier ↓ | pause viol. ↓ | deficit inference ↓ |
+|---|---|---|---|---|---|---|---|
+| M0 | 0.9405 | **0.6377** | 0.0595 | 0.0880 | 0.0840 | — | 0.3008 |
+| M1 | 0.9405 | **0.6377** | 0.0595 | 0.0880 | 0.0576 | — | 0.3008 |
+| M2 | 1.0000 | **0.6838** | 0.0000 | 0.0652 | 0.0094 | — | 0.3008 |
+| M1+pausa | 0.9405 | **0.6377** | 0.0595 | 0.0880 | 0.0576 | — | 0.3008 |
+
+**`W-conflict`** — record ceiling 1.000
+
+| model | accuracy | request resolution ↑ | unsupported cf ↓ | contradicted ↓ | Brier ↓ | pause viol. ↓ | deficit inference ↓ |
+|---|---|---|---|---|---|---|---|
+| M0 | 0.9416 | **0.5552** | 0.0584 | 0.2199 | 0.0748 | — | 1.0000 |
+| M1 | 0.9416 | **0.5552** | 0.0584 | 0.2199 | 0.0567 | — | 1.0000 |
+| M2 | 1.0000 | **0.6004** | 0.0000 | 0.1640 | 0.0094 | — | 1.0000 |
+| M1+pausa | 0.9416 | **0.5552** | 0.0584 | 0.2199 | 0.0567 | — | 1.0000 |
+
+**`W-scope`** — record ceiling 0.7632
+
+| model | accuracy | request resolution ↑ | unsupported cf ↓ | contradicted ↓ | Brier ↓ | pause viol. ↓ | deficit inference ↓ |
+|---|---|---|---|---|---|---|---|
+| M0 | 0.1036 | 0.0063 | 0.0796 | 0.3182 | 0.1315 | — | **1.0000** |
+| M1 | 0.7319 | 0.4880 | 0.0796 | 0.3182 | 0.2169 | — | **0.2368** |
+| M2 | 0.7632 | 0.5120 | 0.0000 | 0.2399 | 0.1525 | — | **0.2368** |
+| M1+pausa | 0.7319 | 0.4880 | 0.0796 | 0.3182 | 0.2169 | — | **0.2368** |
+
+M2's accuracy here IS the record ceiling, to six decimals: 0.763153 against 0.763153. It is
+the one family where a model reaches the limit of what the record allows, and the 0.237 that
+remains is evidence noise, not a missing layer.
+
+**`W-pause`** — record ceiling 1.000
+
+| model | accuracy | request resolution ↑ | unsupported cf ↓ | contradicted ↓ | Brier ↓ | pause viol. ↓ | deficit inference ↓ |
+|---|---|---|---|---|---|---|---|
+| M0 | 0.1678 | 0.0316 | 0.0396 | 0.6315 | 0.3471 | **1.0000** | 1.0000 |
+| M1 | 0.1678 | 0.0316 | 0.0396 | 0.6315 | 0.6757 | **1.0000** | 1.0000 |
+| M2 | 1.0000 | 0.0616 | 0.0000 | 0.0894 | 0.0020 | **0.0000** | 0.1807 |
+| M1+pausa | 0.9604 | 0.0316 | 0.0396 | 0.1194 | 0.0340 | **0.0000** | 0.1807 |
+
+`—` is not zero: no authorization is planted in those three families, so the denominator is
+empty and the rate is undefined. It is reported as undefined rather than as a pass.
+
+M1's Brier in `W-scope` (0.2169) and `W-pause` (0.6757) is **worse than M0's**, and that is
+the honest cost of Λ having no probabilities: its confidence is the declared pair 0.9 / 0.1,
+so where it is confidently wrong — every pause step, where λ(P_next) = T and it acts — it is
+confidently wrong at 0.9. M0's confidence is attenuated by the belief and lands softer. The
+layer that fixes it is Ω, not Λ: M2 is at 0.0020.
+
+### Where each finding holds, and where it dissolves
+
+This is the part Paper 4 should cite, because a rate averaged over a design says nothing
+about which corner of the design produced it.
+
+| finding | holds in | dissolves in |
+|---|---|---|
+| M1 = M0 on `W-absence` / `W-conflict` | **all 16 cells, exactly** — max \|M1 − M0\| over every cell and every criterion other than Brier is **0.000000** | nowhere; there is no corner of the design where Λ changes an action in these families |
+| M1 ≫ M0 on `W-scope` | **all 16 cells**; M0 is 1.000 in every one | nowhere, but the SIZE depends on one factor only: M1 is 0.087–0.101 at `flip_p` = 0.05 and 0.372–0.384 at `flip_p` = 0.25 |
+| the size of that advantage vs T, measurement noise, `keep` | **invariant**: at fixed `flip_p` the spread across T ∈ {300, 600}, noise ∈ {0.05, 0.3} and `keep` ∈ {0.7, 1.0} is ≤ 0.014 | — |
+| M2 = M1+pausa on `pause_violation_rate` | **all 16 cells**, both exactly 0.000 | nowhere |
+| M2 > M1+pausa on accuracy in `W-pause` | **all 16 cells**, 1.000 against 0.951–0.969 | the gap shrinks with evidence noise: 0.041–0.049 at `flip_p` = 0.05, 0.031–0.038 at 0.25 |
+| the provenance tooth (H5) | **all 16 cells of both pause-free families**; M2's `unsupported_counterfactual_rate` is 0.000 everywhere | the SIZE halves with evidence noise: the gap M1→M2 is 0.064–0.080 at `flip_p` = 0.05 and 0.042–0.053 at 0.25 |
+| the `W-scope` record ceiling | 0.901–0.909 at `flip_p` = 0.05 | **0.614–0.627** at `flip_p` = 0.25, and M2 sits on it — what is lost there is the sensor, not a layer |
+
+Two readings follow, and they are the ones a reader should take away. First: **the whole
+design axis of the dynamics bench — length, measurement noise, sampling gaps — is irrelevant
+to every result here.** Nothing in the decision layer moves with T, with `noise` or with
+`keep`. The only factor that moves anything is `flip_p`, the noise in the evidence itself.
+That is a statement about where a decision architecture is fragile, and it is not the place
+the identification pipeline is fragile. Second: **evidence noise attenuates the layers
+without inverting any of them.** Doubling and quintupling it moves M1's scope advantage from
+0.90 to 0.62 of the way to the ceiling and halves Ω's provenance gain, but it never makes M0
+competitive on `W-scope` nor M1 competitive on `W-pause`.
+
+### The sentence the paper asks for, written from the grid
+
+**Λ earns its place on exactly one family of four, and the grid makes that sharper than the
+pilot did.** On `W-absence` and `W-conflict`, M1 and M0 are not merely close — they are
+identical to six decimals on every criterion but calibration, in all 320 cells each, because
+a scalar aggregate that carries the item count already separates N from B. The entire
+operational case for the propositional layer is `W-scope`, where a condition difference and a
+conflict have the same aggregate and only a layer that keeps C can tell them apart. If Paper 4
+wants to claim Belnap in general, this bench does not support it; it supports **scope**.
+
+**Ω survives, and the pause is not what pays for it.** `pause_violation_rate` is 0.000 for
+both M2 and the one-line ablation, in every cell — on the criterion ω is usually argued for,
+the warrant layer buys nothing a boolean would not have bought. What keeps it is the other
+clause: M2 refuses to act when no admissible item followed a support that was actually given,
+driving unsupported counterfactual inference to 0.000 from M1's 0.059 and 0.058 in the two
+families **that contain no pause at all**, and the ablation cannot follow it there. So ω
+stays, and the paper should argue it from provenance and warrant-under-χ, not from the pause.
+
+**Neither claim is large.** Of seven criteria across four families, Λ changes an action in one
+family and Ω in one clause. The bench was built so that both could have come back empty, and
+one of them nearly did.
 
 ## Files
 
@@ -1005,7 +1097,8 @@ decision/eligible.py        33   the single eligibility predicate, built on obse
 decision/models.py         153   M0 / M1 / M2 and the M1+pausa ablation; ONE shared estimator
 decision/metrics.py        156   the external criteria, on denominators defined by the world
 decision/bench.py          134   the decision grid runner: CSV, per-family summary, cost probe
-decision/figures.py         91   decision_M0_M1_M2.svg from the CSV, never recomputed
+out_decision_v4/             -   the EXECUTED decision grid: 1280 cells, 5120 rows, chi 689752ec2d69
+decision/figures.py         92   decision_M0_M1_M2.svg from the CSV, four bars, never recomputed
 make_prereg_decision.py    356   writes PREREGISTRO_v4.md by introspecting decision/
 scripts/decision_nonvacuity.py 53   the non-vacuity of the four families, measured over seeds
 make_figures.py            185   the three paper figures, computed from the bench
@@ -1052,14 +1145,15 @@ stopping rule, so a reader can disagree with a threshold instead of reverse-engi
     down, so it arrives as the adversary of the N gate, and the defence it would be tested
     against has a known hole (item 11). Opening it first means testing the attack and the
     defence at the same time.
-13. **Run the decision grid** (command above) once its approval line carries a date, and
-    re-derive the four panels from 1280 cells instead of 64. Everything in the decision
-    section is a pilot by this bench's own standard.
-14. **A second family in which Λ has a case to make.** The pilot says the propositional
-    layer earns its place on `W-scope` and nowhere else. Either that is the finding — and
-    Paper 4 should claim scope rather than Belnap in general — or a family exists that
-    turns on the N/B distinction in a way a scalar count cannot reach, and it has not been
-    written yet. The honest version of this cell starts by trying to *fail* to find one.
+13. ~~Run the decision grid.~~ **Done** — 1280 cells, 5120 rows, `out_decision_v4/`.
+14. **A second family in which Λ has a case to make.** The grid says the propositional
+    layer earns its place on `W-scope` and nowhere else, and it says so from 320 cells per
+    family with **zero** action-level divergence between M1 and M0 on the other two. Either
+    that is the finding — and Paper 4 should claim scope rather than Belnap in general — or a
+    family exists that turns on the N/B distinction in a way a scalar count cannot reach, and
+    it has not been written yet. The honest version of this cell starts by trying to *fail*
+    to find one. The calibration gap (Brier 0.0576 against 0.0840) is the only thread: Λ is
+    better calibrated while choosing identically, and no family was built to make that pay.
 15. **A competing χ.** The bench measures whether the declared warrant rules survive
     external criteria; it says nothing about whether a different χ would do better. The
     frozen-hash machinery is what would make that comparison honest, and it already exists.

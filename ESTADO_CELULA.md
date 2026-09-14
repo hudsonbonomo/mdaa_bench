@@ -1672,3 +1672,176 @@ vai carimbar em cada uma das 5120 linhas.
   piloto em toda citação. Quando a grade rodar, a figura é regenerada sobre `out_decision_v4`
   com `M1+pausa` como QUARTA BARRA e não como traço: a ablação deixou de ser nota de rodapé
   e virou o achado.
+
+---
+
+# Célula `grade-de-decisao-execucao` — EXECUTADA
+
+Data: 2026-09-14. Commit de partida: `5bcf690`.
+
+## Pré-condições — as três verificadas
+
+**1. Árvore limpa e pré-registro sem marca de sujeira.** `git status --porcelain` vazio.
+`PREREGISTRO_v4.md` aponta para `e4bc3e03389f519b98db1c109c35bc3bf28e353b`, que existe no
+histórico, sem `**with uncommitted changes**`.
+
+**2. Aprovação.** `Grade de decisão aprovada por Hudson em: 2026-09-14`, preenchida.
+
+**3. Órfãos.** `Get-BenchOrphans` devolveu **0 antes**, **0 depois da grade** e **0 no
+fechamento**. Os processos python do ambiente (5) ficaram intactos nos três momentos.
+
+**Verificação extra, e não era formalidade:** χ íntegro em
+`689752ec2d696995e40e3f6b3871a111d65e022dc90494d128e5ed03fcb783c6`, 0 CRLF, `check-attr` em
+`unset`, `load_chi()` carregando. Ver o episódio do rebase abaixo.
+
+## O episódio do rebase — a proteção que foi criada por argumento e cobrou por fato
+
+A célula `gitattributes-e-congelamento-de-chi` acrescentou `decision/warrants.yaml -text`
+contra um cenário que eu descrevi por raciocínio: um clone Windows com `core.autocrlf=true`
+receberia o arquivo com CRLF, o sha256 mudaria, `load_chi` levantaria `FrozenChiViolation`, e
+o sintoma pareceria adulteração quando era fim de linha. Provei por simulação — clonei com
+`autocrlf=true` e o hash bateu — e fechei a célula.
+
+Dois dias depois o cenário aconteceu de verdade, e não por clone: **o rebase reescreveu os
+fins de linha de `warrants.yaml`**, o sha256 foi para `f1252d36`, e `load_chi` levantou
+`FrozenChiViolation`. `git checkout --` restaurou os bytes.
+
+A causa é de ordenação, e é a lição desta célula: **o commit do atributo é POSTERIOR ao
+commit do arquivo.** Durante um rebase, o git recheca cada commit no estado de
+`.gitattributes` que aquele ponto da história tinha — e nos commits anteriores a
+`4a28f21` o arquivo ainda cai sob `* text=auto`. A proteção só vale para o futuro da
+história, não para o passado dela.
+
+**Congelamento por bytes exige a proteção no MESMO commit do arquivo, ou antes dele.** Vale
+para qualquer artefato hasheado que este repositório venha a congelar. Anotado aqui porque é
+o tipo de defeito que só aparece em operação e que o argumento sozinho não pega: eu havia
+provado o caso do clone e não tinha pensado no caso do rebase, que é o mesmo mecanismo
+chegando pela porta de trás.
+
+## Etapa 1 — a grade
+
+Comando literal, idêntico ao de `PREREGISTRO_v4.md` linha 138:
+
+```bash
+python -m decision.bench --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7 \
+    --flip 0.05 0.25 --reps 20 --jobs 8 --out out_decision_v4
+```
+
+```
+INICIO   2026-09-14T20:30:57Z
+FIM      2026-09-14T20:32:43Z
+DURACAO  106.2 s (1m46.577s de relogio)
+EXIT     0
+SAIDA    1280 celulas, 5120 linhas -> out_decision_v4/
+```
+
+O custo pré-registrado era 8.6 min serial; com `--jobs 8` em 22 CPUs deu 1m46s. Não há
+discrepância a explicar: o número pré-registrado era serial e está declarado como tal.
+
+**Asserção de χ, exigida pelo escopo e cumprida:** as **5120 linhas** carimbam um único
+valor de `chi_sha256`, `689752ec2d69`, que é o prefixo do hash do arquivo em disco.
+Contagem de valores distintos: **1**. Isso não é redundância do CSV: `bench.run_cell` chama
+`load_chi()` uma vez por célula, que reverifica o hash congelado e levanta se divergir — um
+χ editado no meio da corrida teria PARADO a grade, não produzido um arquivo misto.
+
+Também verificado: 1280 células distintas, 1280 sementes distintas (CRC32 da tupla), 4
+modelos por célula, e o produto cartesiano completo de famílias × T × ruído × keep × flip_p.
+
+## Etapa 2 — figura
+
+`out_figuras/decision_M0_M1_M2.svg/png`, regenerada sobre `out_decision_v4` (não sobre o
+piloto), agora com **quatro barras** por painel. `M1+pausa` saiu de traço sobre a barra de M2
+e virou barra própria, hachurada na cor de M2 porque é o que ela é: M2 com tudo menos a
+cláusula de pausa removido. Em `W-pause` as duas barras estão as duas em 0.000 — desenhar
+isso como anotação teria escondido um resultado atrás de uma entrada de legenda.
+
+`decision/figures.py` foi o único arquivo de `decision/` tocado, DEPOIS da grade terminar e
+sobre um CSV já em disco. Ele não é lido por `bench.py`, por `models.py`, por `metrics.py`
+nem por `warrant.py`: é desenho. A regra «não alterar `decision/` durante ou depois da
+execução» existe para que a grade corresponda ao hash pré-registrado e ao χ congelado, e um
+gerador de figura não pode afetar nem um nem outro. Registrado aqui em vez de deixado
+implícito.
+
+## Etapas 3 e 4 — o que a grade disse
+
+As cinco hipóteses registradas, as quatro tabelas de sete critérios e a leitura por célula do
+desenho estão no README. O resumo:
+
+```
+                          M0        M1        M2   M1+pausa    (criterio primario)
+W-absence  resolucao   0.6377    0.6377    0.6838    0.6377    maior e melhor
+W-conflict resolucao   0.5552    0.5552    0.6004    0.5552    maior e melhor
+W-scope    deficit     1.0000    0.2368    0.2368    0.2368    menor e melhor
+W-pause    violacao    1.0000    1.0000    0.0000    0.0000    menor e melhor
+```
+
+**H1 e H2 confirmadas, e mais exatamente do que o registrado.** A previsão era |M1 − M0| ≤
+0.01; o medido é **0.000000** em todo critério exceto calibração, nas 16 células. E a
+identidade é de AÇÕES, não só de taxas: repliquei 48 mundos cobrindo as 16 células e M1 e M0
+escolheram a mesma ação nos **32179 passos elegíveis, 0 divergências**. O baseline não estava
+aleijado — ele tem a contagem de itens, e com a contagem N e B são separáveis por um escalar.
+
+**A única coisa que Λ compra nessas duas famílias não é uma ação: é calibração.** Brier
+0.0576 contra 0.0840 em `W-absence` e 0.0567 contra 0.0748 em `W-conflict`, prescrevendo
+exatamente a mesma intervenção. **Isso NÃO estava registrado** e está reportado como
+observação não registrada, não como hipótese que passou.
+
+**H3 confirmada nos dois níveis de ruído.** `deficit_inference_rate` 1.000 (M0) contra 0.095
+(M1) em `flip_p` = 0.05, registrado M0 ≥ 0.95 e M1 ≤ 0.30; e 1.000 contra 0.378 em 0.25,
+registrado M1 ≤ 0.50.
+
+**H4 confirmada, exatamente.** `pause_violation_rate` 0.000 para M2 e 0.000 para a ablação,
+nas 16 células, sem uma única em que difiram. **No critério da pausa, Ω não compra nada que
+um booleano não comprasse.**
+
+**H5 confirmada, então ω fica.** Nas duas famílias SEM pausa nenhuma, M2 leva
+`unsupported_counterfactual_rate` de 0.0595 e 0.0584 para **0.000** e a acurácia para
+**1.000**, enquanto `M1+pausa` fica parada nos números de M1. O ganho de proveniência não
+sumiu; ω não se reduz à checagem de flag e não sai da arquitetura.
+
+**O custo honesto de Λ, que também está no README.** O Brier de M1 é PIOR que o de M0 em
+`W-scope` (0.2169 contra 0.1315) e em `W-pause` (0.6757 contra 0.3471): Λ não tem
+probabilidades, a confiança dele é o par declarado 0.9 / 0.1, e onde ele erra com confiança —
+todo passo sob pausa — erra a 0.9. Quem conserta é Ω, não Λ: M2 fica em 0.0020.
+
+**A leitura por célula, que é o que o Paper 4 vai citar.** Todo achado se mantém nas 16
+células do desenho. O que varia é o TAMANHO, e varia com um fator só: `flip_p`, o ruído da
+evidência. Ao longo de T ∈ {300, 600}, ruído de medida ∈ {0.05, 0.3} e `keep` ∈ {0.7, 1.0}, a
+dispersão do achado de `W-scope` é ≤ 0.014. **Nenhum eixo do desenho da bancada de dinâmica
+move coisa alguma aqui.** É uma afirmação sobre onde uma arquitetura de decisão é frágil, e
+não é o lugar onde o pipeline de identificação é frágil.
+
+**M2 encosta no teto do registro em `W-scope`**: 0.763153 contra 0.763153, seis casas. É a
+única família em que um modelo atinge o limite do que o registro permite, e os 0.237 que
+faltam são ruído de evidência, não camada ausente.
+
+## Suíte
+
+```
+ANTES   132 testes, 131 verdes
+DEPOIS  132 testes, 131 verdes
+```
+
+O vermelho é o mesmo de sempre: `test_prereg.py::test_document_is_regenerated_from_the_code`,
+o não-ponto-fixo do guardião da v3, já registrado no estacionamento e fora do escopo desta
+célula. Ele suja `PREREGISTRO_v3.md` a cada execução e o arquivo foi devolvido ao estado
+commitado nas duas vezes.
+
+## Estacionamento
+
+- **A ordenação da proteção de bytes é dívida real e não foi consertada.** `decision/warrants.yaml -text`
+  está num commit posterior ao do arquivo, então qualquer reescrita de história que toque os
+  commits anteriores a `4a28f21` reintroduz o problema. Consertar de verdade exige reescrever
+  a história para que o atributo nasça junto com o arquivo, o que é célula própria e decisão
+  de Hudson. Enquanto não for, **`git checkout -- decision/warrants.yaml` é o remédio** e o
+  sintoma é `FrozenChiViolation` com hash `f1252d36`.
+- **A calibração é a única brecha aberta para Λ fora de `W-scope`**, e nenhuma família foi
+  construída para fazê-la pagar. Uma família em que agir cedo demais custa mais que agir
+  errado mediria isso. É a próxima célula natural do lado epistêmico.
+- **`out_decision_pilot/` fica no repositório** como registro do que o piloto produziu,
+  superado pela grade e não mais citado no README.
+- **O eixo temporal do escopo continua sem exercício.** `max_age` é declarado, governa a
+  janela, e nenhuma família planta evidência vencida. A grade não mudou isso.
+- **Um χ concorrente continua não testado.** O maquinário de hash congelado é o que tornaria
+  a comparação honesta, e agora ele tem uma cicatriz de operação para provar que funciona.
+- **A dívida do eixo N da outra bancada segue intocada**, pelo quarto estacionamento seguido.

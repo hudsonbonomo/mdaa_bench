@@ -1,12 +1,17 @@
-"""decision_M0_M1_M2.svg — one panel per world family, three bars per panel.
+"""decision_M0_M1_M2.svg — one panel per world family, FOUR bars per panel.
 
-    python -m decision.figures --src out_decision_pilot --out out_figuras
+    python -m decision.figures --src out_decision_v4 --out out_figuras
 
 Each panel shows the EXTERNAL criterion that family was built to expose
 (`metrics.PRIMARY`), never accuracy and never "the models chose differently".
-The ablation M1+pausa is drawn as a tick across the M2 bar rather than as a
-fourth bar: where the tick sits on top of M2, omega bought nothing that a pause
-flag would not have bought, and the README has to say so.
+
+M1+pausa — M1 plus one line, never act under a standing authorization, and
+nothing else of Omega — is a BAR and no longer a tick over M2. In the pilot it
+was a footnote; the grid made it the finding. On `W-pause` it sits at 0.000
+exactly where M2 does, which says that on the pause criterion itself the warrant
+layer buys nothing a boolean would not have bought. Drawing it as an annotation
+of M2 would have hidden a result behind a legend entry, so it is drawn as what
+it is: a competitor that ties.
 
 Nothing here recomputes anything. The figure is drawn from the bench CSV, so a
 number in the paper and a number in the panel cannot drift apart.
@@ -22,11 +27,14 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from .metrics import HIGHER_IS_BETTER, PRIMARY
-from .models import ABLATION, MODELS
+from .models import ABLATION, ALL_MODELS
 from .worlds import FAMILIES
 
-BAR = {"M0": "#8d99ae", "M1": "#2a9d8f", "M2": "#e76f51"}
-TICK = "#22223b"
+#: The ablation carries M2's colour hatched, because that is what it is: M2 with
+#: everything but the pause clause removed. Where the two bars match, the hatch is
+#: the whole story.
+BAR = {"M0": "#8d99ae", "M1": "#2a9d8f", "M2": "#e76f51", ABLATION: "#f4a261"}
+HATCH = {ABLATION: "//"}
 
 
 def load(src):
@@ -47,19 +55,19 @@ def _mean(rows, fam, model, key):
 
 def draw(rows, out: pathlib.Path, name="decision_M0_M1_M2"):
     fams = [f for f in FAMILIES if any(r["family"] == f for r in rows)]
-    fig, axes = plt.subplots(1, len(fams), figsize=(3.1 * len(fams), 4.1), dpi=150)
+    fig, axes = plt.subplots(1, len(fams), figsize=(3.5 * len(fams), 4.3), dpi=150)
     axes = np.atleast_1d(axes)
     for ax, fam in zip(axes, fams):
         key = PRIMARY[fam]
-        vals = [_mean(rows, fam, m, key) for m in MODELS]
-        abl = _mean(rows, fam, ABLATION, key)
-        ax.bar(range(len(MODELS)), vals, color=[BAR[m] for m in MODELS], width=0.66)
-        ax.plot([1.67, 2.33], [abl, abl], color=TICK, lw=1.8, solid_capstyle="butt",
-                zorder=5, label=ABLATION)
+        vals = [_mean(rows, fam, m, key) for m in ALL_MODELS]
+        ax.bar(range(len(ALL_MODELS)), vals, width=0.72,
+               color=[BAR[m] for m in ALL_MODELS],
+               hatch=[HATCH.get(m, "") for m in ALL_MODELS],
+               edgecolor=["none" if m != ABLATION else "#e76f51" for m in ALL_MODELS])
         for i, v in enumerate(vals):
-            ax.text(i, v + 0.02, f"{v:.2f}", ha="center", va="bottom", fontsize=8)
-        ax.set_xticks(range(len(MODELS)))
-        ax.set_xticklabels(MODELS, fontsize=9)
+            ax.text(i, v + 0.02, f"{v:.2f}", ha="center", va="bottom", fontsize=7.5)
+        ax.set_xticks(range(len(ALL_MODELS)))
+        ax.set_xticklabels([m.replace("+pausa", "\n+pausa") for m in ALL_MODELS], fontsize=8)
         ax.set_ylim(0, 1.12)
         arrow = "maior é melhor" if HIGHER_IS_BETTER[key] else "menor é melhor"
         n = int(np.nanmean([r["n_steps"] for r in rows if r["family"] == fam]))
@@ -67,9 +75,8 @@ def draw(rows, out: pathlib.Path, name="decision_M0_M1_M2"):
         ax.grid(axis="y", alpha=0.25, lw=0.6)
         ax.set_axisbelow(True)
     axes[0].set_ylabel("taxa")
-    axes[-1].legend(loc="upper right", fontsize=7.5, frameon=False)
-    fig.suptitle("M0 / M1 / M2 por família de mundo — critério externo de cada família",
-                 fontsize=10.5, y=1.03)
+    fig.suptitle("M0 / M1 / M2 e a ablação M1+pausa, por família — critério externo de cada família",
+                 fontsize=10.5, y=1.04)
     fig.tight_layout()
     out.mkdir(parents=True, exist_ok=True)
     for ext in ("svg", "png"):
@@ -80,7 +87,7 @@ def draw(rows, out: pathlib.Path, name="decision_M0_M1_M2"):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", default="out_decision_pilot")
+    ap.add_argument("--src", default="out_decision_v4")
     ap.add_argument("--out", default="out_figuras")
     a = ap.parse_args(argv)
     for p in draw(load(a.src), pathlib.Path(a.out)):
