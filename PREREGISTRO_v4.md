@@ -4,7 +4,7 @@ Gerado por `make_prereg_decision.py`, que lê as constantes dos módulos. Nenhum
 
 Os pré-registros v1–v3 cobrem a bancada de DINÂMICA (`sim/`), que planta uma lei e mede se o pipeline a recupera. Este cobre a segunda bancada, que planta POLÍTICA: mundos em que a AÇÃO CORRETA é conhecida por construção, para testar os três modelos adversariais do Paper 4. As duas bancadas compartilham gerador, camada de observação e estimador; nada em `sim/` foi alterado por esta célula.
 
-**Proveniência:** git commit `33c6133725668bdce2ae91c5028c6ea8abacb1e4` **with uncommitted changes**
+**Proveniência:** git commit `fac1faa3143a4b82a472673f614d515472435608`
 
 **χ congelado:** `decision/warrants.yaml`, versão 1, declarado em 2026-09-14, sha256 `689752ec2d696995e40e3f6b3871a111d65e022dc90494d128e5ed03fcb783c6`.
 
