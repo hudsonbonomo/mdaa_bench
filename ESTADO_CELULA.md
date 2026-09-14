@@ -1294,3 +1294,258 @@ recuperação, é a comparação dos quatro eixos entre as grades — virou `axe
   mudado de forma material sem o documento acompanhar. O artefato congelado da grade v4
   continua sendo o objeto git em `9586e72` (sha256 `471d67e5...`), não o arquivo em disco.
 - Célula 6 segue fechada, motivo inalterado.
+
+---
+
+# Célula `bancada-de-decisao`
+
+Data: 2026-09-14. Commit de partida: `33c6133` (pontuação simétrica no contest de M).
+
+Segunda bancada. A primeira planta DINÂMICA e mede se o pipeline a recupera; esta planta
+POLÍTICA: mundos em que a ação correta é conhecida por construção, para testar os três
+modelos adversariais do Paper 4 contra a condição de falha que o próprio paper declara.
+
+## Aprovações
+
+```
+Grade de decisão aprovada por Hudson em: ____________
+```
+
+A grade de decisão está **preparada e NÃO executada** (regra 5 do Modo Celular). O comando
+exato está em `PREREGISTRO_v4.md` e no README. O que rodou nesta célula foi um PILOTO de 64
+células, rotulado como piloto em todo lugar onde é citado.
+
+## Item 0 — estrutura: MESMO REPO, pacote novo `decision/`
+
+Decidido pelo critério que você deu — reaproveita `generators.py`, `observe.py` e
+`statespace.py`? Reaproveita os três, e não superficialmente:
+
+- `worlds.py` tira o substrato latente do nó `M1` de `sim/generators.py` e observa por
+  `sim/observe.py`. As quatro famílias herdam ruído de medida, amostragem irregular e o
+  invariante de pausa (`u_ped` = 0 dentro da pausa) em vez de inventar um segundo conjunto.
+- O estimador único dos três modelos é `sim/statespace.py` (EM, Kalman + RTS). Se a bancada
+  de decisão morasse em outro repo, ou eu duplicaria o estimador — e aí um Kalman melhor
+  poderia ser creditado à camada epistêmica, que é exatamente o que o item 2 proíbe — ou
+  criaria uma dependência entre repositórios para um arquivo só.
+- O predicado de elegibilidade é construído sobre `observe.scorable_steps`. É a lição que a
+  célula anterior pagou, e ela vale aqui inteira.
+
+Pacote no topo, `decision/`, e não `sim/decision/`: o caminho de χ que você especificou é
+`decision/warrants.yaml`, e a separação deixa visível que são duas bancadas e não um módulo
+a mais da primeira. **Nada em `sim/` foi alterado.** `git diff --stat` sobre `sim/` está
+vazio nesta célula.
+
+## Etapa 1 — gerador com ação correta conhecida
+
+`decision/record.py` (81) e `decision/worlds.py` (195). Escopo é (S, O, C, t); proveniência é
+`post`/`spont` — se a observação veio depois de um apoio dado. A proveniência é atributo do
+ITEM e **não tem contrapartida em `u`**: o apoio é dado por uma pessoa, não pelo canal
+pedagógico. Nenhum modelo pode recuperá-la da série de intervenção, o que é o ponto.
+
+A proposição é "S atinge o critério em O" e as duas condições são `apoiada` / `nao_apoiada`:
+com apoio o sujeito lê `GAP` desvios acima de onde a leitura sem apoio o coloca. Duas
+observações VERDADEIRAS discordam sempre que |x0| < GAP*sd. **A estrutura de escopo de
+`W-scope` é ganha do latente, não carimbada.**
+
+Quatro famílias, e em todas há passos de LINHA DE BASE (evidência suficiente, concordante,
+com apoio dado, ação correta `ACT`). Sem eles uma política constante acertaria a família
+inteira e a família não mediria nada.
+
+**Não-vacuidade, medida e não esperada.** Para cada família, a política que colapsa
+exatamente a distinção daquela família (`epistemic.blind_action`: N para B, B para N,
+descartar C, descartar Ω):
+
+```
+                  passos de assinatura   erro da política cega   faixa em 20 sementes
+W-absence               0.699                  0.765               0.747 - 0.784
+W-conflict              0.699                  0.790               0.764 - 0.812
+W-scope                 0.843                  0.892               0.832 - 0.947
+W-pause                 0.774                  0.828               0.764 - 0.887
+piso declarado NON_VACUITY_FLOOR = 0.60
+```
+
+`scripts/decision_nonvacuity.py` imprime isso; `tests/test_decision_worlds.py` asserta o piso.
+
+**Uma correção de coerência no caminho.** A primeira versão punha a pausa no topo da
+precedência da ação de referência, e com isso `WAIT` virava a resposta de perguntas sobre as
+quais a pausa não diz nada — inclusive em passos sem evidência nenhuma. Corrigido: a pausa é
+aplicada POR ÚLTIMO e só sobre `ACT`. Uma pausa suspende intervir, não olhar. χ declara a
+mesma coisa (`blocked_by_pause_class: ACT`), e a família `W-pause` emite os dois itens
+concordantes e com proveniência `post`, para que λ(P_next) = T seja de fato o caso e só ω
+segure a mão.
+
+## Etapa 2 — os três modelos, com estimador congelado
+
+`decision/models.py` (153).
+
+- **M0** — b(t) + contexto observado, com a evidência chegando como AGREGADO ESCALAR
+  (contagem e média) sobre exatamente os itens que Λ admitiria. **M0 recebe a contagem.**
+  Isso é deliberado e é o que impede o resultado de ser um espantalho: separar "nada se
+  sabe" de "tanta evidência de um lado quanto do outro" está ao alcance de um escalar com
+  contador, e a bancada prevê o empate em duas famílias antes de medir. b(t) entra na
+  CONFIANÇA de intervenção, que é onde uma crença tem conteúdo; a ação sai do agregado,
+  porque é a única coisa no input de M0 que fala sobre a proposição.
+- **M1** — M0 + Λ(t) explícito. Λ carrega a proveniência e **não age sobre ela**: exigir
+  proveniência é norma, não leitura, e a exigência mora em χ. Isso mantém M1 como a versão
+  mais forte de um decisor só-de-evidência.
+- **M2** — M1 + Ω(t) sob o χ congelado; toda negação é redirigida ao remédio que χ prescreve.
+- **M1+pausa** — **a ablação, e a razão de este arquivo não ser uma demonstração.** M1 com
+  uma linha a mais: nunca `ACT` sob autorização em vigor. Se empatar com M2, ω é uma
+  checagem de flag.
+
+`fit_estimator` é o único ponto de entrada e os quatro consomem a mesma saída. O teste
+compara os **parâmetros ajustados** (A, B, Q, R, loglik), não os tipos.
+
+**Predicado único de elegibilidade** (`decision/eligible.py`): `scorable_steps` mais a janela
+dentro do registro. O teste asserta igualdade de CONJUNTOS de índices, não de contagens. Aqui
+o risco é pior que na outra bancada: M2 se abstém onde M1 age, então deixar cada modelo
+escolher o próprio denominador premiaria quem responde menos.
+
+## Etapa 3 — χ declarado e congelado
+
+`decision/warrants.yaml` + `decision/warrant.py` (117). sha256
+`689752ec2d696995e40e3f6b3871a111d65e022dc90494d128e5ed03fcb783c6`, congelado em
+`decision/warrants.sha256`, verificado em toda carga e em toda célula da grade, e escrito em
+`PREREGISTRO_v4.md`. Três guardas, um teste que falha se discordarem.
+
+χ também **governa a janela de admissibilidade** (`max_age` = 0, logo 1 passo) e `run_models`
+asserta que o mundo concorda. Sem isso o arquivo seria decorativo.
+
+O que χ NÃO declara está escrito no próprio arquivo: sem contagem mínima de itens (Λ rotula,
+não conta), sem regra sobre S ou O (um sujeito, uma proposição — regra que nunca seria
+exercida), e `max_age` declarado mas nunca vinculante porque nenhuma família planta evidência
+velha. Declarado, não implicado.
+
+Teste de mutação: retirar a cláusula de proveniência de uma CÓPIA de χ torna o mesmo estado
+de mundo warrantado. Se não tornasse, a cláusula era cenário.
+
+## Etapa 4 — critérios externos
+
+`decision/metrics.py` (156). Os cinco que você pediu, mais dois:
+
+```
+contradicted_rate                acoes depois contraditas por leitura posterior NA MESMA condicao
+brier_act                        calibracao da confianca de intervencao, em TODOS os passos elegiveis
+request_resolution_rate          pedidos que de fato assentam a questao do passo
+unsupported_counterfactual_rate  ACT sem nenhum item de proveniencia post
+pause_violation_rate             ACT dentro de pausa / passos sob pausa
+deficit_inference_rate           ACT ou PROBE onde as condicoes de fato diferem
+accuracy                         reportada, e NAO e o criterio primario de familia nenhuma
+```
+
+**Todos os denominadores são compartilhados** — o conjunto elegível, ou um subconjunto
+definido pelo MUNDO (passos sob pausa, passos em que as condições diferem), nunca pelo
+comportamento do modelo. `evaluate` asserta em vez de confiar. Os sorteios de acompanhamento
+são semeados por `(semente do mundo, t)` e não por modelo, senão a comparação viraria uma
+questão de quem teve a sonda mais sortuda.
+
+`metrics.ceiling` recomputa a ação de referência lendo a diferença de condição do REGISTRO.
+Em três famílias o teto é 1.0 — o registro decide, e toda perda pertence a uma camada. Em
+`W-scope` é 0.756: uma discordância entre condições no registro pode ser um item invertido e
+leitor nenhum do registro distingue. **Essa folga é o sensor, não uma camada**, e sem
+medi-la eu não saberia dizer se um modelo ficou aquém do mundo ou do sensor.
+
+## Etapa 5 — figura e números (PILOTO, 64 células)
+
+`out_figuras/decision_M0_M1_M2.svg` — um painel por família, três barras, o critério externo
+daquela família, e a ablação desenhada como um traço sobre a barra de M2.
+
+```
+familia       criterio primario                M0      M1      M2    M1+pausa
+W-absence     request_resolution_rate  maior  0.644   0.644   0.688     0.644
+W-conflict    request_resolution_rate  maior  0.561   0.561   0.603     0.561
+W-scope       deficit_inference_rate   menor  1.000   0.243   0.243     0.243
+W-pause       pause_violation_rate     menor  1.000   1.000   0.000     0.000
+
+acuracia (teto do registro entre parenteses)
+W-absence  (1.000)   0.945   0.945   1.000   0.945
+W-conflict (1.000)   0.944   0.944   1.000   0.944
+W-scope    (0.756)   0.110   0.724   0.756   0.724
+W-pause    (1.000)   0.163   0.163   1.000   0.957
+```
+
+### O que os números dizem, inclusive o que eu não queria que dissessem
+
+**Λ ganha o lugar dela em uma família de quatro.** Em `W-absence` e `W-conflict`, M1 e M0
+são idênticos em três casas decimais em TODO critério, porque um agregado escalar que carrega
+a contagem já separa N de B. O caso operacional inteiro da camada proposicional, nesta
+bancada, é `W-scope`: uma diferença de condição e um conflito têm o mesmo agregado, e só uma
+camada que preserva C distingue. M0 lê **toda** diferença de condição como propriedade de S
+(`deficit_inference_rate` 1.000 contra 0.243) e a sonda que emite depois não pode resolver o
+que ele perguntou. Resultado real e estreito — e previsto no pré-registro antes de medido.
+
+**ω sobrevive, mas não pelo motivo com que se argumenta por ele.** Em `pause_violation_rate`
+M2 e `M1+pausa` são os dois exatamente 0.000: **no critério da pausa, a camada de warrant não
+compra nada que um booleano não comprasse.** Se essa fosse a única alegação de Ω, ω devia
+sair e ser substituído pelo flag. O que separa os dois é a outra cláusula — proveniência. M2
+recusa agir quando nenhum item admissível veio depois de um apoio de fato dado
+(`unsupported_counterfactual_rate` 0.000 contra 0.044 de M1 e da ablação), e essa cláusula
+morde nas duas famílias onde não existe pausa nenhuma. **Então: ω fica, e não é a pausa que
+paga por ele.** Se a grade apagar a diferença de proveniência, ω se reduz à checagem de flag
+e sai.
+
+O terceiro número limita os dois anteriores: ruído de evidência. Em `flip_p` = 0.25 o
+`deficit_inference_rate` de M1 em `W-scope` vai de 0.093 para 0.394. A camada não para de
+funcionar; o sensor para.
+
+## Etapa 6 — grade preparada, não executada
+
+`PREREGISTRO_v4.md`, gerado por `make_prereg_decision.py` lendo as constantes dos módulos.
+4 famílias x 2 T x 2 ruídos x 2 `keep` x 2 `flip_p` x 20 sementes = 1280 células, 5120 linhas.
+
+Custo **medido em 8 células reais** (4 por T, uma por família), máquina ociosa: 0.27 s em
+T=300 e 0.54 s em T=600, logo 8.6 min serial. Duas ordens de grandeza abaixo da grade de
+dinâmica (7.8 h), porque uma célula ajusta UM espaço de estados e o resto é política.
+
+Reportada por família e nunca agregada: agregar deixaria a família em que o warrant é
+decisivo pagar pelas famílias em que ele não muda nada, que é o oposto de uma condição de
+falsificação.
+
+## Suíte de testes
+
+52 testes novos, 5 arquivos, todos verdes. Suíte inteira: 130 passam. Os que carregam peso:
+
+- `test_a_policy_that_collapses_the_distinction_is_wrong_on_most_steps` — não-vacuidade das
+  quatro famílias, contra o piso declarado.
+- `test_the_estimator_is_the_same_object_with_the_same_fitted_parameters` — item 2.
+- `test_every_model_is_scored_on_the_same_index_set` — igualdade de conjuntos.
+- `test_a_changed_chi_is_refused` — D8 como invariante.
+- `test_the_rules_are_not_decorative` — mutação de χ.
+- `test_the_ablation_is_m2_minus_everything_except_the_pause` — falha se a cláusula de
+  proveniência nunca vincular, isto é, se χ for cenário.
+- `test_truth_cannot_change_what_any_model_does` — embaralhar `truth` não muda saída nenhuma.
+- `test_the_denominators_are_the_same_for_every_model` e
+  `test_a_model_scored_on_a_different_set_of_steps_is_refused`.
+
+**O guardião do pré-registro, desta vez com ponto fixo.** O da v3 compara o documento
+inteiro, inclusive a linha de proveniência que lê `git rev-parse HEAD` — então ele só pode
+estar verde no instante ANTES do commit, e rodar a suíte REESCREVE `PREREGISTRO_v3.md` como
+efeito colateral. Isso aconteceu aqui: `tests/test_prereg.py` regravou o documento da outra
+bancada durante esta célula e eu devolvi o arquivo ao estado commitado, porque o registro
+congelado daquela bancada não é desta célula para mexer.
+`test_the_pre_registration_is_regenerated_from_the_code`, novo, exclui da comparação
+exatamente a linha que não pode ter ponto fixo, compara todo o resto e **restaura o arquivo
+em `finally`** — rodar a suíte não edita pré-registro nenhum. Se o guardião da v3 for
+consertado um dia, é esse o desenho.
+
+## Estacionamento
+
+- **A previsão de empate em duas famílias é uma faca de dois gumes e eu a registrei assim.**
+  Se a grade confirmar, Paper 4 deve alegar ESCOPO, não Belnap em geral: a distinção N/B,
+  sozinha, não sobreviveu a um baseline honesto que tem a contagem. A saída alternativa é
+  escrever uma família em que N e B divirjam de um jeito que um contador não alcance. Ela
+  não existe ainda, e a versão honesta dessa célula começa tentando NÃO encontrá-la.
+- **A pausa é visível para os três modelos e M0/M1 não a consultam.** Isso é uma afirmação
+  sobre POLÍTICA, não sobre informação, e está dito no código, no pré-registro e aqui. A
+  ablação é o que impede que vire truque: ela mede exatamente o que o flag sozinho compra.
+- **O escopo temporal não faz trabalho.** `max_age` é declarado, governa a janela e nunca é
+  a cláusula vinculante, porque nenhuma família planta evidência velha. Uma família de
+  evidência VENCIDA é barata de escrever e testaria o quarto componente do escopo.
+- **Um χ concorrente não foi testado.** A bancada mede se as regras declaradas sobrevivem a
+  critérios externos, não se outro χ iria melhor. O maquinário de hash congelado é
+  justamente o que tornaria essa comparação honesta, e já existe.
+- **Um sujeito, uma proposição.** As cláusulas de χ sobre S e O existem e nunca são
+  exercidas. Ensemble de sujeitos é a extensão natural e reusaria `sim/ensemble.py`.
+- **A dívida do eixo N continua intocada**, pelo terceiro estacionamento seguido. Fora do
+  escopo desta célula, e a lição que esta bancada acabou de aplicar por conta própria — o
+  comparador tem de responder à mesma pergunta que o rival — é a mesma que falta lá.

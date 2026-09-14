@@ -1,4 +1,4 @@
-# mdaa_bench — SIM-1 / SIM-4 recovery bench, v4
+# mdaa_bench — SIM-1 / SIM-4 recovery bench, v4, and the decision bench
 
 Test bench for Paper 2 §9.1 (and, later, Paper 3 §11): trajectories are generated
 from **known** lattice nodes, observed through a noisy/irregular observation map, and
@@ -7,6 +7,13 @@ the pipeline recovers the planted node, activates a spurious axis, or misses a p
 across measurement noise × length × sampling × observation nonlinearity.
 
 The bench validates the **pipeline**, never the construct. That sentence is in both papers.
+
+There are now **two benches in this repository**. The one above plants *dynamics* and asks
+whether the pipeline recovers it. The second, `decision/`, plants *policy*: worlds in which
+the correct action is known by construction, built to test Paper 4's three adversarial
+models against their own declared failure condition. It shares this bench's generator,
+observation channel and estimator — see [The decision bench](#the-decision-bench-decision--a-second-bench-and-what-it-plants)
+and [PREREGISTRO_v4.md](PREREGISTRO_v4.md).
 
 **v1 closed cells 1–4; v2 closed cell 5; v3 closes the three holes v2 left open.** The
 direction has not changed: every version makes the pipeline *more sceptical* and the axes
@@ -34,6 +41,8 @@ There is also a [pre-registration](PREREGISTRO_v2.md), generated from the code b
 | memory as latent dimension, not as lags (Paper 2 §9, M axis) | companion AR(p) with measurement noise vs a free SSM of latent dim d+k | `sim/memory.py` |
 | SIM-5 ensembles, within vs between person (Paper 3 §11) | N trajectories of one node, replicate or population mode | `sim/ensemble.py` |
 | Paper 3 Table 3, gates H1–H4 | density, chart, memory, locality — each with a stopping rule | `sim/density.py` |
+| Paper 4, decision under Λ and Ω | four world families whose correct action is planted; M0/M1/M2 and an ablation | `decision/` |
+| Paper 4 §D8, warrant rules written by the evaluator | χ in a hashed file, verified on every load and every grid cell | `decision/warrants.yaml` |
 
 Lattice nodes planted: `M1` (linear Markov + process noise), `M1+N` (bounded double-well on
 coordinate 0), `M1+H` (two linear regimes, Markov switching, planted switch times),
@@ -857,6 +866,120 @@ complete data it is 0.50.** The v4 numbers stand as what that pre-registered gri
 they are not what the gate does now, and the paper should quote neither as "the power of the
 M axis" without the sampling condition attached.
 
+## The decision bench (`decision/`) — a second bench, and what it plants
+
+The bench above plants **dynamics** and asks whether the pipeline recovers it. `decision/`
+plants **policy**: synthetic worlds in which the *correct action* is known by construction,
+recorded in `truth` and never handed to a decision module. It exists to test Paper 4, which
+declares three adversarial models with an explicit failure condition — *if M1 does not beat
+M0 the propositional evidence layer has no operational role; if M2 does not beat M1 the
+warrant layer leaves the architecture.*
+
+It is the same repository and the same machinery. `decision/worlds.py` draws its latent from
+the `M1` node of `sim/generators.py`, observes it through `sim/observe.py`, the one estimator
+every model shares is `sim/statespace.py`'s EM fit, and the eligibility predicate is built on
+`observe.scorable_steps`. Only the decision layer above the observation channel is new.
+
+Four families, one distinction each. Each also carries **baseline** steps where the evidence
+is sufficient and concordant and the correct action is to act — without them a constant
+policy would score a family perfectly and the family would measure nothing.
+
+| family | what is on the record | correct action |
+|---|---|---|
+| `W-absence` | nothing admissible about `p` (the record is not empty: there is an item about `q`) | `OBSERVE` |
+| `W-conflict` | two items, **same** scope, opposite values | `PROBE` |
+| `W-scope` | two items, **different conditions**, opposite, each true in its own | `COMPARE` — never a deficit of S |
+| `W-pause` | the evidence decides and an authorized pause is in force | `WAIT` |
+
+**Non-vacuity is asserted, not hoped for.** For each family, the policy that collapses
+exactly the distinction that family plants (`epistemic.blind_action`: N→B, B→N, drop C, drop
+Ω) is wrong on **0.765 / 0.790 / 0.892 / 0.828** of the steps, measured over 20 seeds against
+a declared floor of 0.60.
+
+### The three models, and the ablation
+
+`M0` is a policy over b(t) and the observed context, where the evidence arrives as a scalar
+aggregate — *count and mean* — over exactly the items Λ would admit. Nothing is withheld from
+M0 except structure; it has the count, so separating "nothing known" from "as much either
+way" is inside its reach and its failures cannot be blamed on a crippled baseline. `M1` adds
+Λ(t): T/F/B/N per proposition, per scope, with provenance attached but **not acted on** —
+requiring a provenance is a norm, not a reading. `M2` adds Ω(t): warrant per action under a
+frozen χ. **`M1+pausa` is the ablation** — M1 plus one line, never act under a standing
+authorization — and it is what keeps the ω claim from being a demonstration.
+
+The estimator is the *same object* in all four, and the test compares the **fitted
+parameters** (A, B, Q, R, loglik), not the types: a better Kalman filter must never be
+creditable to the epistemic layer. All four are scored on the *same index set*, asserted as
+a set and not as a count, because M2 abstains where M1 acts and a model allowed to pick its
+own denominator wins by answering less.
+
+χ lives in `decision/warrants.yaml`, is hashed into `decision/warrants.sha256`, is verified
+on every load and on every grid cell, and the same hash is written into
+[PREREGISTRO_v4.md](PREREGISTRO_v4.md). This is the vulnerability Paper 4 declares itself
+(D8), turned into an invariant: a rule cannot be adjusted after seeing a result without
+leaving a commit that says so.
+
+### What the pilot says — 64 cells, not the grid
+
+`python -m decision.bench --T 300 --flip 0.05 0.25 --reps 8`, one T and one measurement
+noise. Figure: [decision_M0_M1_M2.svg](out_figuras/decision_M0_M1_M2.svg), one panel per
+family, three bars, the external criterion of that family, with the ablation drawn as a tick
+across the M2 bar.
+
+| family | primary external criterion | M0 | M1 | M2 | M1+pausa |
+|---|---|---|---|---|---|
+| `W-absence` | `request_resolution_rate` ↑ | 0.644 | 0.644 | **0.688** | 0.644 |
+| `W-conflict` | `request_resolution_rate` ↑ | 0.561 | 0.561 | **0.603** | 0.561 |
+| `W-scope` | `deficit_inference_rate` ↓ | 1.000 | **0.243** | **0.243** | 0.243 |
+| `W-pause` | `pause_violation_rate` ↓ | 1.000 | 1.000 | **0.000** | **0.000** |
+
+Accuracy against the planted action, with the record ceiling in brackets: `W-absence`
+0.945 / 0.945 / **1.000** (1.0); `W-conflict` 0.944 / 0.944 / **1.000** (1.0); `W-scope`
+0.110 / 0.724 / **0.756** (0.756); `W-pause` 0.163 / 0.163 / **1.000** (1.0), with the
+ablation at 0.957.
+
+### The sentence the paper asks for, written from the numbers
+
+**Λ earns its place on exactly one family of four.** On `W-absence` and `W-conflict` M1 and
+M0 are identical to three decimals on every criterion, because a scalar aggregate that
+carries the item count already separates N from B. The whole operational case for the
+propositional layer, in this bench, is `W-scope`: a condition difference and a conflict have
+the same aggregate, and only a layer that keeps C can tell them apart. M0 reads **every**
+condition difference as a property of S — `deficit_inference_rate` 1.000 against M1's 0.243 —
+and the probe it then issues cannot resolve what it asked. That is a real result and a narrow
+one, and it was predicted in the pre-registration before it was measured.
+
+**ω survives, but not for the reason it is usually argued for.** On `pause_violation_rate`
+M2 and `M1+pausa` are both exactly 0.000: on the pause criterion itself, the warrant layer
+buys nothing a boolean flag would not have bought, and if that were Ω's only claim it should
+be removed and replaced by the flag. What separates them is the other clause — provenance.
+M2 refuses to act when no admissible item followed a support that was actually given
+(`unsupported_counterfactual_rate` 0.000 against 0.044 for both M1 and the ablation), and
+that clause binds in the two families where no pause exists at all. **So: ω stays, and the
+pause is not what pays for it.** If the grid removes the provenance gap, ω reduces to a flag
+check and leaves.
+
+The third number worth writing down is the one that limits both claims: evidence noise. At
+`flip_p` = 0.25, M1's `deficit_inference_rate` on `W-scope` goes from 0.093 to 0.394. The
+layer does not stop working; the sensor does. And the `W-scope` record ceiling is 0.756, not
+1.0, because a cross-condition disagreement on a record may be a flipped item and no reader
+of the record can tell — M2 sits exactly on that ceiling.
+
+### Grid — PREPARED, NOT RUN
+
+```bash
+python -m decision.bench --T 300 600 --noise 0.05 0.3 --keep 1.0 0.7 \
+    --flip 0.05 0.25 --reps 20 --jobs 8 --out out_decision_v4
+```
+
+4 families x 2 T x 2 measurement noises x 2 `keep` x 2 `flip_p` x 20 seeds = 1280 cells,
+5120 rows. Cost **measured on 8 real cells**, idle machine: 0.27 s at T=300 and 0.54 s at
+T=600, so 8.6 min serial — two orders of magnitude below the dynamics grid, because a cell
+fits one state space and the rest is policy. Reported per family and never pooled: pooling
+would let the family where the warrant layer is decisive pay for the families where it
+changes nothing. It does not run until the approval line in `ESTADO_CELULA.md` carries a
+date (Modo Celular, rule 5).
+
 ## Files
 
 ```
@@ -873,6 +996,18 @@ sim/density.py             399   Paper 3 gates H1-H4; the M contest with TWO riv
 sim/pipeline.py            319   blind identification: M0, M1, N (three nulls), H, M (two rivals), S
 sim/recovery.py            269   grid runner (--jobs, --reps_per_person), per-axis rates, CSV/JSON, figures
 make_prereg.py             353   writes PREREGISTRO_v3.md by introspecting the modules
+decision/record.py          81   scope (S,O,C,t), evidence, provenance, the authorization record
+decision/worlds.py         195   SIM-7: four families whose correct action is planted in `truth`
+decision/epistemic.py      137   Lambda(t): T/F/B/N per proposition per scope; the family collapses
+decision/warrants.yaml       -   chi, DECLARED AND FROZEN; hashed into decision/warrants.sha256
+decision/warrant.py        117   Omega(t): warrant per action, hash guard, remedy per denial
+decision/eligible.py        33   the single eligibility predicate, built on observe.scorable_steps
+decision/models.py         153   M0 / M1 / M2 and the M1+pausa ablation; ONE shared estimator
+decision/metrics.py        156   the external criteria, on denominators defined by the world
+decision/bench.py          134   the decision grid runner: CSV, per-family summary, cost probe
+decision/figures.py         91   decision_M0_M1_M2.svg from the CSV, never recomputed
+make_prereg_decision.py    356   writes PREREGISTRO_v4.md by introspecting decision/
+scripts/decision_nonvacuity.py 53   the non-vacuity of the four families, measured over seeds
 make_figures.py            185   the three paper figures, computed from the bench
 scripts/m_vs_h.py          116   the old M gate and the new one, scored on the same worlds
 tests/test_smoke.py         36   shapes, pause invariant, truth never leaks
@@ -880,9 +1015,14 @@ tests/test_boundedness.py  151   the generator invariants: magnitude, structure,
 tests/test_gates.py        272   the three nulls of N, the tri-state M axis, the replication factor
 tests/test_density.py      314   ensemble modes, the truth seam, H1-H4, the three-way M contest
 tests/test_prereg.py        46   the pre-registration matches the code it describes
+tests/test_decision_worlds.py    125   the planted action, and the non-vacuity of each family
+tests/test_decision_epistemic.py  86   the four values, scope separation, the collapses
+tests/test_decision_warrants.py  118   the frozen hash, the rules biting, the mutation test
+tests/test_decision_models.py    115   one estimator, one index set, the layers actually differing
+tests/test_decision_metrics.py   110   shared denominators, the record ceiling, the instruments
 ```
 
-Over the 200-line house limit: `memory.py` 220, `density.py` 399, `pipeline.py` 319, `recovery.py` 269, `make_prereg.py` 353, `test_gates.py` 272, `test_density.py` 314. The gate logic,
+Over the 200-line house limit: `memory.py` 220, `density.py` 399, `pipeline.py` 319, `recovery.py` 269, `make_prereg.py` 353, `make_prereg_decision.py` 356, `test_gates.py` 272, `test_density.py` 314. The gate logic,
 the four Paper 3 gates and the grid runner are the places where splitting costs more in
 indirection than it buys in length. `memory.py` is the one candidate that should actually be
 split — once the M axis is either repaired or retired, most of it goes with it.
@@ -912,3 +1052,18 @@ stopping rule, so a reader can disagree with a threshold instead of reverse-engi
     down, so it arrives as the adversary of the N gate, and the defence it would be tested
     against has a known hole (item 11). Opening it first means testing the attack and the
     defence at the same time.
+13. **Run the decision grid** (command above) once its approval line carries a date, and
+    re-derive the four panels from 1280 cells instead of 64. Everything in the decision
+    section is a pilot by this bench's own standard.
+14. **A second family in which Λ has a case to make.** The pilot says the propositional
+    layer earns its place on `W-scope` and nowhere else. Either that is the finding — and
+    Paper 4 should claim scope rather than Belnap in general — or a family exists that
+    turns on the N/B distinction in a way a scalar count cannot reach, and it has not been
+    written yet. The honest version of this cell starts by trying to *fail* to find one.
+15. **A competing χ.** The bench measures whether the declared warrant rules survive
+    external criteria; it says nothing about whether a different χ would do better. The
+    frozen-hash machinery is what would make that comparison honest, and it already exists.
+16. **The N-axis debt, still untouched.** Inherited from the previous cell and unchanged:
+    the N axis is defended by three nulls and a single comparator, and the lesson this
+    repository has now paid for twice — a null bolted on outside does not repair a
+    comparator that asks two different questions — applies there in full.

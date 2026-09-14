@@ -1,0 +1,114 @@
+# chi — the warrant rules of the decision bench. DECLARED AND FROZEN.
+#
+# Paper 4 declares its own vulnerability (D8): the warrant rules are written by
+# the same hand that runs the evaluation, so a rule tuned after seeing the
+# result proves nothing. This file is the answer to that. It is hashed
+# (decision/warrants.sha256), the hash is verified on every load, the same hash
+# is written into PREREGISTRO_v4.md, and a test fails if the three disagree.
+# Changing a rule therefore requires re-freezing the hash AND regenerating the
+# pre-registration, which moves the commit — it cannot be done quietly.
+#
+# Every rule names the EXTERNAL criterion by which it will be judged. None of
+# those criteria is "M2 chose a different action": a rule that can only be
+# judged by whether it was followed is not a rule, it is a definition.
+#
+# What this file does NOT declare, so that it cannot be read as claiming it:
+#   * no minimum item count — Lambda labels, it does not count, and a threshold
+#     on counts would be a second evidence model hiding inside chi;
+#   * no rule keyed on the subject S or the object O — one subject, one
+#     proposition per world, so a rule on them would never be exercised;
+#   * max_age is declared and governs the admissibility window that Lambda
+#     applies, but no family plants stale evidence, so it is never the binding
+#     clause. Stated, not implied.
+
+version: 1
+frozen_on: "2026-09-14"
+cell: bancada-de-decisao
+
+# The admissibility window Lambda uses is max_age + 1 steps. chi sets it; the
+# world must agree (tests/test_decision_warrants.py).
+max_age: 0
+
+actions:
+
+  ACT:
+    warrant_claim: >
+      Intervening on S is licensed: the record decides the proposition in a
+      single reading, nothing on the record contradicts it, the support that
+      produced the reading was actually given, and no authorization suspends
+      the ACT class for S at t.
+    admissible_support:
+      labels: [T, F]
+      requires_decided: true      # one reading, or several that agree
+      max_age: 0
+    inadmissible_contra:
+      conflict: true              # a B inside any scope blocks the warrant
+      cross_scope: true           # two conditions that disagree block it too
+    scope:
+      must_name: [S, O, C, t]
+      requires_single_reading: true
+    provenance:
+      required: post              # the observation followed a support that was given
+    blocked_by_pause_class: ACT
+    on_denied:
+      no_support: OBSERVE
+      conflict: PROBE
+      cross_scope: COMPARE
+      provenance: PROBE
+      pause: WAIT
+    external_criterion:
+      - pause_violation_rate
+      - unsupported_counterfactual_rate
+      - contradicted_rate
+      - brier_act
+
+  OBSERVE:
+    warrant_claim: >
+      Asking for a first observation is licensed whenever the record holds
+      nothing admissible about the proposition. A pause suspends intervening,
+      not looking, so no pause class blocks it.
+    admissible_support: {labels: [N]}
+    inadmissible_contra: {}
+    scope: {must_name: [S, O, C, t], requires_single_reading: false}
+    provenance: {required: null}
+    blocked_by_pause_class: null
+    on_denied: {}
+    external_criterion: [request_resolution_rate]
+
+  PROBE:
+    warrant_claim: >
+      Asking for a discriminating observation is licensed when the record holds
+      a conflict inside one reading, or when a reading is decided but no support
+      was given: both are questions more evidence of the same kind can settle.
+    admissible_support: {labels: [B, T, F]}
+    inadmissible_contra: {}
+    scope: {must_name: [S, O, C, t], requires_single_reading: false}
+    provenance: {required: null}
+    blocked_by_pause_class: null
+    on_denied: {}
+    external_criterion: [request_resolution_rate]
+
+  COMPARE:
+    warrant_claim: >
+      Comparing conditions is licensed when two readings in DIFFERENT conditions
+      are each decided and disagree. This is the rule that forbids reading a
+      condition difference as a deficit of S.
+    admissible_support: {labels: [T, F], requires_cross_scope: true}
+    inadmissible_contra: {}
+    scope: {must_name: [S, O, C, t], requires_single_reading: false}
+    provenance: {required: null}
+    blocked_by_pause_class: null
+    on_denied: {}
+    external_criterion: [request_resolution_rate, unsupported_counterfactual_rate]
+
+  WAIT:
+    warrant_claim: >
+      Not acting is always licensed. It is the remedy an authorization leaves
+      open, and it is the only action whose warrant cannot be revoked.
+    admissible_support: {}
+    inadmissible_contra: {}
+    scope: {must_name: [], requires_single_reading: false}
+    provenance: {required: null}
+    blocked_by_pause_class: null
+    on_denied: {}
+    external_criterion: [pause_violation_rate]
