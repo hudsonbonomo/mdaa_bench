@@ -1308,7 +1308,7 @@ modelos adversariais do Paper 4 contra a condição de falha que o próprio pape
 ## Aprovações
 
 ```
-Grade de decisão aprovada por Hudson em: ____________
+Grade de decisão aprovada por Hudson em: 2026-09-14
 ```
 
 A grade de decisão está **preparada e NÃO executada** (regra 5 do Modo Celular). O comando
@@ -1580,7 +1580,7 @@ publicar é decisão de Hudson, não consequência de um commit local.
 **2. Aprovação da grade — FALHOU. É o bloqueio.** A linha continua
 
 ```
-Grade de decisão aprovada por Hudson em: ____________
+Grade de decisão aprovada por Hudson em: 2026-09-14
 ```
 
 Vazia. Regra 5 do Modo Celular: a grade não roda. **Não rodei a grade, não gerei figura
