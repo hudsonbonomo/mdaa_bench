@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this bench, please cite it as below."
 type: software
 title: "mdaa_bench: simulation bench for blind identification of latent dynamical structure (MDAA)"
-version: v4.0.0
-date-released: 2026-09-12
+version: v5.0.0
+date-released: 2026-09-14
 license: CC-BY-4.0
 repository-code: "https://github.com/hudsonbonomo/mdaa_bench"
 authors:
@@ -17,7 +17,10 @@ abstract: >-
   identification pipeline. The output is a recovery map: how often the pipeline
   recovers the planted node, activates a spurious axis, or misses a planted one,
   across measurement noise, series length, sampling density and observation
-  nonlinearity. The bench validates the pipeline, never the construct.
+  nonlinearity. The bench validates the pipeline, never the construct. A second bench
+  plants policy instead of dynamics: four families of world in which the correct action is
+  known by construction, four models scored on the same steps with the same estimator, and
+  a warrant layer under a chi frozen by hash.
 keywords:
   - dynamical systems
   - system identification
@@ -27,3 +30,8 @@ keywords:
   - pre-registration
   - reproducibility
   - MDAA
+  - decision under uncertainty
+  - four-valued logic
+  - warrant
+  - action warrant
+  - provenance
