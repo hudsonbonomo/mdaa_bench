@@ -1,0 +1,17 @@
+{
+  "schema": "mdaa_bench/standing/alpha_frozen/v1",
+  "units": "rounds",
+  "appearance_floor": 0.30,
+  "policies": {
+    "strict":  { "appear_window": 80,  "warrant_window": 40  },
+    "lenient": { "appear_window": 160, "warrant_window": 120 }
+  },
+  "invariant": "warrant_window <= appear_window for every policy",
+  "comparators": {
+    "R_decay": { "decay_after_rounds": 72, "floor": 0.30, "kernel": "exponential" },
+    "R_current": { "condition_match": "exact_string", "vocabulary_events": "ignored" }
+  },
+  "signal_noise_unclear": 0.15,
+  "frozen_on": "2026-09-15",
+  "approved_by": "Hudson A. R. Bonomo"
+}
