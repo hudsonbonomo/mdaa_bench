@@ -8,7 +8,13 @@
   },
   "invariant": "warrant_window <= appear_window for every policy",
   "comparators": {
-    "R_decay": { "decay_after_rounds": 72, "floor": 0.30, "kernel": "exponential" },
+    "R_decay": {
+      "decay_after_rounds": 72,
+      "decay_constant_rounds": 72,
+      "full_weight_until_rounds": 72,
+      "floor": 0.30,
+      "kernel": "exponential"
+    },
     "R_current": { "condition_match": "exact_string", "vocabulary_events": "ignored" }
   },
   "signal_noise_unclear": 0.15,

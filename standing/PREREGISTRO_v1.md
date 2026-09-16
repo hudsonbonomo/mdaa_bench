@@ -124,3 +124,11 @@ commit. O teste guardião recomputa os dois hashes e compara com `freeze.sha256`
 falha se qualquer um divergir. Nenhuma execução
 antes do commit de congelamento; nenhuma execução da grade sem autorização explícita
 de Hudson A. R. Bonomo, registrada no commit de execução.
+
+## Emenda v1.1 (16 set 2026)
+
+Acrescentados `decay_constant_rounds` e `full_weight_until_rounds` ao bloco
+`comparators.R_decay` de `alpha_frozen.json`, explicitando a constante de tempo
+do kernel exponencial e o limiar de peso unitário. Os dois valores são 72,
+compatíveis com o `decay_after_rounds` original; a semântica do comparador não
+muda. `freeze.sha256` recomputado neste commit.
