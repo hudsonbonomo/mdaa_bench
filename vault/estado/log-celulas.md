@@ -35,3 +35,10 @@ variância zero). Hudson identifica passagem vacuosa: ν ignora sinal, medida
 pode ser cega. Controle positivo A vs C obrigatório antes da grade.
 **Bug corrigido:** readers.py snake_case → camelCase na policy.
 **Estacionamento:** controle-positivo-p1; vocabulario-worlds.
+
+## controle-positivo-p1 — ✔ concluída (2026-09-16)
+
+**Objetivo:** testar se as medidas de P1 distinguem mundos que devem diferir.
+**Resultado:** A vs C dá 0.00 — régua cega. ν é determinística de (escopo, idade),
+ignora sinal. A vs B logged separa (0.50). Emenda de P1 necessária.
+**Estacionamento:** emenda-p1 (célula própria).

@@ -12,5 +12,6 @@
 | schiusa-consome-mdaa | schiusa → @tmulab/mdaa | ✔ | 2026-09-16 | b6d3996, 264 verdes; brand por cast; install-links=true |
 | bancada-aponta-mdaa | mdaa_bench → tmulab-mdaa/dist | ✔ | 2026-09-16 | CLI 07b2464d (f25caa0); env.example; R_declared real, 27 verdes, 0 skip |
 | potencia-p1 | standing/pilot | ✔ | 2026-09-16 | Potência 1.000 mas variância zero — controle positivo obrigatório |
-| controle-positivo-p1 | standing/pilot | 📋 | — | A vs C com TVD+desacordo; se 0.00, medida é cega e P1 não significa nada |
+| controle-positivo-p1 | standing/pilot | ✔ | 2026-09-16 | Régua cega: TVD(ν)=0.00 em A vs C; ν ignora sinal; P1 intestável como estava |
+| emenda-p1 | standing/prereg | 🔵 | 2026-09-16 | P1 → R_decay com pesos; P1b R_declared como instrumento; pendência s* única |
 | vocabulario-worlds | standing/worlds.py | 📋 | — | worlds.py renomeia valor, §3 diz chave; corrigir antes de P4/P4b |
