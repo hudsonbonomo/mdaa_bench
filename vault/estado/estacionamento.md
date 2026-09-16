@@ -1,0 +1,10 @@
+# Estacionamento de ideias
+
+> Ideias capturadas em 1 linha para nada se perder. Nada é apagado.
+> Promovida a célula → marcar com ✔ e o nome da célula criada.
+
+- Encolher PersonScope em host-types.ts — célula própria, com teste de comparação contra o schiusa (hoje 194L, 15 tipos transitivos que o MDAA não toca)
+- Anotar no CONTRATO-HOSPEDAGEM que as chaves de capability carregam prefixo schiusa.* — vira decisão quando existir um segundo hospedeiro
+- Brand nominal atravessa a fronteira por cast; o acordo é por string (schiusa.event-journal@1.0.0) — resolve junto com as chaves na célula de hospedagem
+- Edits no tmulab-mdaa exigem npm install no schiusa (install-links=true copia em vez de linkar)
+- O retrato completo do parecer é warrantingIds ∪ appearingIds; appearingIds sozinho só traz quem aparece sem autorizar (partição, não duplicação) — conferir quando as métricas de parecer forem escritas
