@@ -1,0 +1,170 @@
+{
+  "pilot_seeds": [
+    901,
+    902,
+    903,
+    904,
+    905
+  ],
+  "note": "Sementes-piloto — descartadas por preregistro (§5). NAO entram em resultado do paper.",
+  "cli_sha256": "07b2464d2be93e3ad68f65d61bd841e4465fed34fc142b101b3e8b7d9229db7a",
+  "cli_commit": "f25caa0",
+  "factors": {
+    "T": [
+      40,
+      160
+    ],
+    "alpha": [
+      "strict",
+      "lenient"
+    ],
+    "replicas": 1,
+    "replicas_note": "make_world takes no replicas parameter; world generation does not move with it"
+  },
+  "measures_by_cell": {
+    "T=40,alpha=strict": {
+      "tvd_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "disagreement_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "mean_tvd": 0.0,
+      "mean_disagreement": 0.0
+    },
+    "T=40,alpha=lenient": {
+      "tvd_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "disagreement_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "mean_tvd": 0.0,
+      "mean_disagreement": 0.0
+    },
+    "T=160,alpha=strict": {
+      "tvd_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "disagreement_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "mean_tvd": 0.0,
+      "mean_disagreement": 0.0
+    },
+    "T=160,alpha=lenient": {
+      "tvd_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "disagreement_per_seed": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "mean_tvd": 0.0,
+      "mean_disagreement": 0.0
+    }
+  },
+  "pooled": {
+    "n_observations": 20,
+    "mean_tvd": 0.0,
+    "mean_disagreement": 0.0,
+    "sd_tvd": 0.0,
+    "sd_disagreement": 0.0
+  },
+  "power_analysis": {
+    "delta": 0.1,
+    "alpha": 0.05,
+    "n_target": 20,
+    "n_bootstrap": 10000,
+    "bootstrap_seed": 20260916,
+    "power_tvd": 1.0,
+    "power_disagreement": 1.0,
+    "power_both": 1.0,
+    "power_both_ci95_montecarlo": [
+      0.9996159875222334,
+      0.9999999999999999
+    ],
+    "min_delta_for_080": 0.05,
+    "delta_sweep_power_both": {
+      "0.05": 1.0,
+      "0.06": 1.0,
+      "0.07": 1.0,
+      "0.08": 1.0,
+      "0.09": 1.0,
+      "0.10": 1.0,
+      "0.11": 1.0,
+      "0.12": 1.0,
+      "0.13": 1.0,
+      "0.14": 1.0,
+      "0.15": 1.0,
+      "0.16": 1.0,
+      "0.17": 1.0,
+      "0.18": 1.0,
+      "0.19": 1.0,
+      "0.20": 1.0,
+      "0.21": 1.0,
+      "0.22": 1.0,
+      "0.23": 1.0,
+      "0.24": 1.0,
+      "0.25": 1.0,
+      "0.26": 1.0,
+      "0.27": 1.0,
+      "0.28": 1.0,
+      "0.29": 1.0,
+      "0.30": 1.0,
+      "0.31": 1.0,
+      "0.32": 1.0,
+      "0.33": 1.0,
+      "0.34": 1.0,
+      "0.35": 1.0,
+      "0.36": 1.0,
+      "0.37": 1.0,
+      "0.38": 1.0,
+      "0.39": 1.0,
+      "0.40": 1.0,
+      "0.41": 1.0,
+      "0.42": 1.0,
+      "0.43": 1.0,
+      "0.44": 1.0,
+      "0.45": 1.0,
+      "0.46": 1.0,
+      "0.47": 1.0,
+      "0.48": 1.0,
+      "0.49": 1.0,
+      "0.50": 1.0
+    },
+    "caveat": "5 sementes-piloto: o bootstrap reamostra 5 valores observados, entao o intervalo e erro de Monte Carlo do reamostrador, nao incerteza amostral do piloto."
+  },
+  "elapsed_seconds": 3.08
+}

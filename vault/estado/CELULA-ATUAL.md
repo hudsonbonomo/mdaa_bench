@@ -1,6 +1,6 @@
 # Célula atual
 
-**Status:** nenhuma célula ativa · 3 concluídas — ver `INDICE.md`
+**Status:** nenhuma célula ativa · 4 concluídas, 2 planejadas — ver `INDICE.md`
 
 ## ➜ Para começar
 Dizer `/celula` e propor a primeira célula — ou `/celula <nome>` para

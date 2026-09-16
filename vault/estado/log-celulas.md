@@ -26,3 +26,12 @@ plugins/query era segundo consumidor não previsto.
 **standing-cli.js SHA-256:** `07b2464d…9229db7a` (tmulab-mdaa f25caa0).
 **Testes:** 27 verdes, 0 skipped, R_declared contra CLI real.
 **Estacionamento:** appearingIds é partição, não duplicação.
+
+## potencia-p1 — ✔ concluída (2026-09-16)
+
+**Objetivo:** primeira execução real — potência de P1 com sementes-piloto 901–905.
+**Resultado:** potência 1.000 para Δ=0.10 (TVD e desacordo exatamente 0.00,
+variância zero). Hudson identifica passagem vacuosa: ν ignora sinal, medida
+pode ser cega. Controle positivo A vs C obrigatório antes da grade.
+**Bug corrigido:** readers.py snake_case → camelCase na policy.
+**Estacionamento:** controle-positivo-p1; vocabulario-worlds.

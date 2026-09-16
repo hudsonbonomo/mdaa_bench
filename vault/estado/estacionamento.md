@@ -8,3 +8,5 @@
 - Brand nominal atravessa a fronteira por cast; o acordo é por string (schiusa.event-journal@1.0.0) — resolve junto com as chaves na célula de hospedagem
 - Edits no tmulab-mdaa exigem npm install no schiusa (install-links=true copia em vez de linkar)
 - O retrato completo do parecer é warrantingIds ∪ appearingIds; appearingIds sozinho só traz quem aparece sem autorizar (partição, não duplicação) — conferir quando as métricas de parecer forem escritas
+- P1 passou vacuamente? TVD sobre ν mede que ν ignora sinal (já sabíamos), não que escopo foi lido como idade. Desacordo 0,00 porque há uma estratégia só. Controle positivo A vs C obrigatório antes da grade — se der 0,00, a medida é cega e P1 não significa nada. Célula própria: controle-positivo-p1
+- Contrato de vocabulário: worlds.py renomeia valor, CLI renomeia chave; §3 do preregistro diz chave. Corrigir worlds.py, não o CLI. Célula própria: vocabulario-worlds

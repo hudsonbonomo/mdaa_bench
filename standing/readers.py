@@ -57,6 +57,7 @@ def to_payload(world: StandingWorld, policy: str = DEFAULT_POLICY,
     """The JSON the plugin CLI eats. Alpha comes from the frozen file, never inline."""
     alpha = load_alpha()
     assert policy in alpha["policies"], f"unknown policy {policy!r}"
+    window = alpha["policies"][policy]
     return {
         "observations": [{"id": obs_id(o.t), "strategy": o.strategy,
                           "conditions": dict(o.conditions), "signal": o.signal,
@@ -65,7 +66,11 @@ def to_payload(world: StandingWorld, policy: str = DEFAULT_POLICY,
         "currentConditions": current_conditions if current_conditions is not None
         else _current_conditions(world),
         "vocabularyEvents": [dict(e) for e in world.vocabulary_events],
-        "policy": {"name": policy, **alpha["policies"][policy],
+        # The CLI's policy contract is camelCase (dist/standing.js: standingOf).
+        # alpha_frozen.json is snake_case and frozen; the translation lives here.
+        "policy": {"name": policy,
+                   "appearWindow": window["appear_window"],
+                   "warrantWindow": window["warrant_window"],
                    "appearanceFloor": alpha["appearance_floor"]},
     }
 
