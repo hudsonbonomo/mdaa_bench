@@ -132,3 +132,46 @@ Acrescentados `decay_constant_rounds` e `full_weight_until_rounds` ao bloco
 do kernel exponencial e o limiar de peso unitário. Os dois valores são 72,
 compatíveis com o `decay_after_rounds` original; a semântica do comparador não
 muda. `freeze.sha256` recomputado neste commit.
+
+## Emenda v1.2 (16 set 2026)
+
+O controle positivo (`standing/resultados/positive_control.json`) revelou que as
+duas medidas originais de P1 — distância de variação total entre distribuições de ν
+e taxa de desacordo entre pareceres — são cegas ao que distingue os mundos. A razão
+é estrutural: ν é função determinística de escopo e idade, nunca lê o sinal emitido,
+e a estratégia-alvo é única, logo o vencedor do tally é o mesmo em todo mundo. A vs C
+(par que deve diferir: contrário versus idade) deu 0,00 nas duas medidas, o mesmo
+resultado de A vs B `unlogged`. A equivalência observada no piloto (emenda v1.1) era
+artefato da medida, não achado.
+
+### P1 passa a ser sobre R_decay
+
+O §4 do Paper 5 afirma que inferir envelhecimento de uma trajetória é indistinguível
+de condição mudando sem registro. R_declared não infere — aplica α por desenho — e
+portanto não pode testar essa afirmação. Quem a testa é R_decay, o comparador que lê
+a trajetória. P1 passa a ser:
+
+- **P1 (equivalência, R_decay).** Em B `unlogged`, R_decay não distingue A de B:
+  distância entre os vetores de **peso ponderado por estratégia** ao final do tally
+  (não contagens de ν) em A versus B `unlogged`, por semente e célula. Com estratégia-
+  alvo única o vencedor é sempre o mesmo, então a medida olha o peso, nunca o vencedor.
+  Equivalência declarada se a distância fica abaixo de Δ = 0,10, por TOST com α = 0,05,
+  célula a célula. A potência é recalculada sobre a medida nova com as sementes-piloto
+  901–905; se ficar abaixo de 0,80 o Δ sobe e entra como emenda v1.3 antes da grade.
+
+### P1b (nova, R_declared — verificação de instrumento)
+
+R_declared separa A de B quando o escopo está registrado e não separa quando não está.
+Limiar: TVD entre distribuições de ν ≥ 0,40 em B `logged` e ≤ 0,05 em B `unlogged`,
+em todas as células. Já observado no controle positivo (0,50 e 0,00), o que a torna
+verificação de instrumento, não achado.
+
+### Pendência declarada (estratégia-alvo única)
+
+Os geradores emitem uma única estratégia-alvo (s*), logo nenhum mundo produz
+divergência de escolha no tally. P3 e P5 falam de parecer e podem sofrer do mesmo
+defeito de P1 original. Decidir, em célula própria e antes da grade, se os mundos
+passam a ter duas estratégias (s* e uma alternativa) — mudança que toca o §3.
+
+Feita ANTES de qualquer execução da grade — nenhuma semente 1–20 foi rodada até
+este commit. `freeze.sha256` recomputado.
