@@ -1123,6 +1123,32 @@ split — once the M axis is either repaired or retired, most of it goes with it
 Every gate in `density.py` returns `(passed, stat, note)` where `note` spells out the
 stopping rule, so a reader can disagree with a threshold instead of reverse-engineering it.
 
+## The standing bench (`standing/`) — a third bench, and what it plants
+
+Paper 5 (Memory in Situated Learning Accessibility, DOI
+[10.5281/zenodo.22815088](https://doi.org/10.5281/zenodo.22815088)) asks whether a
+record reader can distinguish four states of standing — applicable, out of scope, aged,
+unevaluable — when four different mechanisms produce the same observable signal
+trajectory. The bench does not test whether aging exists or whether standing improves
+appraisals; it tests distinguishability under declared conditions.
+
+Four planted worlds: true aging (A), unlogged condition swap (B), a step drop the
+person forgot (C), and a vocabulary key rename with optional reconciliation (D). Three
+readers: R_declared calls the real MDAA plugin (`@tmulab/mdaa`, via `standing-cli.js`
+over subprocess), R_decay is the exponential-recency comparator the agent literature
+uses, and R_current is the plugin as it was before the standing layer.
+
+The pre-registration (`standing/PREREGISTRO_v1.md`) was frozen at commit `0851ac7`,
+with three amendments (v1.1 kernel parameterisation, v1.2 P1 moved to R_decay weights,
+v1.3 P3 clarified and P5 redefined as divergence) — all made before any grid seed was
+run. The grid of 400 executions (20 cells × 20 seeds) was run at commit `b085568`.
+Seven predictions sustained: P1, P1b, P2, P3, P4, P4b, P5. Results in
+`standing/resultados/grid_v1_predictions.md`.
+
+R_declared requires `MDAA_PLUGIN_DIST` pointing to the compiled `@tmulab/mdaa` dist
+directory (see `standing/env.example`). The CLI SHA-256 measured for the grid is
+`8c3cf889...26302543` from tmulab-mdaa commit `4503cc1`.
+
 ## Next cells (in order of value)
 
 1-6. ~~Cells 1-5 of the original roadmap, plus the Wiener null.~~ **Done (v1, v2).**

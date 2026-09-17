@@ -3,7 +3,7 @@
   "access_right": "open",
   "license": "cc-by-4.0",
   "title": "mdaa_bench: simulation bench for blind identification of latent dynamical structure (MDAA)",
-  "version": "v5.0.0",
+  "version": "v6.0.0",
   "language": "eng",
   "creators": [
     {
@@ -31,7 +31,7 @@
   "notes": "Competing interest: TMU-LAB has commercial interests, declared as a competing interest in the associated papers.",
   "related_identifiers": [
     {
-      "identifier": "https://github.com/hudsonbonomo/mdaa_bench/tree/v5.0.0",
+      "identifier": "https://github.com/hudsonbonomo/mdaa_bench/tree/v6.0.0",
       "relation": "isSupplementTo",
       "resource_type": "software",
       "scheme": "url"
@@ -50,6 +50,18 @@
     },
     {
       "identifier": "10.5281/zenodo.22728986",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-preprint",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "10.5281/zenodo.22728835",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-preprint",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "10.5281/zenodo.22815088",
       "relation": "isSupplementTo",
       "resource_type": "publication-preprint",
       "scheme": "doi"

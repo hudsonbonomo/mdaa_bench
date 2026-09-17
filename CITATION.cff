@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this bench, please cite it as below."
 type: software
 title: "mdaa_bench: simulation bench for blind identification of latent dynamical structure (MDAA)"
-version: v5.0.0
-date-released: 2026-09-14
+version: v6.0.0
+date-released: 2026-09-17
 license: CC-BY-4.0
 repository-code: "https://github.com/hudsonbonomo/mdaa_bench"
 authors:
@@ -35,3 +35,36 @@ keywords:
   - warrant
   - action warrant
   - provenance
+  - record standing
+  - vocabulary reconciliation
+references:
+  - type: article
+    title: "Paper 1 — Situated Learning Accessibility: The Assessment Problem"
+    doi: "10.5281/zenodo.22728889"
+    authors:
+      - family-names: Bonomo
+        given-names: Hudson A. R.
+  - type: article
+    title: "Paper 2 — Dynamics of Situated Learning Accessibility: The Four Axes"
+    doi: "10.5281/zenodo.22728933"
+    authors:
+      - family-names: Bonomo
+        given-names: Hudson A. R.
+  - type: article
+    title: "Paper 3 — Scope and Conflict in Situated Learning Accessibility"
+    doi: "10.5281/zenodo.22728986"
+    authors:
+      - family-names: Bonomo
+        given-names: Hudson A. R.
+  - type: article
+    title: "Paper 4 — Decision Under Situated Evidence"
+    doi: "10.5281/zenodo.22728835"
+    authors:
+      - family-names: Bonomo
+        given-names: Hudson A. R.
+  - type: article
+    title: "Paper 5 — Memory in Situated Learning Accessibility"
+    doi: "10.5281/zenodo.22815088"
+    authors:
+      - family-names: Bonomo
+        given-names: Hudson A. R.
