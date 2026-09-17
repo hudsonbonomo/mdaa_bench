@@ -21,6 +21,12 @@ abstract: >-
   plants policy instead of dynamics: four families of world in which the correct action is
   known by construction, four models scored on the same steps with the same estimator, and
   a warrant layer under a chi frozen by hash.
+
+  A third bench plants record standing: four planted worlds test whether a record reader
+  can distinguish the four standing states — applicable, out of scope, aged, unevaluable —
+  when distinct mechanisms produce the same observable trajectory of signals, read by three
+  readers: R_declared, which calls the @tmulab/mdaa plugin by subprocess, R_decay, the recency
+  comparator from the agent literature, and R_current, the plugin before the standing layer.
 keywords:
   - dynamical systems
   - system identification
