@@ -1,9 +1,7 @@
 # Célula atual
 
-**Célula:** grade-v1
-**Status:** 🔵 ativa
-**Autorização:** sementes 1–20. CLI 8c3cf889 (4503cc1).
+**Status:** nenhuma célula ativa · 12 concluídas — ver `INDICE.md`
 
-## Próximo passo
-
-Escrever bench.py, rodar 1.280 execuções, medir P1–P5+P4b.
+## ➜ Para começar
+Dizer `/celula` e propor a primeira célula — ou `/celula <nome>` para
+retomar uma célula pausada do índice.

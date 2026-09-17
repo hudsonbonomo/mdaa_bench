@@ -95,3 +95,10 @@ valueMap com valor que registros não carregam, contido por assert.
 **Objetivo:** emenda v1.3 — P3 esclarecida, P5 passa a prever divergência.
 **Commits:** cb17ad6 (prereg + freeze) + fd9d675 (código + sondas + estado).
 **Resultado:** todas as previsões agora testáveis. Grade pode rodar.
+
+## grade-v1 — ✔ concluída (2026-09-17)
+
+**Objetivo:** primeira execução da grade — sementes 1–20, 20 células, 3 leitores.
+**Commit:** b085568 — 400 runs, 26.87s. CLI 8c3cf889 (tmulab-mdaa 4503cc1).
+**Resultado:** 7/7 previsões PASS. Nenhum FAIL.
+**Diagnóstico:** D T=160 total → 20% pré-τ1 voltam AGED (α sobre vocabulário).
