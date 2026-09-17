@@ -19,4 +19,5 @@
 | sugestao-exploratoria | @tmulab/mdaa exploratory | ✔ | 2026-09-16 | 2dcfaae, 74 verdes; critério de ignorância; offeredStrategies é célula seguinte |
 | vocabulario-worlds | standing/worlds.py | ✔ | 2026-09-17 | 7be78ee; D renomeia chave; ponta a ponta nos 3 ramos; P4/P4b desbloqueados |
 | leitores-completos | CLI + readers + P1 | ✔ | 2026-09-17 | CLI 8c3cf889; readers sem hardcode; P1 pesos 1.000; P5 falsificada |
-| emenda-p3-p5 | standing/prereg | 🔵 | 2026-09-17 | P3 esclarecida (ordem registrada); P5 → divergência com causa nomeada |
+| emenda-p3-p5 | standing/prereg | ✔ | 2026-09-17 | cb17ad6; P3 ordem registrada; P5 divergência por B; grade pode rodar |
+| grade-v1 | standing/grade | 🔵 | 2026-09-17 | PRIMEIRA EXECUÇÃO — 1.280 runs, sementes 1–20, CLI 8c3cf889 (4503cc1) |

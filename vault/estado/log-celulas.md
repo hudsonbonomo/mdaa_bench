@@ -89,3 +89,9 @@ valueMap com valor que registros não carregam, contido por assert.
 **P1:** potência 1.000 Δ=0.10 (pesos). α inerte para R_decay.
 **P3:** B confirmado, ordem parcial (ruído sobrepõe faixas).
 **P5:** falsificada — R_declared nunca elege, divergência 76/80. Emenda v1.3.
+
+## emenda-p3-p5 — ✔ concluída (2026-09-17)
+
+**Objetivo:** emenda v1.3 — P3 esclarecida, P5 passa a prever divergência.
+**Commits:** cb17ad6 (prereg + freeze) + fd9d675 (código + sondas + estado).
+**Resultado:** todas as previsões agora testáveis. Grade pode rodar.

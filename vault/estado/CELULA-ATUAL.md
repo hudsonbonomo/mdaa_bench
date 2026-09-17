@@ -1,14 +1,9 @@
 # Célula atual
 
-**Célula:** leitores-completos
+**Célula:** grade-v1
 **Status:** 🔵 ativa
-**Repos:** tmulab-mdaa + mdaa_bench
-
-## Contexto
-
-CLI expõe só vigência. P3 precisa do estatuto, P5 precisa da estratégia
-eleita, P1 precisa de pesos do R_decay. Três ajustes em dois repos.
+**Autorização:** sementes 1–20. CLI 8c3cf889 (4503cc1).
 
 ## Próximo passo
 
-Expandir standing-cli.ts, atualizar readers.py, implementar medida de P1.
+Escrever bench.py, rodar 1.280 execuções, medir P1–P5+P4b.
