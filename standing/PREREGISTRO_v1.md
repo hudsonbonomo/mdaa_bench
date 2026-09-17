@@ -175,3 +175,38 @@ passam a ter duas estratégias (s* e uma alternativa) — mudança que toca o §
 
 Feita ANTES de qualquer execução da grade — nenhuma semente 1–20 foi rodada até
 este commit. `freeze.sha256` recomputado.
+
+## Emenda v1.3 (17 set 2026)
+
+### P3 — esclarecimento, não mudança de limiar
+
+"Reporta B com ordem" significa que a proposição de s* no mundo C recebe estatuto B
+e que as observações a favor e contra vêm com `seq` preservado e legível — NÃO que
+a ordem separe os blocos pré e pós-τ de forma limpa. Com ruído UNCLEAR = 0,15 as
+faixas de `seq` dos supporting e contradicting se sobrepõem em torno de τ por
+construção, e isso é o esperado: o Paper 1 garante que a ordem é preservada no
+registro, não que ela separe os blocos quando há ruído. Limiar ≥ 0,95 mantido: ele
+se aplica a "a proposição recebe estatuto B", não a "a ordem é limpa".
+
+### P5 — redefinição: concordância → divergência com causa nomeada
+
+A previsão anterior (R_decay e R_declared concordam em ≥ 0,90 no parecer em A, α
+leniente, T = 160) é insustentável. A razão é conhecida: com ruído realista quase
+toda proposição recebe um contrário, e a regra do estatuto por proposição ("nenhuma
+proposição elege enquanto a de maior sustentação estiver em B", emenda v1.2 e
+`CONTRATO-ESTATUTO.md` do @tmulab/mdaa) bloqueia a eleição. R_declared não elege em
+A; R_decay, que não lê o estatuto, elege por peso.
+
+P5 passa a prever **divergência com causa nomeada**: em A, α leniente, T = 160,
+R_decay elege por peso e R_declared não elege, e o parecer de R_declared nomeia o
+bloqueio por B como razão. Limiar: divergência em ≥ 0,90 das sementes, e em 100%
+delas a razão reportada é o bloqueio por B (não ausência de observação, não fora de
+escopo). Ajustar o mundo para recuperar a concordância prevista seria ajustar o mundo
+à previsão — o Paper 5 documenta a divergência como achado, não como defeito.
+
+Motivação: os resultados da sonda de duas estratégias
+(`standing/resultados/probe_strategies.json`) e da verificação de leitores completos
+mostraram divergência em 76/80 células com R_declared constantemente `None`.
+
+Feita ANTES de qualquer execução da grade — nenhuma semente 1–20 foi rodada até
+este commit. `freeze.sha256` recomputado.
