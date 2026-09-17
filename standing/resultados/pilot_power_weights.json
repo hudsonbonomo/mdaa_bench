@@ -1,0 +1,330 @@
+{
+  "measure": "P1 emenda v1.2 — max_s |w_A[s] - w_B_unlogged[s]| over the R_decay weighted-BETTER-share vector at end of tally",
+  "reader": "R_decay",
+  "pilot_seeds": [
+    901,
+    902,
+    903,
+    904,
+    905
+  ],
+  "note": "Sementes-piloto — descartadas por preregistro (§5). NAO entram em resultado do paper.",
+  "cli_sha256": "8c3cf88999013bca8c55ae0905055f27327a931301e70d4ddd29388f26302543",
+  "factors": {
+    "T": [
+      40,
+      160
+    ],
+    "alpha": [
+      "strict",
+      "lenient"
+    ],
+    "replicas": 1,
+    "alpha_is_inert": "R_decay does not read the standing policy; the two alpha levels give identical values"
+  },
+  "measures_by_cell": {
+    "T=40,alpha=strict": {
+      "distance_per_seed": [
+        0.025000000000000022,
+        0.050000000000000044,
+        0.025000000000000022,
+        0.0,
+        0.050000000000000044
+      ],
+      "mean_distance": 0.030000000000000027,
+      "max_distance": 0.050000000000000044,
+      "weights_per_seed": [
+        {
+          "seed": 901,
+          "weight_a": {
+            "s_star": 0.525
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.55
+          }
+        },
+        {
+          "seed": 902,
+          "weight_a": {
+            "s_star": 0.6
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.65
+          }
+        },
+        {
+          "seed": 903,
+          "weight_a": {
+            "s_star": 0.6
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.575
+          }
+        },
+        {
+          "seed": 904,
+          "weight_a": {
+            "s_star": 0.55
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.55
+          }
+        },
+        {
+          "seed": 905,
+          "weight_a": {
+            "s_star": 0.575
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.625
+          }
+        }
+      ]
+    },
+    "T=40,alpha=lenient": {
+      "distance_per_seed": [
+        0.025000000000000022,
+        0.050000000000000044,
+        0.025000000000000022,
+        0.0,
+        0.050000000000000044
+      ],
+      "mean_distance": 0.030000000000000027,
+      "max_distance": 0.050000000000000044,
+      "weights_per_seed": [
+        {
+          "seed": 901,
+          "weight_a": {
+            "s_star": 0.525
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.55
+          }
+        },
+        {
+          "seed": 902,
+          "weight_a": {
+            "s_star": 0.6
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.65
+          }
+        },
+        {
+          "seed": 903,
+          "weight_a": {
+            "s_star": 0.6
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.575
+          }
+        },
+        {
+          "seed": 904,
+          "weight_a": {
+            "s_star": 0.55
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.55
+          }
+        },
+        {
+          "seed": 905,
+          "weight_a": {
+            "s_star": 0.575
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.625
+          }
+        }
+      ]
+    },
+    "T=160,alpha=strict": {
+      "distance_per_seed": [
+        0.013404564948537367,
+        0.07995961710002686,
+        0.04279473271549711,
+        0.015545111925416633,
+        0.029786871062047582
+      ],
+      "mean_distance": 0.03629817955030511,
+      "max_distance": 0.07995961710002686,
+      "weights_per_seed": [
+        {
+          "seed": 901,
+          "weight_a": {
+            "s_star": 0.5390559523123815
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.5256513873638441
+          }
+        },
+        {
+          "seed": 902,
+          "weight_a": {
+            "s_star": 0.548301487557359
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.6282611046573858
+          }
+        },
+        {
+          "seed": 903,
+          "weight_a": {
+            "s_star": 0.49338671139121754
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.5361814441067146
+          }
+        },
+        {
+          "seed": 904,
+          "weight_a": {
+            "s_star": 0.48223153162643423
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.49777664355185086
+          }
+        },
+        {
+          "seed": 905,
+          "weight_a": {
+            "s_star": 0.558908180070241
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.5886950511322886
+          }
+        }
+      ]
+    },
+    "T=160,alpha=lenient": {
+      "distance_per_seed": [
+        0.013404564948537367,
+        0.07995961710002686,
+        0.04279473271549711,
+        0.015545111925416633,
+        0.029786871062047582
+      ],
+      "mean_distance": 0.03629817955030511,
+      "max_distance": 0.07995961710002686,
+      "weights_per_seed": [
+        {
+          "seed": 901,
+          "weight_a": {
+            "s_star": 0.5390559523123815
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.5256513873638441
+          }
+        },
+        {
+          "seed": 902,
+          "weight_a": {
+            "s_star": 0.548301487557359
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.6282611046573858
+          }
+        },
+        {
+          "seed": 903,
+          "weight_a": {
+            "s_star": 0.49338671139121754
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.5361814441067146
+          }
+        },
+        {
+          "seed": 904,
+          "weight_a": {
+            "s_star": 0.48223153162643423
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.49777664355185086
+          }
+        },
+        {
+          "seed": 905,
+          "weight_a": {
+            "s_star": 0.558908180070241
+          },
+          "weight_b_unlogged": {
+            "s_star": 0.5886950511322886
+          }
+        }
+      ]
+    }
+  },
+  "pooled": {
+    "n_observations": 20,
+    "n_distinct": 10,
+    "mean_distance": 0.03314908977515257,
+    "sd_distance": 0.022466111414078168,
+    "max_distance": 0.07995961710002686
+  },
+  "power_analysis": {
+    "delta": 0.1,
+    "alpha": 0.05,
+    "n_target": 20,
+    "n_bootstrap": 10000,
+    "bootstrap_seed": 20260916,
+    "power_weight_distance": 1.0,
+    "power_weight_distance_distinct_only": 1.0,
+    "power_ci95_montecarlo": [
+      0.9996159875222334,
+      0.9999999999999999
+    ],
+    "min_delta_for_080": 0.05,
+    "delta_sweep_power": {
+      "0.05": 0.8815,
+      "0.06": 0.9979,
+      "0.07": 1.0,
+      "0.08": 1.0,
+      "0.09": 1.0,
+      "0.10": 1.0,
+      "0.11": 1.0,
+      "0.12": 1.0,
+      "0.13": 1.0,
+      "0.14": 1.0,
+      "0.15": 1.0,
+      "0.16": 1.0,
+      "0.17": 1.0,
+      "0.18": 1.0,
+      "0.19": 1.0,
+      "0.20": 1.0,
+      "0.21": 1.0,
+      "0.22": 1.0,
+      "0.23": 1.0,
+      "0.24": 1.0,
+      "0.25": 1.0,
+      "0.26": 1.0,
+      "0.27": 1.0,
+      "0.28": 1.0,
+      "0.29": 1.0,
+      "0.30": 1.0,
+      "0.31": 1.0,
+      "0.32": 1.0,
+      "0.33": 1.0,
+      "0.34": 1.0,
+      "0.35": 1.0,
+      "0.36": 1.0,
+      "0.37": 1.0,
+      "0.38": 1.0,
+      "0.39": 1.0,
+      "0.40": 1.0,
+      "0.41": 1.0,
+      "0.42": 1.0,
+      "0.43": 1.0,
+      "0.44": 1.0,
+      "0.45": 1.0,
+      "0.46": 1.0,
+      "0.47": 1.0,
+      "0.48": 1.0,
+      "0.49": 1.0,
+      "0.50": 1.0
+    },
+    "caveat": "5 sementes-piloto: o bootstrap reamostra 5 valores observados por celula, entao o intervalo e erro de Monte Carlo do reamostrador, nao incerteza amostral do piloto."
+  },
+  "elapsed_seconds": 0.36
+}

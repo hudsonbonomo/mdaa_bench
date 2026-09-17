@@ -17,10 +17,10 @@ import math
 import os
 import subprocess
 
-from .worlds import STRATEGY, StandingWorld, load_alpha
+from .worlds import StandingWorld, load_alpha
 
 __all__ = ["ReadingResult", "R_declared", "R_decay", "R_current",
-           "DEFAULT_POLICY", "obs_id", "to_payload"]
+           "DEFAULT_POLICY", "obs_id", "to_payload", "weight_vector"]
 
 DEFAULT_POLICY = "lenient"
 _CLI = "standing-cli.js"
@@ -29,9 +29,10 @@ _CLI = "standing-cli.js"
 @dataclass
 class ReadingResult:
     verdicts: dict[str, str]            # observation_id -> standing/status
-    strategy: str | None                # winning strategy, or None
+    strategy: str | None                # elected/winning strategy, or None
     summary: dict[str, int]             # counts by standing
     reader: str = ""
+    status: dict | None = None          # byProposition + conflicts (R_declared only)
     raw: dict = field(default_factory=dict, repr=False)
 
 
@@ -95,12 +96,18 @@ def R_declared(world: StandingWorld, policy: str = DEFAULT_POLICY,
     if proc.returncode != 0:
         raise RuntimeError(f"{_CLI} exited {proc.returncode}: {proc.stderr.strip()[:400]}")
     out = json.loads(proc.stdout)
+    # The parecer is READ, never assumed: the elected strategy comes from the
+    # plugin's own status cell. A dist that does not expose it is a stale build,
+    # and saying so is better than resurrecting the hardcoded s_star.
+    if "electedStrategy" not in out or "status" not in out:
+        raise RuntimeError(
+            f"{_CLI} answers without 'electedStrategy'/'status': stale dist, rebuild the plugin")
     verdicts = {v["id"]: v["standing"] for v in out.get("verdicts", [])}
-    warranting = out.get("warrantingIds", [])
+    elected = out.get("electedStrategy") or None
     return ReadingResult(verdicts=verdicts,
-                         strategy=STRATEGY if warranting else None,
+                         strategy=">".join(elected) if elected else None,
                          summary=_summarise(verdicts) or dict(out.get("summary", {})),
-                         reader="R_declared", raw=out)
+                         reader="R_declared", status=out.get("status"), raw=out)
 
 
 # --------------------------------------------------------------------------- #
@@ -116,6 +123,18 @@ def _decay_params() -> tuple[float, float, float]:
     full_weight_until = float(cfg["full_weight_until_rounds"])
     assert decay_constant > 0, f"decay_constant_rounds must be positive, got {decay_constant}"
     return decay_constant, full_weight_until, float(cfg["floor"])
+
+
+def weight_vector(tally: dict[str, dict[str, float]]) -> dict[str, float]:
+    """WEIGHTED BETTER SHARE per strategy at the end of the R_decay tally — the
+    vector emenda v1.2 measures P1 on. Each coordinate is that strategy's weighted
+    BETTER over its own weighted mass, a share in [0, 1] that does not move with
+    how much the strategy was observed."""
+    out: dict[str, float] = {}
+    for strategy, counts in tally.items():
+        mass = sum(counts.values())
+        out[strategy] = (counts["BETTER"] / mass) if mass else 0.0
+    return out
 
 
 def R_decay(world: StandingWorld, policy: str = DEFAULT_POLICY,
@@ -147,6 +166,7 @@ def R_decay(world: StandingWorld, policy: str = DEFAULT_POLICY,
     return ReadingResult(verdicts=verdicts, strategy=best, summary=summary,
                          reader="R_decay",
                          raw={"weighted_better_share": share,
+                              "weight_vector": weight_vector(tally),
                               "decay_constant_rounds": decay_constant,
                               "full_weight_until_rounds": full_weight_until,
                               "floor": floor, "tally": tally})

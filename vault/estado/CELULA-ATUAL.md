@@ -1,14 +1,14 @@
 # Célula atual
 
-**Célula:** emenda-p1
+**Célula:** leitores-completos
 **Status:** 🔵 ativa
+**Repos:** tmulab-mdaa + mdaa_bench
 
 ## Contexto
 
-Controle positivo mostrou que TVD sobre ν é cega ao sinal. P1 precisa mudar
-de leitor (R_declared → R_decay) e de medida (contagens de ν → pesos do
-tally). Nenhuma execução nesta célula.
+CLI expõe só vigência. P3 precisa do estatuto, P5 precisa da estratégia
+eleita, P1 precisa de pesos do R_decay. Três ajustes em dois repos.
 
 ## Próximo passo
 
-Redigir emenda v1.2, recomputar freeze, commitar.
+Expandir standing-cli.ts, atualizar readers.py, implementar medida de P1.

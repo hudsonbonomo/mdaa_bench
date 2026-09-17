@@ -42,3 +42,50 @@ pode ser cega. Controle positivo A vs C obrigatório antes da grade.
 **Resultado:** A vs C dá 0.00 — régua cega. ν é determinística de (escopo, idade),
 ignora sinal. A vs B logged separa (0.50). Emenda de P1 necessária.
 **Estacionamento:** emenda-p1 (célula própria).
+
+## emenda-p1 — ✔ concluída (2026-09-16)
+
+**Objetivo:** emendar P1 no preregistro — régua cega motivou mudança de leitor e medida.
+**Commits:** 5d583f5 (emenda v1.2, freeze) + 56d8e2f (controle positivo, estado).
+**Pendência declarada:** estratégia-alvo única pode afetar P3/P5 — célula estrategia-unica.
+**Ponto de partida da próxima:** a pergunta não é "quantas estratégias", é se os mundos
+precisam produzir divergência de escolha para que previsões sobre parecer signifiquem algo.
+
+## estatuto-por-proposicao — ✔ concluída (2026-09-16)
+
+**Objetivo:** estatuto T·F·B·N por proposição; B não elege, informa.
+**Commit:** b926d81 — 68 verdes. tallyWinner mantido como controle negativo.
+**Decisões:** identidade por conjunto exato; desempate por seq mais antigo;
+B com mais suporte bloqueia eleição (leitura literal do contrato);
+estratégia excluída ignorada antes de vencer ou bloquear.
+
+## estrategia-unica — ✔ concluída (2026-09-16)
+
+**Objetivo:** investigar se mundos precisam de divergência de escolha para P3/P5.
+**Resultado:** duas estratégias necessárias mas não suficientes. B aparece em quase
+todo lugar (ruído 0.15); B-blocking nunca disparou (0/160). P3 e P5 intestáveis
+como escritas. Resolvido pelo CONTRATO-SUGESTAO-EXPLORATORIA.
+**Pendências:** readers.py hardcoda s_star; warrant_window/τ; emenda de P3/P5.
+
+## sugestao-exploratoria — ✔ concluída (2026-09-16)
+
+**Objetivo:** sugestão exploratória por ignorância quando nada elege.
+**Commit:** 2dcfaae — 74 verdes. Critério nunca lê sinal; PV6 controle negativo.
+**Decisões:** offeredStrategies=[] (fallback); ACCEPTED sobre sugestão com marca;
+nota no contrato sobre repertório limitado ao registro.
+**Célula seguinte:** offeredStrategies na entrada de generateRecommendation.
+
+## vocabulario-worlds — ✔ concluída (2026-09-17)
+
+**Objetivo:** mundo D renomeia chave (não valor); eventos no formato CLI.
+**Commit:** 7be78ee — 28 verdes. Ponta a ponta nos 3 ramos bate com §3.
+**Decisão:** ramo parcial = "nenhum valor tem correspondente" (caso extremo);
+valueMap com valor que registros não carregam, contido por assert.
+
+## leitores-completos — ✔ concluída (2026-09-17)
+
+**Objetivo:** CLI expõe estatuto; readers.py reporta eleição; P1 por pesos.
+**CLI:** SHA 8c3cf889 (uncommitted tmulab-mdaa). 81 verdes.
+**P1:** potência 1.000 Δ=0.10 (pesos). α inerte para R_decay.
+**P3:** B confirmado, ordem parcial (ruído sobrepõe faixas).
+**P5:** falsificada — R_declared nunca elege, divergência 76/80. Emenda v1.3.
