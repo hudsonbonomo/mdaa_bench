@@ -11,8 +11,8 @@ import os
 import pytest
 
 from standing import worlds as W
-from standing.worlds import (MAPPED_VALUES, NOISE_UNCLEAR, SIGNALS, STRATEGY,
-                             load_alpha, make_world)
+from standing.worlds import (COND_VALUE, KEY_NEW, KEY_OLD, MAPPED_VALUES, NOISE_UNCLEAR,
+                             SIGNALS, STRATEGY, load_alpha, make_world)
 from standing.readers import R_current, R_decay, R_declared, ReadingResult
 
 SEED = {"A": 9001, "B": 9002, "C": 9003, "D": 9004}
@@ -79,10 +79,27 @@ def test_d_has_one_rename_at_tau1_and_at_most_one_reconciliation_at_tau2():
     for T in TS:
         for forced in (None, "none", "total", "partial"):
             w = _w("D", T, force_reconciliation=forced)
-            ren = [e for e in w.vocabulary_events if e["type"] == "rename"]
-            rec = [e for e in w.vocabulary_events if e["type"] == "reconciliation"]
-            assert len(ren) == 1 and ren[0]["t"] == T // 3 == w.params["tau1"]
-            assert len(rec) <= 1 and all(e["t"] == 2 * T // 3 for e in rec)
+            ren = [e for e in w.vocabulary_events if e["kind"] == "KEY_RENAMED"]
+            rec = [e for e in w.vocabulary_events if e["kind"] == "RECONCILED"]
+            assert len(ren) == 1 and ren[0]["seq"] == T // 3 == w.params["tau1"]
+            assert len(rec) <= 1 and all(e["seq"] == 2 * T // 3 for e in rec)
+
+
+def test_d_renames_the_key_not_the_value_in_the_plugins_event_shape():
+    """The plugin's VocabularyEvent (dist/standing.d.ts): KEY_RENAMED {kind,seq,from,to},
+    RECONCILED {kind,seq,oldKey,newKey,valueMap?} — valueMap absent means TOTAL."""
+    T = 40
+    base = {"kind": "RECONCILED", "seq": 2 * T // 3, "oldKey": KEY_OLD, "newKey": KEY_NEW}
+    want = {"none": [], "total": [base],
+            "partial": [{**base, "valueMap": {v: v for v in MAPPED_VALUES}}]}
+    for forced, rec in want.items():
+        w = _w("D", T, force_reconciliation=forced)
+        assert w.vocabulary_events == \
+            [{"kind": "KEY_RENAMED", "seq": T // 3, "from": KEY_OLD, "to": KEY_NEW}] + rec
+        assert [set(o.conditions) for o in w.observations] == \
+            [{KEY_OLD}] * (T // 3) + [{KEY_NEW}] * (T - T // 3)
+        assert {v for o in w.observations for v in o.conditions.values()} == {COND_VALUE}
+        assert COND_VALUE not in MAPPED_VALUES  # partial leaves the recorded value unmapped
 
 
 # --------------------------------------------------------------------------- #
@@ -135,7 +152,7 @@ def test_d_covers_all_three_branches_by_parameter(forced, pre_states):
     assert all(w.planted[t]["planted_state"] == "applicable" for t in range(tau1, T))
     if forced == "partial":
         for t in range(tau1):
-            want = "applicable" if w.planted[t]["regime"] in MAPPED_VALUES else "out_of_scope"
+            want = "applicable" if w.planted[t]["value"] in MAPPED_VALUES else "out_of_scope"
             assert w.planted[t]["planted_state"] == want, t
 
 
@@ -168,7 +185,6 @@ def _check_shape(r, T):
     assert len(r.verdicts) == T and all(isinstance(v, str) for v in r.verdicts.values())
     assert r.strategy is None or r.strategy == STRATEGY
     assert sum(r.summary.values()) == T
-
 
 @pytest.mark.parametrize("reader", [R_decay, R_current])
 def test_pure_python_readers_share_the_reading_result_form(reader):

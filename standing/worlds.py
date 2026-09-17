@@ -15,16 +15,17 @@ import json
 import numpy as np
 
 __all__ = ["WORLDS", "SIGNALS", "STATES", "STRATEGY", "NOISE_UNCLEAR", "ALPHA_PATH",
-           "MAPPED_VALUES", "RECONCILIATIONS", "Observation", "StandingWorld",
-           "load_alpha", "make_world", "make_world_a", "make_world_b",
-           "make_world_c", "make_world_d"]
+           "MAPPED_VALUES", "RECONCILIATIONS", "KEY_OLD", "KEY_NEW", "COND_VALUE",
+           "Observation", "StandingWorld", "load_alpha", "make_world", "make_world_a",
+           "make_world_b", "make_world_c", "make_world_d"]
 
 WORLDS = ("A", "B", "C", "D")
 SIGNALS = ("BETTER", "WORSE", "UNCLEAR")
 STATES = ("applicable", "out_of_scope", "aged", "unevaluable")
 STRATEGY = "s_star"                 # the target strategy s*
 ALPHA_PATH = Path(__file__).resolve().parent / "alpha_frozen.json"
-MAPPED_VALUES = ("r0",)             # world D: values a PARTIAL reconciliation carries over
+KEY_OLD, KEY_NEW, COND_VALUE = "c1", "c1_prime", "stable"   # world D: the KEY renamed at tau1 (§3)
+MAPPED_VALUES = ("legacy",)         # world D: values a PARTIAL reconciliation carries over
 RECONCILIATIONS = ("none", "total", "partial")
 
 
@@ -132,63 +133,62 @@ def make_world_c(T: int, seed: int, noise_unclear: float = NOISE_UNCLEAR,
 
 def make_world_d(T: int, seed: int, noise_unclear: float = NOISE_UNCLEAR,
                  p0: float = 0.80, force_reconciliation: str | None = None) -> StandingWorld:
-    """D — vocabulary change: c1 renamed c1_prime at T/3, maybe reconciled at 2T/3.
-
-    The signal does not move (p0 throughout): this world tests the vocabulary, not
-    the trajectory. `regime` carries the values a PARTIAL reconciliation fails to map.
-    `force_reconciliation` pins the branch — None draws it (1/2 event, then 1/2 total
-    / 1/2 partial, PREREGISTRO_v1 §3); "none"|"total"|"partial" fix it. Both draws are
-    consumed either way, so a seed's observation stream does not move when pinned.
+    """D — vocabulary change: the KEY c1 is renamed c1_prime at tau1 = T/3 (same values,
+    §3), maybe reconciled at tau2 = 2T/3; events use the plugin's VocabularyEvent fields.
+    The signal does not move (p0 throughout). The condition is FIXED, so a TOTAL
+    reconciliation brings every pre-tau1 record back, while a PARTIAL one — covering only
+    MAPPED_VALUES, which the recorded value is not among — leaves them `out_of_scope` and
+    never `unevaluable`. `force_reconciliation` pins the branch; both draws are consumed
+    either way, so a seed's stream does not move when the branch is pinned.
     """
-    assert force_reconciliation is None or force_reconciliation in RECONCILIATIONS, \
-        f"World D: force_reconciliation must be None or one of {RECONCILIATIONS}"
+    assert (force_reconciliation is None or force_reconciliation in RECONCILIATIONS) \
+        and COND_VALUE not in MAPPED_VALUES, \
+        f"World D: force_reconciliation in {RECONCILIATIONS}; {COND_VALUE!r} has no correspondent"
     rng = np.random.default_rng(seed)
     tau1, tau2 = T // 3, 2 * T // 3
-    events = [{"type": "rename", "t": tau1, "from": "c1", "to": "c1_prime"}]
+    events = [{"kind": "KEY_RENAMED", "seq": tau1, "from": KEY_OLD, "to": KEY_NEW}]
     drawn_event, drawn_kind = rng.random() < 0.5, rng.random() < 0.5
-    if force_reconciliation is None:
-        kind = ("total" if drawn_kind else "partial") if drawn_event else None
-    else:
-        kind = None if force_reconciliation == "none" else force_reconciliation
-    if kind is not None:
-        events.append({"type": "reconciliation", "t": tau2, "kind": kind})
-    renames = [e for e in events if e["type"] == "rename"]
-    recons = [e for e in events if e["type"] == "reconciliation"]
-    assert len(renames) == 1 and renames[0]["t"] == tau1, \
-        f"World D: expected exactly one rename at {tau1}, got {renames}"
-    assert len(recons) <= 1 and all(e["t"] == tau2 for e in recons), \
-        f"World D: at most one reconciliation at {tau2}, got {recons}"
+    drawn = ("total" if drawn_kind else "partial") if drawn_event else None
+    kind = drawn if force_reconciliation is None else \
+        (None if force_reconciliation == "none" else force_reconciliation)
+    vmap = {"valueMap": {v: v for v in MAPPED_VALUES}} if kind == "partial" else {}
+    if kind is not None:    # a valueMap covering only MAPPED_VALUES is PARTIAL; absent is TOTAL
+        events.append({"kind": "RECONCILED", "seq": tau2,
+                       "oldKey": KEY_OLD, "newKey": KEY_NEW, **vmap})
+    renames = [e for e in events if e["kind"] == "KEY_RENAMED"]
+    recons = [e for e in events if e["kind"] == "RECONCILED"]
+    assert len(renames) == 1 and renames[0] == {"kind": "KEY_RENAMED", "seq": tau1,
+                                                "from": KEY_OLD, "to": KEY_NEW}, \
+        f"World D: expected exactly one rename at {tau1}, VocabularyEvent-shaped, got {renames}"
+    assert len(recons) <= 1 and all(e["seq"] == tau2 for e in recons) and \
+        all(set(e) <= {"kind", "seq", "oldKey", "newKey", "valueMap"} for e in recons) and \
+        (kind == "partial") == any("valueMap" in e for e in recons), \
+        f"World D: at most one reconciliation at {tau2}, VocabularyEvent-shaped, got {recons}"
+    mapped = COND_VALUE in MAPPED_VALUES
+    pre_final = {"total": "applicable",
+                 "partial": "applicable" if mapped else "out_of_scope"}.get(kind, "unevaluable")
     obs, planted = [], {}
     for t in range(T):
-        regime = str(rng.choice(("r0", "r1")))
-        label = "c1" if t < tau1 else "c1_prime"
-        obs.append(Observation(STRATEGY, {"env": label, "regime": regime},
-                               _draw(rng, p0, noise_unclear), t))
-        if t < tau1:
-            if kind == "total":
-                final = "applicable"
-            elif kind == "partial":
-                final = "applicable" if regime in MAPPED_VALUES else "out_of_scope"
-            else:
-                final = "unevaluable"
-            planted[t] = {"planted_state": final, "pre_tau1": True,
-                          "state_between_tau1_tau2": "unevaluable", "regime": regime}
-        else:
-            planted[t] = {"planted_state": "applicable", "pre_tau1": False,
-                          "state_between_tau1_tau2": "applicable", "regime": regime}
-    labels = [o.conditions["env"] for o in obs]
-    switches = [t for t in range(1, T) if labels[t] != labels[t - 1]]
-    assert switches == [tau1], f"World D: label must change exactly once at {tau1}, got {switches}"
-    pre = [planted[t]["planted_state"] for t in range(tau1)]
-    if kind == "partial":
-        assert "unevaluable" not in pre, "World D: a partial reconciliation leaves no unevaluable"
-    elif kind is None:
-        assert set(pre) <= {"unevaluable"}, "World D: without an event pre-tau1 stays unevaluable"
+        key, early = (KEY_OLD, True) if t < tau1 else (KEY_NEW, False)
+        obs.append(Observation(STRATEGY, {key: COND_VALUE}, _draw(rng, p0, noise_unclear), t))
+        planted[t] = {"planted_state": pre_final if early else "applicable",
+                      "pre_tau1": early, "key": key, "value": COND_VALUE,
+                      "state_between_tau1_tau2": "unevaluable" if early else "applicable",
+                      "value_mapped": mapped if early else True}
+    keys = [next(iter(o.conditions)) for o in obs]
+    switches = [t for t in range(1, T) if keys[t] != keys[t - 1]]
+    assert switches == [tau1] and set(keys[:tau1]) == {KEY_OLD} and set(keys[tau1:]) == {KEY_NEW} \
+        and {v for o in obs for v in o.conditions.values()} == {COND_VALUE}, \
+        f"World D: only the KEY moves, {KEY_OLD} -> {KEY_NEW}, once at {tau1}; got {switches}"
+    pre = {planted[t]["planted_state"] for t in range(tau1)}
+    want = {None: {"unevaluable"}, "total": {"applicable"},
+            "partial": {"applicable", "out_of_scope"}}[kind]
+    assert pre <= want, f"World D: pre-tau1 under reconciliation={kind} must be {want}, got {pre}"
     return StandingWorld(obs, events, planted,
                          {"world": "D", "T": T, "seed": seed, "tau1": tau1, "tau2": tau2,
-                          "p0": p0, "noise_unclear": noise_unclear,
-                          "reconciliation": kind, "forced": force_reconciliation,
-                          "mapped_values": list(MAPPED_VALUES)})
+                          "p0": p0, "noise_unclear": noise_unclear, "reconciliation": kind,
+                          "forced": force_reconciliation, "key_old": KEY_OLD, "key_new": KEY_NEW,
+                          "cond_value": COND_VALUE, "mapped_values": list(MAPPED_VALUES)})
 
 
 _DISPATCH = {"A": make_world_a, "B": make_world_b, "C": make_world_c, "D": make_world_d}
