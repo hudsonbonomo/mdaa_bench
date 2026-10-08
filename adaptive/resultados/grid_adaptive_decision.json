@@ -1,0 +1,355 @@
+{
+  "decision": {
+    "S_T320_k3": {
+      "p1": {
+        "rate_declared": 1.0,
+        "rate_fixed": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "S_T320_k5": {
+      "p1": {
+        "rate_declared": 0.8,
+        "rate_fixed": 1.0,
+        "passed": false,
+        "failure_class": "against_thesis"
+      }
+    },
+    "S_T640_k3": {
+      "p1": {
+        "rate_declared": 1.0,
+        "rate_fixed": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p3": {
+        "rate_declared": 1.0,
+        "mean_mix": 0.3333333333333333,
+        "excluded_declared": 0,
+        "excluded_mix": 0,
+        "n_counted_mix": 20,
+        "passed": true,
+        "failure_class": null
+      },
+      "p3b": {
+        "rate": 1.0,
+        "excluded": 0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p4": {
+        "side": "R_simple",
+        "rate": 1.0,
+        "excluded": 0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "S_T640_k5": {
+      "p1": {
+        "rate_declared": 1.0,
+        "rate_fixed": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p3": {
+        "rate_declared": 1.0,
+        "mean_mix": 0.3333333333333333,
+        "excluded_declared": 0,
+        "excluded_mix": 0,
+        "n_counted_mix": 20,
+        "passed": true,
+        "failure_class": null
+      },
+      "p3b": {
+        "rate": 1.0,
+        "excluded": 0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p4": {
+        "side": "R_simple",
+        "rate": 1.0,
+        "excluded": 0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "N_T320_k3": {
+      "p2": {
+        "rate_declared": 1.0,
+        "rate_simple": 0.95,
+        "passed": true,
+        "failure_class": null
+      },
+      "p4": {
+        "side": "R_mix",
+        "rate": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "N_T320_k5": {
+      "p2": {
+        "rate_declared": 1.0,
+        "rate_simple": 0.95,
+        "passed": true,
+        "failure_class": null
+      },
+      "p4": {
+        "side": "R_mix",
+        "rate": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "N_T640_k3": {
+      "p2": {
+        "rate_declared": 1.0,
+        "rate_simple": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p4": {
+        "side": "R_mix",
+        "rate": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "N_T640_k5": {
+      "p2": {
+        "rate_declared": 1.0,
+        "rate_simple": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p4": {
+        "side": "R_mix",
+        "rate": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "K_T320_k3": {
+      "p5": {
+        "rate_monotone": 1.0,
+        "rate_conflict": 1.0,
+        "rate_sym": 0.65,
+        "passed": false,
+        "failure_class": "instrument_defect"
+      }
+    },
+    "K_T320_k5": {
+      "p5": {
+        "rate_monotone": 1.0,
+        "rate_conflict": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "K_T640_k3": {
+      "p5": {
+        "rate_monotone": 1.0,
+        "rate_conflict": 1.0,
+        "rate_sym": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "K_T640_k5": {
+      "p5": {
+        "rate_monotone": 1.0,
+        "rate_conflict": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "V_T320_k3": {
+      "p6": {
+        "rate_declared": 1.0,
+        "rate_cross": 0.95,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "V_T320_k5": {
+      "p6": {
+        "rate_declared": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "V_T640_k3": {
+      "p6": {
+        "rate_declared": 1.0,
+        "rate_cross": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "V_T640_k5": {
+      "p6": {
+        "rate_declared": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T320_k3": {
+      "p7": {
+        "rate": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T320_k5": {
+      "p7": {
+        "rate": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T640_k3": {
+      "p7": {
+        "rate": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T640_k5": {
+      "p7": {
+        "rate": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    }
+  },
+  "verdicts": {
+    "p1": {
+      "passed": false,
+      "failed_cells": [
+        {
+          "cell": "S_T320_k5",
+          "failure_class": "against_thesis"
+        }
+      ]
+    },
+    "p2": {
+      "passed": true,
+      "failed_cells": []
+    },
+    "p3": {
+      "passed": true,
+      "failed_cells": []
+    },
+    "p3b": {
+      "passed": true,
+      "failed_cells": []
+    },
+    "p5": {
+      "passed": false,
+      "failed_cells": [
+        {
+          "cell": "K_T320_k3",
+          "failure_class": "instrument_defect"
+        }
+      ]
+    },
+    "p6": {
+      "passed": true,
+      "failed_cells": []
+    },
+    "p7": {
+      "passed": true,
+      "failed_cells": []
+    },
+    "p4": {
+      "passed": true,
+      "failed_cells": []
+    }
+  },
+  "costs": {
+    "K_T320_k3": {
+      "mean_B_R_declared": 3.95,
+      "mean_B_R_fixed": 2.95,
+      "mean_B_diff": 1.0
+    },
+    "K_T320_k5": {
+      "mean_B_R_declared": 3.6,
+      "mean_B_R_fixed": 2.95,
+      "mean_B_diff": 0.6499999999999999
+    },
+    "K_T640_k3": {
+      "mean_B_R_declared": 7.05,
+      "mean_B_R_fixed": 3.95,
+      "mean_B_diff": 3.0999999999999996
+    },
+    "K_T640_k5": {
+      "mean_B_R_declared": 5.5,
+      "mean_B_R_fixed": 3.95,
+      "mean_B_diff": 1.5499999999999998
+    },
+    "V_T320_k3": {
+      "mean_A_R_cross": 1.45,
+      "mean_A_R_declared": 0.0
+    },
+    "V_T320_k5": {
+      "mean_A_R_cross": 0.8,
+      "mean_A_R_declared": 0.0
+    },
+    "V_T640_k3": {
+      "mean_A_R_cross": 5.8,
+      "mean_A_R_declared": 0.0
+    },
+    "V_T640_k5": {
+      "mean_A_R_cross": 3.7,
+      "mean_A_R_declared": 0.0
+    }
+  },
+  "n_rows": 400,
+  "worlds": [
+    "S",
+    "N",
+    "K",
+    "V",
+    "R"
+  ],
+  "T_levels": [
+    320,
+    640
+  ],
+  "k_levels": [
+    3,
+    5
+  ],
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ],
+  "plugin_commit": "04e71bb128892709f0b8017ead15d9c12e5cd75d",
+  "dist_sha256": {
+    "adjustment-cli.js": "2daf107a00b22f10f4e1546a501c241e68a715a6725d2cf9494e82d3e5077a68",
+    "adjustment.js": "5d992d3f6a22c1b5898f6c0e0f59166bd203654d26882024d4703960f43d65fc",
+    "standing.js": "e645bd29b32164a6d16955e3442ca1cc771f4ff221ea8477c28fa6d0b14ddae1"
+  },
+  "elapsed_seconds": 585.66
+}
