@@ -1,0 +1,79 @@
+{
+  "_comment": "Paper 6 — adaptive/ — parametros a congelar. Nao editar depois do commit de congelamento.",
+  "declared": {
+    "warrant_window": 40,
+    "appear_window": 160,
+    "declared_by": "person"
+  },
+  "rule": {
+    "step": 10,
+    "min_window": 20,
+    "max_window": 160,
+    "thresholds": [
+      3,
+      5
+    ]
+  },
+  "stream": {
+    "block_length": 5,
+    "conditions": [
+      "c1",
+      "c2"
+    ],
+    "key": "modo",
+    "target": "c1",
+    "strategy": "s*"
+  },
+  "worlds": {
+    "S": {
+      "p": 0.8
+    },
+    "N": {
+      "p_hi": 0.8,
+      "p_lo": 0.2,
+      "regime_rounds": 40
+    },
+    "K": {
+      "p_before": 0.8,
+      "p_after": 0.2,
+      "tau": "T/2"
+    },
+    "V": {
+      "p": 0.8,
+      "first_rename": 200,
+      "rename_every": 60,
+      "reconcile_after": 10
+    },
+    "R": {
+      "p": 0.8,
+      "redeclare_at": "T/2",
+      "redeclare_window": 40
+    }
+  },
+  "T": [
+    320,
+    640
+  ],
+  "mix": {
+    "candidate_steps": [
+      10,
+      20,
+      40
+    ],
+    "eta": 0.5
+  },
+  "seeds": {
+    "grid": [
+      1,
+      20
+    ],
+    "pilot": [
+      901,
+      905
+    ],
+    "structural_tests_only": [
+      7001,
+      7005
+    ]
+  }
+}
