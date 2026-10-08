@@ -1,0 +1,119 @@
+{
+  "seeds": [
+    901,
+    902,
+    903,
+    904,
+    905
+  ],
+  "note": "Sementes-piloto -- descartadas por preregistro. NAO entram em resultado do paper.",
+  "plugin_commit": "04e71bb128892709f0b8017ead15d9c12e5cd75d",
+  "dist_sha256": {
+    "adjustment-cli.js": "2daf107a00b22f10f4e1546a501c241e68a715a6725d2cf9494e82d3e5077a68",
+    "adjustment.js": "5d992d3f6a22c1b5898f6c0e0f59166bd203654d26882024d4703960f43d65fc",
+    "standing.js": "e645bd29b32164a6d16955e3442ca1cc771f4ff221ea8477c28fa6d0b14ddae1"
+  },
+  "controls": {
+    "S_T640_k3": {
+      "p3": {
+        "mean_mix": 0.3333333333333333,
+        "excluded_mix": 0,
+        "threshold": 0.5
+      },
+      "p3b": {
+        "rate": 1.0,
+        "threshold": 1.0
+      },
+      "p4": {
+        "side": "R_simple",
+        "rate": 1.0,
+        "threshold": 1.0
+      }
+    },
+    "S_T640_k5": {
+      "p3": {
+        "mean_mix": 0.3333333333333333,
+        "excluded_mix": 0,
+        "threshold": 0.5
+      },
+      "p3b": {
+        "rate": 1.0,
+        "threshold": 1.0
+      },
+      "p4": {
+        "side": "R_simple",
+        "rate": 1.0,
+        "threshold": 1.0
+      }
+    },
+    "N_T320_k3": {
+      "p2": {
+        "rate_simple": 0.8,
+        "threshold": 0.6
+      },
+      "p4": {
+        "side": "R_mix",
+        "rate": 1.0,
+        "threshold": 0.95
+      }
+    },
+    "N_T320_k5": {
+      "p2": {
+        "rate_simple": 0.8,
+        "threshold": 0.6
+      },
+      "p4": {
+        "side": "R_mix",
+        "rate": 1.0,
+        "threshold": 0.95
+      }
+    },
+    "N_T640_k3": {
+      "p2": {
+        "rate_simple": 1.0,
+        "threshold": 0.85
+      },
+      "p4": {
+        "side": "R_mix",
+        "rate": 1.0,
+        "threshold": 0.95
+      }
+    },
+    "N_T640_k5": {
+      "p2": {
+        "rate_simple": 1.0,
+        "threshold": 0.85
+      },
+      "p4": {
+        "side": "R_mix",
+        "rate": 1.0,
+        "threshold": 0.95
+      }
+    },
+    "K_T320_k3": {
+      "p5": {
+        "rate_sym": 0.8,
+        "threshold_sym": 0.8
+      }
+    },
+    "K_T640_k3": {
+      "p5": {
+        "rate_sym": 1.0,
+        "threshold_sym": 0.8
+      }
+    },
+    "V_T320_k3": {
+      "p6": {
+        "rate_cross": 1.0,
+        "threshold_cross": 0.9
+      }
+    },
+    "V_T640_k3": {
+      "p6": {
+        "rate_cross": 1.0,
+        "threshold_cross": 0.9
+      }
+    }
+  },
+  "elapsed_seconds": 163.48
+}
