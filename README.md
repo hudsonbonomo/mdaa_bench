@@ -1149,6 +1149,18 @@ R_declared requires `MDAA_PLUGIN_DIST` pointing to the compiled `@tmulab/mdaa` d
 directory (see `standing/env.example`). The CLI SHA-256 measured for the grid is
 `8c3cf889...26302543` from tmulab-mdaa commit `4503cc1`.
 
+## adaptive/ — Paper 6 (Adaptive Policy Learning)
+
+Paper 6 asks whether an adaptive policy — one that updates its own decision
+rule from the record it reads — can be graded by the same external criteria
+the decision bench uses, on worlds where the correct adaptation is planted.
+
+- Preregistro frozen at `bed380b` (8 out 2026)
+- Pilot at `65f5e6b` (seeds 901–905, discarded per preregistro)
+- Grid at `3cd0aad` (seeds 1–20, authorized by Hudson A. R. Bonomo)
+- Plugin fixed at `tmulab-mdaa 04e71bb` via `adaptive/plugin.sha256`
+- Result: 6 of 8 predictions met, per `adaptive/resultados/grid_adaptive_decision.json`
+
 ## Next cells (in order of value)
 
 1-6. ~~Cells 1-5 of the original roadmap, plus the Wiener null.~~ **Done (v1, v2).**
