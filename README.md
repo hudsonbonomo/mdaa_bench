@@ -1160,6 +1160,7 @@ the decision bench uses, on worlds where the correct adaptation is planted.
 - Grid at `3cd0aad` (seeds 1–20, authorized by Hudson A. R. Bonomo)
 - Plugin fixed at `tmulab-mdaa 04e71bb` via `adaptive/plugin.sha256`
 - Result: 6 of 8 predictions met, per `adaptive/resultados/grid_adaptive_decision.json`
+- Paper 6: https://doi.org/10.5281/zenodo.23241779
 
 ## Next cells (in order of value)
 

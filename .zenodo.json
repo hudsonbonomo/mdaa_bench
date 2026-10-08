@@ -33,7 +33,7 @@
   "notes": "Competing interest: TMU-LAB has commercial interests, declared as a competing interest in the associated papers.",
   "related_identifiers": [
     {
-      "identifier": "https://github.com/hudsonbonomo/mdaa_bench/tree/v6.0.0",
+      "identifier": "https://github.com/hudsonbonomo/mdaa_bench/tree/v7.0.0",
       "relation": "isSupplementTo",
       "resource_type": "software",
       "scheme": "url"
@@ -67,6 +67,12 @@
       "relation": "isSupplementTo",
       "resource_type": "publication-preprint",
       "scheme": "doi"
+    },
+    {
+      "identifier": "10.5281/zenodo.23241779",
+      "relation": "isSupplementTo",
+      "scheme": "doi",
+      "resource_type": "publication-preprint"
     }
   ]
 }
