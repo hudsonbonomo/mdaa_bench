@@ -1,0 +1,10 @@
+{
+ "O":  {"k": [2, 5], "episodes": 30, "inversion": {"s1_episodes": 8, "s2_episodes": 3, "s2_reports_each": 4}},
+ "Pn": {"n": [5, 20], "records_per_person": 40, "p_s1": 0.5, "p_s2": 0.75},
+ "Pop": {"worlds": ["Pc", "Pl", "Pw"], "n": [5, 20], "T": [320, 640],
+         "Pc": {"p": 0.85}, "Pl": {"p_range": [0.6, 0.9]},
+         "Pw": {"p0": 0.85, "p1_fast": 0.35, "fast_fraction": 0.5}},
+ "G":  {"n": [5, 10, 30], "m": 5, "p": [0.8, 0.9], "rho": [0.0, 0.5],
+        "status_quo": "a0", "show_reasons_rate": 0.7},
+ "seeds": {"grid": [1, 20], "pilot": [901, 905], "sizing": [300001, 300300]}
+}
