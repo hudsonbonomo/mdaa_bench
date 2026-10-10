@@ -45,13 +45,18 @@ def _call_bridge(cli_name: str, payload: dict,
 
 
 def read_own_episodes(world, offered_strategies=None) -> dict:
-    """R_own for O and Pn: collective-cli.js mode episodes."""
+    """R_own for O and Pn: collective-cli.js mode episodes.
+    EpisodesRequest extends StandingRequest; we send the standing
+    fields so the plugin can compute status and election."""
+    nowSeq = len(world.observations)
     payload: dict = {
         "mode": "episodes",
         "observations": world.observations,
-        "declarations": world.declarations,
+        "nowSeq": nowSeq,
+        "currentConditions": world.condition,
         "vocabularyEvents": world.vocabulary_events,
-        "condition": world.condition,
+        "policy": {"appearWindow": 1e9, "warrantWindow": 1e9,
+                   "appearanceFloor": 1},
     }
     if offered_strategies is not None:
         payload["offeredStrategies"] = offered_strategies

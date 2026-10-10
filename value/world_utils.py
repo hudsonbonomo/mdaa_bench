@@ -59,14 +59,15 @@ def make_obs(seq: int, signal: str, strategy: str,
 
 def make_norm_proposed(norm_id: str, reads: str,
                        min_per_arm: int, margin: float,
-                       seq: int = 0) -> dict:
+                       seq: int = 0,
+                       origin: str = "DECLARED") -> dict:
     return {
         "type": "mdaa.norm.proposed", "seq": seq,
         "normId": norm_id, "version": 1,
         "reads": reads,
         "scope": {"modo": "c1"},
         "rule": {"minPerArm": min_per_arm, "margin": margin},
-        "provenance": {"origin": "DECLARED", "recordedBy": "host"},
+        "provenance": {"origin": origin, "recordedBy": "host"},
     }
 
 

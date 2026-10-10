@@ -12,6 +12,31 @@ from .worlds import ValueWorld, load_policy
 
 __all__ = ["read_judge", "read_parecer", "JUDGE_STATES"]
 
+
+def _labels(s):
+    """Normalise strategy to list of labels (plugin convention)."""
+    return [s] if isinstance(s, str) else s
+
+
+def _wrap_events(events: list[dict]) -> list[dict]:
+    """Wrap flat bench events into {type, seq, payload} envelope
+    expected by the plugin's readLedger.  Also normalises strategy
+    fields to arrays (plugin calls strategyIdentity which needs
+    .join)."""
+    wrapped = []
+    for e in events:
+        env: dict = {"type": e["type"], "seq": e["seq"]}
+        payload = {k: v for k, v in e.items()
+                   if k not in ("type", "seq")}
+        if "strategy" in payload:
+            payload["strategy"] = _labels(payload["strategy"])
+        if "strategies" in payload:
+            payload["strategies"] = [_labels(s) for s in
+                                     payload["strategies"]]
+        env["payload"] = payload
+        wrapped.append(env)
+    return wrapped
+
 JUDGE_STATES = (
     "SEM_NORMA", "INSUFICIENTE", "JUSTIFICADO",
     "NAO_JUSTIFICADO", "EM_CONFLITO",
@@ -57,10 +82,9 @@ def _judge_payload(world: ValueWorld,
     return {
         "mode": "judge",
         "observations": world.observations,
-        "normEvents": world.norm_events,
-        "protocolEvents": world.protocol_events,
-        "journeyEvents": world.journey_events,
-        "gammaInput": _gamma_input(pair),
+        "normEvents": _wrap_events(world.norm_events),
+        "protocolEvents": _wrap_events(world.protocol_events),
+        "gamma": _gamma_input(pair),
         "currentConditions": {"modo": "c1"},
     }
 
@@ -75,12 +99,15 @@ def _parecer_payload(world: ValueWorld, layer7: bool) -> dict:
     return {
         "mode": "parecer",
         "observations": world.observations,
-        "normEvents": world.norm_events,
-        "protocolEvents": world.protocol_events,
-        "journeyEvents": world.journey_events,
+        "normEvents": _wrap_events(world.norm_events),
+        "protocolEvents": _wrap_events(world.protocol_events),
         "layer7": layer7,
         "currentConditions": {"modo": "c1"},
-        "gammaInput": _gamma_input(("s1", "s2")),
+        "gamma": _gamma_input(("s1", "s2")),
+        "nowSeq": len(world.observations),
+        "vocabularyEvents": [],
+        "policy": {"appearWindow": 1e9, "warrantWindow": 1e9,
+                   "appearanceFloor": 1},
     }
 
 

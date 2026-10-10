@@ -67,7 +67,7 @@ def make_N0(T: int, seed: int) -> ValueWorld:
     proto_evts, obs, _ = _protocol_and_obs(
         T, seed, p_ret, "retention", _STRATS, _PROBS)
     norms = [make_norm_proposed("n1", "retention",
-             _NORM["minPerArm"], _NORM["margin"])]
+             _NORM["minPerArm"], _NORM["margin"], origin="HOST")]
     pc = [make_protocol_consented("proto1", _STRATS, _PROBS)]
     w = ValueWorld(obs, norms, pc + proto_evts, [],
                    {"world": "N0", "planted": "no_norm_confirmed"},

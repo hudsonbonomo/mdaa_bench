@@ -55,6 +55,7 @@ def _measure_norm_stub(world: ValueWorld, world_name: str) -> dict:
     available. Returns empty-state markers so decide.py can detect absence."""
     d: dict = {}
     d["R_norm_state"] = None
+    d["R_norm_judged_strategy"] = None
     d["R_norm_elected"] = None
     d["R_norm_s2s3_state"] = None
     d["R_norm_s2s3_elected"] = None
@@ -66,6 +67,28 @@ def _measure_norm_stub(world: ValueWorld, world_name: str) -> dict:
     return d
 
 
+def _judged_from_perNorm(jdg: dict) -> str | None:
+    """Derive the best strategy from perNorm when elected is absent.
+    Returns the strategy with the higher BETTER rate among JUSTIFICADO
+    norms, or None if the judgment is not JUSTIFICADO."""
+    if jdg.get("state") != "JUSTIFICADO":
+        return None
+    for nr in jdg.get("perNorm", []):
+        if nr.get("verdict") != "JUSTIFICADO":
+            continue
+        arms = nr.get("arms", {})
+        best_s, best_rate = None, -1.0
+        for s, arm in arms.items():
+            eps = arm.get("episodes", 0)
+            rate = arm["better"] / eps if eps > 0 else 0.0
+            if rate > best_rate:
+                best_rate = rate
+                best_s = s
+        if best_s is not None:
+            return best_s
+    return None
+
+
 def _measure_norm_integration(world: ValueWorld,
                               world_name: str) -> dict:
     """Full R_norm measurements via plugin bridge."""
@@ -73,11 +96,15 @@ def _measure_norm_integration(world: ValueWorld,
     d: dict = {}
     jdg = read_judge(world, ("s1", "s2"))
     d["R_norm_state"] = jdg.get("state")
-    d["R_norm_elected"] = jdg.get("elected")
+    d["R_norm_judged_strategy"] = _judged_from_perNorm(jdg)
+    el = jdg.get("elected")
+    d["R_norm_elected"] = el[0] if isinstance(el, list) and el else el
     if world_name == "P":
         jdg23 = read_judge(world, ("s2", "s3"))
         d["R_norm_s2s3_state"] = jdg23.get("state")
-        d["R_norm_s2s3_elected"] = jdg23.get("elected")
+        el23 = jdg23.get("elected")
+        d["R_norm_s2s3_elected"] = (el23[0] if isinstance(el23, list)
+                                    and el23 else el23)
     else:
         d["R_norm_s2s3_state"] = None
         d["R_norm_s2s3_elected"] = None
