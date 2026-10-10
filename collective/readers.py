@@ -36,7 +36,8 @@ def _call_bridge(cli_name: str, payload: dict,
     cli = _dist_path(cli_name)
     proc = subprocess.run(
         ["node", str(cli)], input=json.dumps(payload),
-        capture_output=True, text=True, timeout=timeout)
+        capture_output=True, text=True, encoding="utf-8",
+        timeout=timeout)
     if proc.returncode != 0:
         raise RuntimeError(
             f"{cli_name} exited {proc.returncode}: "

@@ -89,13 +89,16 @@ def make_C2(T: int, seed: int):
     return w
 
 
-def _X_core(T, seed, with_protocol):
+def _X_core(T, seed, with_protocol, *,
+            p_ret_fresh_ov=None, p_ret_tired_ov=None):
     xp = _P["worlds"]["X"]
     p_stay = float(xp["p_stay"])
     p_s2_tired = float(xp["p_choose_s2_if_tired"])
     p_s1_fresh = float(xp["p_choose_s1_if_fresh"])
-    p_ret_fresh = float(xp["p_ret_fresh"])
-    p_ret_tired = float(xp["p_ret_tired"])
+    p_ret_fresh = p_ret_fresh_ov if p_ret_fresh_ov is not None \
+        else float(xp["p_ret_fresh"])
+    p_ret_tired = p_ret_tired_ov if p_ret_tired_ov is not None \
+        else float(xp["p_ret_tired"])
     rng = np.random.default_rng(seed)
     strats_2, probs_2 = _STRATS[:2], [0.5, 0.5]
     proto_evts, obs, choices = [], [], []
@@ -126,10 +129,13 @@ def _X_core(T, seed, with_protocol):
     return proto_evts, obs, norms, pc, choices, rng
 
 
-def make_X(T: int, seed: int):
+def make_X(T: int, seed: int, *,
+           p_ret_fresh=None, p_ret_tired=None):
     """X: confounded, no protocol. Planted: not justifiable."""
     from .worlds import ValueWorld
-    proto_evts, obs, norms, pc, choices, _ = _X_core(T, seed, False)
+    proto_evts, obs, norms, pc, choices, _ = _X_core(
+        T, seed, False,
+        p_ret_fresh_ov=p_ret_fresh, p_ret_tired_ov=p_ret_tired)
     w = ValueWorld(obs, norms, pc + proto_evts, [],
                    {"world": "X", "planted": "not_justifiable",
                     "choices": choices},
@@ -139,10 +145,13 @@ def make_X(T: int, seed: int):
     return w
 
 
-def make_Xp(T: int, seed: int):
+def make_Xp(T: int, seed: int, *,
+            p_ret_fresh=None, p_ret_tired=None):
     """Xp: same hidden structure as X, with protocol. No difference."""
     from .worlds import ValueWorld
-    proto_evts, obs, norms, pc, choices, _ = _X_core(T, seed, True)
+    proto_evts, obs, norms, pc, choices, _ = _X_core(
+        T, seed, True,
+        p_ret_fresh_ov=p_ret_fresh, p_ret_tired_ov=p_ret_tired)
     w = ValueWorld(obs, norms, pc + proto_evts, [],
                    {"world": "Xp", "planted": "no_difference",
                     "choices": choices},

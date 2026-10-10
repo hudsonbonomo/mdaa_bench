@@ -61,7 +61,8 @@ def _call_bridge(payload: dict, timeout: float = 120.0) -> dict:
     cli = _dist_path()
     proc = subprocess.run(
         ["node", str(cli)], input=json.dumps(payload),
-        capture_output=True, text=True, timeout=timeout)
+        capture_output=True, text=True, encoding="utf-8",
+        timeout=timeout)
     if proc.returncode != 0:
         raise RuntimeError(
             f"{_CLI} exited {proc.returncode}: {proc.stderr.strip()[:400]}")

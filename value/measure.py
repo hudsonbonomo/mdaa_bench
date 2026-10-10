@@ -34,6 +34,17 @@ def _strip_pauses(world: ValueWorld) -> ValueWorld:
                       world.planted, world.params)
 
 
+def _measure_gap_shift(world: ValueWorld) -> dict:
+    """R_infer_value gap with vs without pauses. For R/R+ only."""
+    iv_with = R_infer_value(world)
+    gap_with = iv_with["values"].get("s2", 0) - iv_with["values"].get("s1", 0)
+    stripped = _strip_pauses(world)
+    iv_without = R_infer_value(stripped)
+    gap_wo = iv_without["values"].get("s2", 0) - iv_without["values"].get("s1", 0)
+    return {"gap_with_pauses": gap_with, "gap_without_pauses": gap_wo,
+            "gap_shift": abs(gap_with - gap_wo)}
+
+
 def _measure_controls(world: ValueWorld) -> dict:
     """Run all four Python controls on the world."""
     d: dict = {}
@@ -121,7 +132,11 @@ def _measure_norm_integration(world: ValueWorld,
     d["P6_layer7_false"] = par_off
     jdg_s3 = read_judge(world, ("s1", "s3"))
     d["P6_s3_never_elected"] = jdg_s3.get("elected") != "s3"
-    d["cost_checkpoint"] = _cost_checkpoint(world, world_name)
+    # Cost only for P (reaches JUSTIFICADO); Xp gets None by design
+    if world_name == "P":
+        d["cost_checkpoint"] = _cost_checkpoint(world, world_name)
+    else:
+        d["cost_checkpoint"] = None
     return d
 
 
@@ -143,11 +158,16 @@ def _cost_checkpoint(world: ValueWorld, world_name: str) -> int | None:
 
 
 def measure_run(world_name: str, T: int, seed: int,
-                use_plugin: bool = False) -> dict:
-    """Run all readers and measurements for one (world, T, seed) cell."""
-    w = make_world(world_name, T=T, seed=seed)
+                use_plugin: bool = False,
+                world_override: 'ValueWorld | None' = None) -> dict:
+    """Run all readers and measurements for one (world, T, seed) cell.
+    Pass world_override to use a pre-built world (e.g. alternative params).
+    """
+    w = world_override or make_world(world_name, T=T, seed=seed)
     d: dict = {}
     d.update(_measure_controls(w))
+    if world_name in ("R", "R+"):
+        d.update(_measure_gap_shift(w))
     if use_plugin:
         d.update(_measure_norm_integration(w, world_name))
     else:
