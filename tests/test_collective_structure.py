@@ -145,7 +145,37 @@ def test_Pl_wide_range_gate_refuses():
         f"Pl [0.05,0.95]: mean ratio {mean_r:.4f} < 1.5")
 
 
-# -- 10. make_world dispatch works --
+# -- 10. gates._variance_ratio uses median, matching density.py formula --
+def test_gates_median_matches_density_formula():
+    """gates._variance_ratio centres = median, same as density.py L184-188."""
+    from collective.gates import _variance_ratio
+    rng = np.random.default_rng(42)
+    # 4 persons, 8 blocks each, different locations (so median != mean)
+    data = []
+    for loc in [0.5, 0.6, 0.7, 0.8]:
+        s = list(rng.normal(loc, 0.1, size=8))
+        s[0] = loc + 2.0  # outlier so median != mean
+        data.append(s)
+
+    ratio_gates = _variance_ratio(data)
+
+    # density.py formula (h1_ensemble L184-188): centres = median
+    centres = np.array([np.median(s) for s in data])
+    within = float(np.mean([np.var(s) for s in data]))
+    between = float(np.var(centres))
+    ratio_density = between / (within + 1e-12)
+
+    assert abs(ratio_gates - ratio_density) < 1e-10, (
+        f"gates {ratio_gates:.6f} != density formula {ratio_density:.6f}")
+
+    # Also verify it would differ if we used mean instead
+    mean_centres = np.array([np.mean(s) for s in data])
+    ratio_mean = float(np.var(mean_centres)) / (within + 1e-12)
+    assert abs(ratio_gates - ratio_mean) > 1e-6, (
+        "With outlier, median-based ratio must differ from mean-based")
+
+
+# -- 11. make_world dispatch works --
 @pytest.mark.parametrize("seed", SEEDS[:1])
 def test_dispatch(seed):
     for name in WORLDS:

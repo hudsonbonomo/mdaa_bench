@@ -50,16 +50,16 @@ def _better_rate_per_block(world: AdaptiveWorld) -> list[float]:
 
 
 def _location_between_within(person_worlds: list[AdaptiveWorld]):
-    """Variance ratio: between-person / within-person on BETTER rate."""
+    """Variance ratio: between-person / within-person on BETTER rate.
+    Centres are medians, matching sim/density.py h1_ensemble lines 184-188.
+    """
     person_rates = [_better_rate_per_block(pw) for pw in person_worlds]
     person_rates = [r for r in person_rates if len(r) > 1]
     if not person_rates:
         return float("inf")
-    person_means = [np.mean(r) for r in person_rates]
-    grand_mean = np.mean(person_means)
-    between = np.mean([(m - grand_mean) ** 2 for m in person_means])
-    within_vars = [np.var(r) for r in person_rates]
-    within = np.mean(within_vars)
+    centres = np.array([float(np.median(r)) for r in person_rates])
+    between = float(np.var(centres))
+    within = float(np.mean([np.var(r) for r in person_rates]))
     if within < 1e-12:
         return float("inf") if between > 1e-12 else 0.0
     return float(between / within)
@@ -84,10 +84,16 @@ def make_Pc(n: int, T: int, seed: int) -> CollectiveWorld:
 
 
 # ── Pl: location differs ────────────────────────────────────
-def make_Pl(n: int, T: int, seed: int) -> CollectiveWorld:
-    """Pl -- S world with p drawn per person in p_range."""
+def make_Pl(n: int, T: int, seed: int,
+            p_range: list[float] | None = None) -> CollectiveWorld:
+    """Pl -- S world with p drawn per person in p_range.
+    p_range: [lo, hi] pair.  None -> first range from policy (dose-response).
+    """
     rng = np.random.default_rng(seed)
-    p_lo, p_hi = _CP["Pop"]["Pl"]["p_range"]
+    if p_range is None:
+        cfg = _CP["Pop"]["Pl"]["p_range"]
+        p_range = cfg[0] if isinstance(cfg[0], list) else cfg
+    p_lo, p_hi = p_range
     person_worlds = []
     person_ps = []
     for i in range(n):

@@ -34,13 +34,14 @@ def _better_rate_per_block(world: AdaptiveWorld) -> list[float]:
 
 
 def _variance_ratio(per_person_series: list[list[float]]) -> float:
-    """Between-person / within-person variance ratio."""
+    """Between-person / within-person variance ratio.
+    Centres are medians, matching sim/density.py h1_ensemble lines 184-188.
+    """
     valid = [s for s in per_person_series if len(s) > 1]
     if not valid:
         return float("inf")
-    person_means = [np.mean(s) for s in valid]
-    grand_mean = np.mean(person_means)
-    between = float(np.mean([(m - grand_mean) ** 2 for m in person_means]))
+    centres = np.array([float(np.median(s)) for s in valid])
+    between = float(np.var(centres))
     within = float(np.mean([np.var(s) for s in valid]))
     if within < 1e-12:
         return float("inf") if between > 1e-12 else 0.0
