@@ -377,62 +377,62 @@
   "empty_intersection": {
     "G_n5_p0.8_rho0.0": {
       "observed": 0.4533333333333333,
-      "expected": 0.8626337148442734,
+      "expected": 0.4389979451306081,
       "n_seeds": 300
     },
     "G_n5_p0.8_rho0.5": {
       "observed": 0.44,
-      "expected": 0.8626337148442734,
+      "expected": null,
       "n_seeds": 300
     },
     "G_n5_p0.9_rho0.0": {
       "observed": 0.19666666666666666,
-      "expected": 0.9884834457628289,
+      "expected": 0.2022890284471291,
       "n_seeds": 300
     },
     "G_n5_p0.9_rho0.5": {
       "observed": 0.19,
-      "expected": 0.9884834457628289,
+      "expected": null,
       "n_seeds": 300
     },
     "G_n10_p0.8_rho0.0": {
       "observed": 0.8866666666666667,
-      "expected": 0.43330782041120397,
+      "expected": 0.8899571693143112,
       "n_seeds": 300
     },
     "G_n10_p0.8_rho0.5": {
       "observed": 0.85,
-      "expected": 0.43330782041120397,
+      "expected": null,
       "n_seeds": 300
     },
     "G_n10_p0.9_rho0.0": {
       "observed": 0.65,
-      "expected": 0.8827865978466163,
+      "expected": 0.6777732899183004,
       "n_seeds": 300
     },
     "G_n10_p0.9_rho0.5": {
       "observed": 0.6633333333333333,
-      "expected": 0.8827865978466163,
+      "expected": null,
       "n_seeds": 300
     },
     "G_n30_p0.8_rho0.0": {
       "observed": 1.0,
-      "expected": 0.006174394200654132,
+      "expected": 0.9999387954854664,
       "n_seeds": 300
     },
     "G_n30_p0.8_rho0.5": {
       "observed": 1.0,
-      "expected": 0.006174394200654132,
+      "expected": null,
       "n_seeds": 300
     },
     "G_n30_p0.9_rho0.0": {
       "observed": 0.9966666666666667,
-      "expected": 0.19473145251878454,
+      "expected": 0.9979058602084562,
       "n_seeds": 300
     },
     "G_n30_p0.9_rho0.5": {
       "observed": 1.0,
-      "expected": 0.19473145251878454,
+      "expected": null,
       "n_seeds": 300
     }
   },
