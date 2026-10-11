@@ -1,0 +1,188 @@
+{
+  "Q1_count_T": {
+    "source": "step_c",
+    "rate": 1.0,
+    "theta": 1.0
+  },
+  "Q2_pool_elects": {
+    "source": "step_c",
+    "rate": 1.0,
+    "theta": 1.0
+  },
+  "Pw_n5_T320_theta3_H1_passes": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pw_n5_T640_theta3_H1_passes": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pw_n20_T320_theta3_H1_passes": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pw_n20_T640_theta3_H1_passes": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pw_n5_T320_theta3p_borrow_error": {
+    "source": "E4+F2",
+    "rate": 0.9766666666666667,
+    "theta": 0.95,
+    "n_seeds": 300,
+    "f2_correction": {
+      "original_count": 297,
+      "seeds_switched_to_R_own": [
+        300041,
+        300086,
+        300166,
+        300191
+      ],
+      "borrow_errors_removed": 4,
+      "corrected_count": 293
+    }
+  },
+  "Pw_n5_T640_theta3p_borrow_error": {
+    "source": "E4",
+    "rate": 0.9933333333333333,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pw_n20_T320_theta3p_borrow_error": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pw_n20_T640_theta3p_borrow_error": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pl_n5_T320_theta3pp_H1_refuses": {
+    "source": "step_c",
+    "rate": 0.0,
+    "theta": 0.0,
+    "note": "F2 dose-response: theta3'' valid only for p_range [0.05, 0.95]"
+  },
+  "Pl_n5_T640_theta3pp_H1_refuses": {
+    "source": "step_c",
+    "rate": 0.0,
+    "theta": 0.0,
+    "note": "F2 dose-response: theta3'' valid only for p_range [0.05, 0.95]"
+  },
+  "Pl_n20_T320_theta3pp_H1_refuses": {
+    "source": "step_c",
+    "rate": 0.0,
+    "theta": 0.0,
+    "note": "F2 dose-response: theta3'' valid only for p_range [0.05, 0.95]"
+  },
+  "Pl_n20_T640_theta3pp_H1_refuses": {
+    "source": "step_c",
+    "rate": 0.0,
+    "theta": 0.0,
+    "note": "F2 dose-response: theta3'' valid only for p_range [0.05, 0.95]"
+  },
+  "Pc_n5_T320_gate_passes": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pc_n5_T640_gate_passes": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pc_n20_T320_gate_passes": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "Pc_n20_T640_gate_passes": {
+    "source": "E4",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "G_n10_p0.8_rho0.0_theta4_R_mean_outside": {
+    "source": "step_c_plugin_G",
+    "rate": 0.8866666666666667,
+    "theta": 0.85,
+    "n_seeds": 300
+  },
+  "G_n10_p0.8_rho0.5_theta4_R_mean_outside": {
+    "source": "step_c_plugin_G",
+    "rate": 0.85,
+    "theta": 0.8,
+    "n_seeds": 300
+  },
+  "G_n10_p0.9_rho0.0_theta4_R_mean_outside": {
+    "source": "step_c_plugin_G",
+    "rate": 0.65,
+    "theta": 0.55,
+    "n_seeds": 300
+  },
+  "G_n10_p0.9_rho0.5_theta4_R_mean_outside": {
+    "source": "step_c_plugin_G",
+    "rate": 0.6633333333333333,
+    "theta": 0.6,
+    "n_seeds": 300
+  },
+  "G_n30_p0.8_rho0.0_theta4_R_mean_outside": {
+    "source": "step_c_plugin_G",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "G_n30_p0.8_rho0.5_theta4_R_mean_outside": {
+    "source": "step_c_plugin_G",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "G_n30_p0.9_rho0.0_theta4_R_mean_outside": {
+    "source": "step_c_plugin_G",
+    "rate": 0.9966666666666667,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "G_n30_p0.9_rho0.5_theta4_R_mean_outside": {
+    "source": "step_c_plugin_G",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300
+  },
+  "G_low_empty_theta4_R_mean_outside_aggregate": {
+    "source": "step_c",
+    "rate": 0.9555555555555556,
+    "theta": 0.9,
+    "n_cells": 1800,
+    "note": "aggregate over cells with old expected_empty < 0.5"
+  },
+  "G_observed_empty_rates": {
+    "G_n5_p0.8_rho0.0": 0.4533333333333333,
+    "G_n5_p0.8_rho0.5": 0.44,
+    "G_n5_p0.9_rho0.0": 0.19666666666666666,
+    "G_n5_p0.9_rho0.5": 0.19,
+    "G_n10_p0.8_rho0.0": 0.8866666666666667,
+    "G_n10_p0.8_rho0.5": 0.85,
+    "G_n10_p0.9_rho0.0": 0.65,
+    "G_n10_p0.9_rho0.5": 0.6633333333333333,
+    "G_n30_p0.8_rho0.0": 1.0,
+    "G_n30_p0.8_rho0.5": 1.0,
+    "G_n30_p0.9_rho0.0": 0.9966666666666667,
+    "G_n30_p0.9_rho0.5": 1.0
+  }
+}
