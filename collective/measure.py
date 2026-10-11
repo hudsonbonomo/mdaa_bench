@@ -148,7 +148,12 @@ def _measure_Q4(world: CollectiveWorld, use_plugin=False) -> dict:
     d["Q4_n_members"] = n
     d["Q4_m_actions"] = m
     p = world.params.get("p", 0.8)
-    d["Q4_expected_empty_rate"] = 1.0 - (1.0 - p ** n) ** m
+    rho = world.params.get("rho", 0.0)
+    if rho == 0.0:
+        p_ef = p * 0.95 ** 3  # p * P(feas) * P(safe) * P(epi)
+        d["Q4_expected_empty_rate"] = (1.0 - p_ef ** n) ** m
+    else:
+        d["Q4_expected_empty_rate"] = None  # correlated; report observed only
     if use_plugin:
         from .readers import read_group
         gr = read_group(gi)
