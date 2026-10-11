@@ -67,6 +67,21 @@ def R_pool(population_obs: list[dict], strategies: list[str]) -> dict:
             "source": "population"}
 
 
+def _count_counted(folds: list[dict]) -> int:
+    """Count unique COUNTED returns across a person's fold sequence.
+    The plugin emits lastReturn {seq, kind} per fold; we count distinct
+    seqs with kind == 'COUNTED'.
+    """
+    seen: set[int] = set()
+    for f in folds:
+        if not isinstance(f, dict):
+            continue
+        lr = f.get("lastReturn")
+        if isinstance(lr, dict) and lr.get("kind") == "COUNTED":
+            seen.add(lr["seq"])
+    return len(seen)
+
+
 def R_pool_pop(person_folds: list[list[dict]], rule: dict) -> dict:
     """In Pop worlds: sum COUNTED returns across persons, apply rule.
     Each person_folds[i] is the folds result for person i.
@@ -79,9 +94,7 @@ def R_pool_pop(person_folds: list[list[dict]], rule: dict) -> dict:
     for folds in person_folds:
         if not folds:
             continue
-        last = folds[-1] if isinstance(folds, list) else folds
-        if isinstance(last, dict):
-            total_counted += last.get("countedReturns", 0)
+        total_counted += _count_counted(folds)
 
     k = rule.get("threshold", 3)
     step = rule.get("step", 10)

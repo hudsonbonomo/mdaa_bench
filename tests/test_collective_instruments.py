@@ -171,6 +171,62 @@ class TestRLeastmisery:
 
 # --- R_H1 ---
 
+# --- R_pool_pop ---
+
+class TestRPoolPop:
+    """R_pool_pop must read COUNTED returns from plugin fold format."""
+
+    def test_counts_from_lastReturn_kind(self):
+        """Hand-written fixture: 3 persons x 2 folds with lastReturn."""
+        person_folds = [
+            [  # Person 0: 2 COUNTED returns
+                {"window": 40, "lastReturn": {"seq": 10, "kind": "COUNTED"},
+                 "adjustments": []},
+                {"window": 40, "lastReturn": {"seq": 20, "kind": "COUNTED"},
+                 "adjustments": []},
+            ],
+            [  # Person 1: 1 COUNTED, 1 NEUTRAL
+                {"window": 40, "lastReturn": {"seq": 30, "kind": "NEUTRAL"},
+                 "adjustments": []},
+                {"window": 40, "lastReturn": {"seq": 40, "kind": "COUNTED"},
+                 "adjustments": []},
+            ],
+            [  # Person 2: 0 COUNTED
+                {"window": 40, "lastReturn": None, "adjustments": []},
+            ],
+        ]
+        rule = {"threshold": 3, "step": 10, "minWindow": 20, "maxWindow": 160}
+        from collective.controls import R_pool_pop
+        r = R_pool_pop(person_folds, rule)
+        assert r["counted_returns"] == 3, (
+            f"Expected 3 COUNTED returns, got {r['counted_returns']}")
+
+    def test_zero_when_no_counted(self):
+        person_folds = [
+            [{"window": 40, "lastReturn": {"seq": 10, "kind": "NEUTRAL"},
+              "adjustments": []}],
+        ]
+        rule = {"threshold": 3, "step": 10, "minWindow": 20, "maxWindow": 160}
+        from collective.controls import R_pool_pop
+        r = R_pool_pop(person_folds, rule)
+        assert r["counted_returns"] == 0
+
+    def test_dedup_same_seq(self):
+        """Same seq appearing in multiple folds -> counted once."""
+        person_folds = [
+            [
+                {"window": 40, "lastReturn": {"seq": 10, "kind": "COUNTED"},
+                 "adjustments": []},
+                {"window": 40, "lastReturn": {"seq": 10, "kind": "COUNTED"},
+                 "adjustments": []},
+            ],
+        ]
+        rule = {"threshold": 3, "step": 10, "minWindow": 20, "maxWindow": 160}
+        from collective.controls import R_pool_pop
+        r = R_pool_pop(person_folds, rule)
+        assert r["counted_returns"] == 1
+
+
 class TestRH1:
     def test_passes_when_ratio_low(self):
         r = R_H1(None, [[]], {"threshold": 3}, 0.5)
