@@ -173,58 +173,34 @@ class TestRLeastmisery:
 
 # --- R_pool_pop ---
 
+_RULE = {"threshold": 3, "step": 10, "minWindow": 20, "maxWindow": 160}
+
+
+def _fold(seq, kind):
+    return {"window": 40, "lastReturn": {"seq": seq, "kind": kind},
+            "adjustments": []}
+
+
 class TestRPoolPop:
     """R_pool_pop must read COUNTED returns from plugin fold format."""
 
     def test_counts_from_lastReturn_kind(self):
-        """Hand-written fixture: 3 persons x 2 folds with lastReturn."""
-        person_folds = [
-            [  # Person 0: 2 COUNTED returns
-                {"window": 40, "lastReturn": {"seq": 10, "kind": "COUNTED"},
-                 "adjustments": []},
-                {"window": 40, "lastReturn": {"seq": 20, "kind": "COUNTED"},
-                 "adjustments": []},
-            ],
-            [  # Person 1: 1 COUNTED, 1 NEUTRAL
-                {"window": 40, "lastReturn": {"seq": 30, "kind": "NEUTRAL"},
-                 "adjustments": []},
-                {"window": 40, "lastReturn": {"seq": 40, "kind": "COUNTED"},
-                 "adjustments": []},
-            ],
-            [  # Person 2: 0 COUNTED
-                {"window": 40, "lastReturn": None, "adjustments": []},
-            ],
-        ]
-        rule = {"threshold": 3, "step": 10, "minWindow": 20, "maxWindow": 160}
+        """3 persons: 2 COUNTED, 1 COUNTED + 1 NEUTRAL, 0 COUNTED."""
+        pf = [[_fold(10, "COUNTED"), _fold(20, "COUNTED")],
+              [_fold(30, "NEUTRAL"), _fold(40, "COUNTED")],
+              [{"window": 40, "lastReturn": None, "adjustments": []}]]
         from collective.controls import R_pool_pop
-        r = R_pool_pop(person_folds, rule)
-        assert r["counted_returns"] == 3, (
-            f"Expected 3 COUNTED returns, got {r['counted_returns']}")
+        assert R_pool_pop(pf, _RULE)["counted_returns"] == 3
 
     def test_zero_when_no_counted(self):
-        person_folds = [
-            [{"window": 40, "lastReturn": {"seq": 10, "kind": "NEUTRAL"},
-              "adjustments": []}],
-        ]
-        rule = {"threshold": 3, "step": 10, "minWindow": 20, "maxWindow": 160}
         from collective.controls import R_pool_pop
-        r = R_pool_pop(person_folds, rule)
-        assert r["counted_returns"] == 0
+        assert R_pool_pop([[_fold(10, "NEUTRAL")]], _RULE)["counted_returns"] == 0
 
     def test_dedup_same_seq(self):
-        """Same seq appearing in multiple folds -> counted once."""
-        person_folds = [
-            [
-                {"window": 40, "lastReturn": {"seq": 10, "kind": "COUNTED"},
-                 "adjustments": []},
-                {"window": 40, "lastReturn": {"seq": 10, "kind": "COUNTED"},
-                 "adjustments": []},
-            ],
-        ]
-        rule = {"threshold": 3, "step": 10, "minWindow": 20, "maxWindow": 160}
+        """Same seq in two folds -> counted once."""
         from collective.controls import R_pool_pop
-        r = R_pool_pop(person_folds, rule)
-        assert r["counted_returns"] == 1
+        pf = [[_fold(10, "COUNTED"), _fold(10, "COUNTED")]]
+        assert R_pool_pop(pf, _RULE)["counted_returns"] == 1
 
 
 class TestRH1:
