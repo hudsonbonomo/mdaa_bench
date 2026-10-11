@@ -172,7 +172,8 @@ _DISPATCH = {
     "Pc": lambda seed, **kw: make_Pc(
         n=kw.get("n", 5), T=kw.get("T", 320), seed=seed),
     "Pl": lambda seed, **kw: make_Pl(
-        n=kw.get("n", 5), T=kw.get("T", 320), seed=seed),
+        n=kw.get("n", 5), T=kw.get("T", 320), seed=seed,
+        p_range=kw.get("p_range")),
     "Pw": lambda seed, **kw: make_Pw(
         n=kw.get("n", 5), T=kw.get("T", 320), seed=seed),
 }
