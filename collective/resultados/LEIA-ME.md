@@ -32,3 +32,4 @@ Mantidos no repositorio para rastreabilidade, mas NAO devem ser usados.
 | `sizing_plugin_Pw_300151_300225.json` | idem |
 | `sizing_plugin_Pw_300226_300300.json` | idem |
 | `sizing_collective.json` | agregado anterior ao step C, supersedido |
+| Pl entries in `sizing_collective_final.json` pre-H1 | rate 0.0 / theta 0.0, single p_range, mean-based estimator |

@@ -10,10 +10,16 @@
     "theta": 1.0
   },
   "Pw_n5_T320_theta3_H1_passes": {
-    "source": "E4",
-    "rate": 1.0,
-    "theta": 1.0,
-    "n_seeds": 300
+    "source": "E4+F2",
+    "rate": 0.9866666666666667,
+    "theta": 0.95,
+    "n_seeds": 300,
+    "f2_correction": {
+      "original_count": 300,
+      "seeds_now_fail_gate": [300041, 300086, 300166, 300191],
+      "gate_passes": 296,
+      "note": "median-based ratio > 1.0 in 4 seeds"
+    }
   },
   "Pw_n5_T640_theta3_H1_passes": {
     "source": "E4",
@@ -69,28 +75,40 @@
     "n_seeds": 300
   },
   "Pl_n5_T320_theta3pp_H1_refuses": {
-    "source": "step_c",
-    "rate": 0.0,
-    "theta": 0.0,
-    "note": "F2 dose-response: theta3'' valid only for p_range [0.05, 0.95]"
+    "source": "F2_dose_response",
+    "rate": 0.7733333333333333,
+    "theta": 0.7,
+    "n_seeds": 300,
+    "refusals": 232,
+    "p_range": [0.05, 0.95],
+    "note": "median-based ratio > 1.0 (H1 correctly refused)"
   },
   "Pl_n5_T640_theta3pp_H1_refuses": {
-    "source": "step_c",
-    "rate": 0.0,
-    "theta": 0.0,
-    "note": "F2 dose-response: theta3'' valid only for p_range [0.05, 0.95]"
+    "source": "F2_dose_response",
+    "rate": 0.7833333333333333,
+    "theta": 0.7,
+    "n_seeds": 300,
+    "refusals": 235,
+    "p_range": [0.05, 0.95],
+    "note": "median-based ratio > 1.0 (H1 correctly refused)"
   },
   "Pl_n20_T320_theta3pp_H1_refuses": {
-    "source": "step_c",
-    "rate": 0.0,
-    "theta": 0.0,
-    "note": "F2 dose-response: theta3'' valid only for p_range [0.05, 0.95]"
+    "source": "F2_dose_response",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300,
+    "refusals": 300,
+    "p_range": [0.05, 0.95],
+    "note": "median-based ratio > 1.0 (H1 correctly refused)"
   },
   "Pl_n20_T640_theta3pp_H1_refuses": {
-    "source": "step_c",
-    "rate": 0.0,
-    "theta": 0.0,
-    "note": "F2 dose-response: theta3'' valid only for p_range [0.05, 0.95]"
+    "source": "F2_dose_response",
+    "rate": 1.0,
+    "theta": 1.0,
+    "n_seeds": 300,
+    "refusals": 300,
+    "p_range": [0.05, 0.95],
+    "note": "median-based ratio > 1.0 (H1 correctly refused)"
   },
   "Pc_n5_T320_gate_passes": {
     "source": "E4",
