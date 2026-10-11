@@ -1,7 +1,4 @@
-"""Measurement function for the collective grid (Paper 8).
-measure_run(world_name, seed, **kw) -> flat dict of raw numbers.
-Per-reader measurements for Q1-Q4 with optional plugin integration.
-"""
+"""Measurement for the collective grid (Paper 8). Q1-Q4 per reader."""
 from __future__ import annotations
 
 from .worlds import make_world, CollectiveWorld, load_policy
@@ -23,12 +20,8 @@ def _dedup_obs(obs):
 
 
 def _status_kind(result: dict) -> str | None:
-    """Extract status kind (B/T/...) from episodes result."""
-    st = result.get("status", {})
-    bp = st.get("byProposition", [])
-    if bp and isinstance(bp[0], dict):
-        return bp[0].get("status", {}).get("kind")
-    return None
+    st = result.get("status", {}).get("byProposition", [])
+    return st[0].get("status", {}).get("kind") if st and isinstance(st[0], dict) else None
 
 
 def _measure_Q1(world: CollectiveWorld, use_plugin=False) -> dict:
@@ -85,12 +78,8 @@ def _measure_Q2(world: CollectiveWorld, use_plugin=False) -> dict:
 
 
 def _no_cross_adjust(folds):
-    for f in folds:
-        if isinstance(f, dict):
-            if any(a.get("source") == "other"
-                   for a in f.get("adjustments", [])):
-                return False
-    return True
+    return all(not any(a.get("source") == "other" for a in f.get("adjustments", []))
+               for f in folds if isinstance(f, dict))
 
 
 def _measure_Q3(world: CollectiveWorld, use_plugin=False) -> dict:
@@ -114,10 +103,27 @@ def _measure_Q3(world: CollectiveWorld, use_plugin=False) -> dict:
         d["Q3_transfer_ratio"] = transfer_between_within(pf)
         gate = loc_ratio <= H1_BETWEEN_WITHIN
         d["Q3_H1_passed"] = gate
-        d["Q3_H1_result"] = R_H1(world.person_worlds, pf, rule, loc_ratio)
+        w0 = int(ap["declared"]["warrant_window"])
+        d["Q3_H1_result"] = R_H1(world.person_worlds, pf, rule, loc_ratio,
+                                  w0=w0)
         d["Q3_per_person_windows"] = [
             f[-1].get("window") if f else None for f in pf]
         d["Q3_R_own_no_cross_adjust"] = all(_no_cross_adjust(f) for f in pf)
+        # E2: borrowing error -- R_H1 vs R_own per person
+        h1_w = d["Q3_H1_result"].get("window") if gate else None
+        own_ws = d["Q3_per_person_windows"]
+        d["Q3_R_H1_window"], d["Q3_R_own_windows"], d["Q3_W0"] = h1_w, own_ws, w0
+        labs = world.planted.get("labels")
+        if labs and gate and h1_w is not None:
+            decay_idx = [i for i, l in enumerate(labs) if l == "fast_decay"]
+            n_worse = sum(1 for i in decay_idx if own_ws[i] and h1_w > own_ws[i])
+            d["Q3_borrow_error"] = n_worse > len(decay_idx) / 2
+            d["Q3_borrow_n_decay_worse"] = n_worse
+            d["Q3_borrow_n_decay"] = len(decay_idx)
+            _ws = lambda tag: [own_ws[i] for i, l in enumerate(labs) if l == tag and own_ws[i]]
+            sw, dw = _ws("stable"), _ws("fast_decay")
+            d["Q3_R_own_mean_stable"] = sum(sw) / len(sw) if sw else None
+            d["Q3_R_own_mean_decay"] = sum(dw) / len(dw) if dw else None
     else:
         d["Q3_transfer_ratio"] = None
         d["Q3_H1_passed"] = None

@@ -85,14 +85,21 @@ def q3(rows: list[dict], world: str) -> dict | None:
     _check_thresholds()
     n = len(rows)
     if world == "Pw":
-        # H1 passes in rate >= TH_Q3_H1_PASS
+        # theta_3: H1 passes rate
         ok_pass = sum(1 for r in rows
                       if r.get("Q3_location_ratio") is not None
                       and r["Q3_location_ratio"] <= 1.0)
         rate_pass = ok_pass / n if n else 0.0
-        passed = rate_pass >= TH_Q3_H1_PASS
-        fc = "against_thesis" if not passed else None
+        pass_ok = rate_pass >= TH_Q3_H1_PASS
+        # theta_3': borrowing error (majority of decaying have H1 > own)
+        ok_borrow = sum(1 for r in rows if r.get("Q3_borrow_error"))
+        rate_borrow = ok_borrow / n if n else 0.0
+        borrow_ok = rate_borrow >= TH_Q3_H1_WRONG
+        passed = pass_ok and borrow_ok
+        fc = ("against_thesis" if not pass_ok
+              else "instrument_defect" if not borrow_ok else None)
         return {"rate_H1_passes": rate_pass,
+                "rate_borrow_error": rate_borrow,
                 "passed": passed, "failure_class": fc}
     else:  # Pl
         # H1 refuses in rate >= TH_Q3_H1_REFUSE

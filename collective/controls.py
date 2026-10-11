@@ -67,56 +67,83 @@ def R_pool(population_obs: list[dict], strategies: list[str]) -> dict:
             "source": "population"}
 
 
-def _count_counted(folds: list[dict]) -> int:
-    """Count unique COUNTED returns across a person's fold sequence.
-    The plugin emits lastReturn {seq, kind} per fold; we count distinct
-    seqs with kind == 'COUNTED'.
+def _collect_returns(person_folds: list[list[dict]]) -> list[dict]:
+    """Collect all lastReturn entries from all persons' folds.
+    Returns a list of {seq, kind} dicts, sorted by seq.
+    Deduplicates by seq (same return seen in overlapping folds).
     """
     seen: set[int] = set()
-    for f in folds:
-        if not isinstance(f, dict):
-            continue
-        lr = f.get("lastReturn")
-        if isinstance(lr, dict) and lr.get("kind") == "COUNTED":
-            seen.add(lr["seq"])
-    return len(seen)
-
-
-def R_pool_pop(person_folds: list[list[dict]], rule: dict) -> dict:
-    """In Pop worlds: sum COUNTED returns across persons, apply rule.
-    Each person_folds[i] is the folds result for person i.
-    Returns a single window for the whole population.
-    """
-    if not person_folds or not any(person_folds):
-        return {"window": None, "counted_returns": 0}
-
-    total_counted = 0
+    returns: list[dict] = []
     for folds in person_folds:
         if not folds:
             continue
-        total_counted += _count_counted(folds)
+        for f in folds:
+            if not isinstance(f, dict):
+                continue
+            lr = f.get("lastReturn")
+            if not isinstance(lr, dict) or lr.get("seq") is None:
+                continue
+            if lr["seq"] not in seen:
+                seen.add(lr["seq"])
+                returns.append({"seq": lr["seq"], "kind": lr["kind"]})
+    returns.sort(key=lambda r: r["seq"])
+    return returns
 
+
+def apply_adjustment_rule(
+        returns: list[dict], rule: dict, w0: int | None = None
+) -> dict:
+    """Apply the plugin's adjustment rule to a return stream.
+    Reimplements adjustment.ts foldPolicy L132-145. See E1 spec."""
     k = rule.get("threshold", 3)
     step = rule.get("step", 10)
     min_w = rule.get("minWindow", 20)
     max_w = rule.get("maxWindow", 160)
+    w = w0 if w0 is not None else min_w
+    run = 0
+    adj_count = 0
+    for r in returns:
+        kind = r["kind"]
+        if kind == "COUNTED":
+            # adjustment.ts L133: run += 1
+            run += 1
+        elif kind in ("CONFLICT", "CONTRADICTED"):
+            # adjustment.ts L134-135: run = 0, counted = []
+            run = 0
+        # NEUTRAL: adjustment.ts does nothing (no branch)
+        # adjustment.ts L138-143: threshold check
+        if run >= k and w < max_w:
+            w = min(w + step, max_w)
+            run = 0
+            adj_count += 1
+    return {"window": w, "run": run, "adjustments": adj_count,
+            "returns_stream": returns}
 
-    # Apply rule to aggregate count
-    w = min_w
-    if total_counted >= k:
-        w = min(w + step, max_w)
 
-    return {"window": w, "counted_returns": total_counted,
+def R_pool_pop(person_folds: list[list[dict]], rule: dict,
+               w0: int | None = None) -> dict:
+    """Pop worlds: merge all persons' returns by seq, apply rule
+    as if the population were one person. E1 spec."""
+    if not person_folds or not any(person_folds):
+        return {"window": None, "counted_returns": 0}
+    returns = _collect_returns(person_folds)
+    result = apply_adjustment_rule(returns, rule, w0)
+    counted = sum(1 for r in returns if r["kind"] == "COUNTED")
+    return {"window": result["window"],
+            "counted_returns": counted,
+            "run": result["run"],
+            "adjustments": result["adjustments"],
             "rule_applied": rule}
 
 
-def R_H1(person_worlds, person_folds, rule, location_ratio):
+def R_H1(person_worlds, person_folds, rule, location_ratio,
+         w0: int | None = None):
     """R_pool only when location ratio <= H1_BETWEEN_WITHIN.
     Otherwise falls back to R_own (per-person folds, no pooling).
     """
     gate_passed = location_ratio <= H1_BETWEEN_WITHIN
     if gate_passed:
-        result = R_pool_pop(person_folds, rule)
+        result = R_pool_pop(person_folds, rule, w0)
         result["gate_passed"] = True
         result["location_ratio"] = location_ratio
         return result

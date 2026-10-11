@@ -109,7 +109,7 @@ def test_q2_plugin_defect():
 
 # Q3
 def test_q3_pw_passes():
-    r = D.q3(_rows(Q3_location_ratio=0.5), "Pw")
+    r = D.q3(_rows(Q3_location_ratio=0.5, Q3_borrow_error=True), "Pw")
     assert r["passed"] is True
 
 def test_q3_pw_against_thesis():

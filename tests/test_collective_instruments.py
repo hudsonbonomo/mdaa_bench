@@ -169,39 +169,7 @@ class TestRLeastmisery:
         assert r["chosen"] == "b0"
 
 
-# --- R_H1 ---
-
-# --- R_pool_pop ---
-
-_RULE = {"threshold": 3, "step": 10, "minWindow": 20, "maxWindow": 160}
-
-
-def _fold(seq, kind):
-    return {"window": 40, "lastReturn": {"seq": seq, "kind": kind},
-            "adjustments": []}
-
-
-class TestRPoolPop:
-    """R_pool_pop must read COUNTED returns from plugin fold format."""
-
-    def test_counts_from_lastReturn_kind(self):
-        """3 persons: 2 COUNTED, 1 COUNTED + 1 NEUTRAL, 0 COUNTED."""
-        pf = [[_fold(10, "COUNTED"), _fold(20, "COUNTED")],
-              [_fold(30, "NEUTRAL"), _fold(40, "COUNTED")],
-              [{"window": 40, "lastReturn": None, "adjustments": []}]]
-        from collective.controls import R_pool_pop
-        assert R_pool_pop(pf, _RULE)["counted_returns"] == 3
-
-    def test_zero_when_no_counted(self):
-        from collective.controls import R_pool_pop
-        assert R_pool_pop([[_fold(10, "NEUTRAL")]], _RULE)["counted_returns"] == 0
-
-    def test_dedup_same_seq(self):
-        """Same seq in two folds -> counted once."""
-        from collective.controls import R_pool_pop
-        pf = [[_fold(10, "COUNTED"), _fold(10, "COUNTED")]]
-        assert R_pool_pop(pf, _RULE)["counted_returns"] == 1
-
+# --- R_H1 & R_pool_pop: moved to test_collective_pool.py ---
 
 class TestRH1:
     def test_passes_when_ratio_low(self):

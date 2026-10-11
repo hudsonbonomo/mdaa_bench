@@ -127,7 +127,25 @@ def test_G_admissible_is_intersection(seed):
             assert blocked, f"action {a} not admissible but no blocker"
 
 
-# -- 9. make_world dispatch works --
+# -- 9. E3: Pl [0.05, 0.95] gate must refuse on average --
+def test_Pl_wide_range_gate_refuses():
+    """With p_range [0.05, 0.95], mean location ratio >= 1.5."""
+    from collective.worlds_pop import _make_adaptive_world, _location_between_within
+    ratios = []
+    for seed in SEEDS:
+        rng = np.random.default_rng(seed)
+        pws = []
+        for i in range(5):
+            p_i = float(rng.uniform(0.05, 0.95))
+            pw = _make_adaptive_world(320, seed + i * 1000, lambda t, _p=p_i: _p)
+            pws.append(pw)
+        ratios.append(_location_between_within(pws))
+    mean_r = np.mean(ratios)
+    assert mean_r >= 1.5, (
+        f"Pl [0.05,0.95]: mean ratio {mean_r:.4f} < 1.5")
+
+
+# -- 10. make_world dispatch works --
 @pytest.mark.parametrize("seed", SEEDS[:1])
 def test_dispatch(seed):
     for name in WORLDS:
