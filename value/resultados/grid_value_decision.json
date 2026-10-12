@@ -1,0 +1,335 @@
+{
+  "decision": {
+    "N0_T80": {
+      "p1": {
+        "rate_norm": 1.0,
+        "rate_reward": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "N0_T160": {
+      "p1": {
+        "rate_norm": 1.0,
+        "rate_reward": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "P_T80": {
+      "p2": {
+        "rate_norm": 0.9,
+        "rate_reward": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "P_T160": {
+      "p2": {
+        "rate_norm": 1.0,
+        "rate_reward": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T80": {
+      "p3": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T160": {
+      "p3": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R+_T80": {
+      "p3": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R+_T160": {
+      "p3": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C0_T80": {
+      "p4": {
+        "rate_conflict": 0.75,
+        "rate_scalar": 1.0,
+        "passed": false,
+        "failure_class": "plugin_defect"
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C0_T160": {
+      "p4": {
+        "rate_conflict": 0.85,
+        "rate_scalar": 1.0,
+        "passed": false,
+        "failure_class": "plugin_defect"
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C1_T80": {
+      "p4": {
+        "rate_elect": 0.9,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C1_T160": {
+      "p4": {
+        "rate_elect": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C2_T80": {
+      "p4": {
+        "rate_elect": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C2_T160": {
+      "p4": {
+        "rate_elect": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "X_T80": {
+      "p5": {
+        "rate_insuf": 1.0,
+        "rate_naive_s1": 0.95,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "X_T160": {
+      "p5": {
+        "rate_insuf": 1.0,
+        "rate_naive_s1": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Xp_T80": {
+      "p5": {
+        "rate_no_justificado": 0.0,
+        "passed": false,
+        "failure_class": "against_thesis"
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Xp_T160": {
+      "p5": {
+        "rate_no_justificado": 0.0,
+        "passed": false,
+        "failure_class": "against_thesis"
+      },
+      "p6": {
+        "rate_s3_never": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    }
+  },
+  "verdicts": {
+    "p1": {
+      "passed": true,
+      "failed_cells": []
+    },
+    "p2": {
+      "passed": true,
+      "failed_cells": []
+    },
+    "p3": {
+      "passed": true,
+      "failed_cells": []
+    },
+    "p4": {
+      "passed": false,
+      "failed_cells": [
+        {
+          "cell": "C0_T80",
+          "failure_class": "plugin_defect"
+        },
+        {
+          "cell": "C0_T160",
+          "failure_class": "plugin_defect"
+        }
+      ]
+    },
+    "p5": {
+      "passed": false,
+      "failed_cells": [
+        {
+          "cell": "Xp_T80",
+          "failure_class": "against_thesis"
+        },
+        {
+          "cell": "Xp_T160",
+          "failure_class": "against_thesis"
+        }
+      ]
+    },
+    "p6": {
+      "passed": true,
+      "failed_cells": []
+    }
+  },
+  "costs": {
+    "P_T80": {
+      "mean_cost": 51.578947368421055,
+      "n_justified": 19,
+      "n_total": 20
+    },
+    "P_T160": {
+      "mean_cost": 54.5,
+      "n_justified": 20,
+      "n_total": 20
+    }
+  },
+  "n_rows": 360,
+  "worlds": [
+    "N0",
+    "P",
+    "R",
+    "R+",
+    "C0",
+    "C1",
+    "C2",
+    "X",
+    "Xp"
+  ],
+  "T_levels": [
+    80,
+    160
+  ],
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ],
+  "plugin_commit": "32e010599fec8c09b811d435f2fbabda62be69d3",
+  "dist_sha256": {
+    "value-cli.js": "2dec2cf9a5f3202ec7e879d77a243ffcba9fae18dfd5dd606c8159c49ac1d80a",
+    "judgment.js": "edbb7a25561a8cd87d810e355a1ab3d78a58c45f5d44c8b3cb6b5fe5fb7d8d0d",
+    "norm.js": "1534e54fc26bf3257a49238ec68c59a06896ce26aad5167eaf065041d700b5df",
+    "standing-cli.js": "8c3cf88999013bca8c55ae0905055f27327a931301e70d4ddd29388f26302543",
+    "status.js": "0fcd3bbefb0e1456dfb8ed20b3e98d5943d63dc23d3ac645c1b1475abbad89e9"
+  },
+  "elapsed_seconds": 119.9
+}
