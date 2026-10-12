@@ -128,6 +128,7 @@ def test_python_rule_matches_plugin_per_person(seed):
     """For each person in Pc n=5 T=320, apply_adjustment_rule on
     that person's returns must give the same final window as the
     plugin fold. This validates E1."""
+    import collective.worlds  # noqa: F401 — resolve circular import
     from collective.worlds_pop import make_Pc
     from collective.readers import read_own_folds
     from adaptive.worlds import load_policy as load_ap

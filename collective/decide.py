@@ -15,13 +15,13 @@ __all__ = [
 
 FAILURE_CLASSES = ("against_thesis", "instrument_defect", "plugin_defect")
 
-# --- Thresholds: None until sizing. decide() refuses with None. ---
-TH_Q1_COUNT: float | None = None      # R_count converts B->T rate in O
-TH_Q2_POOL: float | None = None       # R_pool elects rate in Pn
-TH_Q3_H1_PASS: float | None = None    # R_H1 passes gate in Pw
-TH_Q3_H1_WRONG: float | None = None   # R_H1 adjusts wrong in Pw
-TH_Q3_H1_REFUSE: float | None = None  # R_H1 refuses in Pl
-TH_Q4_MEAN_OUTSIDE: float | None = None  # R_mean outside Gamma_i
+# --- Thresholds from sizing (PREREGISTRO v1 SS8). ---
+TH_Q1_COUNT: float | None = 1.00      # R_count converts B->T rate in O
+TH_Q2_POOL: float | None = 1.00       # R_pool elects rate in Pn
+TH_Q3_H1_PASS: float | None = 0.95    # R_H1 passes gate in Pw (min cell)
+TH_Q3_H1_WRONG: float | None = 0.95   # R_H1 borrow error in Pw (min cell)
+TH_Q3_H1_REFUSE: float | None = 0.70  # R_H1 refuses in Pl (min cell)
+TH_Q4_MEAN_OUTSIDE: float | None = 0.55  # R_mean outside Gamma_i (min cell)
 
 
 def _check_thresholds():
