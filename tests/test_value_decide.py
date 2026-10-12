@@ -159,8 +159,20 @@ def test_p5_x_plugin_defect():
 
 
 def test_p5_xp_passes():
-    r = D.p5(_rows(R_norm_state="NAO_JUSTIFICADO"), "Xp", 80)
+    r = D.p5(_rows(R_norm_state="NÃO_JUSTIFICADO"), "Xp", 80)
     assert r["passed"] is True
+
+
+def test_p5_xp_old_spelling_fails():
+    """v1.2 regression: 'NAO_JUSTIFICADO' (no accent) must NOT match."""
+    r = D.p5(_rows(R_norm_state="NAO_JUSTIFICADO"), "Xp", 80)
+    assert r["rate_no_justificado"] == 0.0
+
+
+def test_p5_xp_accented_spelling_matches():
+    """v1.2: 'NÃO_JUSTIFICADO' (accented, as plugin returns) must match."""
+    r = D.p5(_rows(R_norm_state="NÃO_JUSTIFICADO"), "Xp", 80)
+    assert r["rate_no_justificado"] == 1.0
 
 
 # P6

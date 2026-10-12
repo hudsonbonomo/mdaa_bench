@@ -39,7 +39,7 @@ def _wrap_events(events: list[dict]) -> list[dict]:
 
 JUDGE_STATES = (
     "SEM_NORMA", "INSUFICIENTE", "JUSTIFICADO",
-    "NAO_JUSTIFICADO", "EM_CONFLITO",
+    "NÃO_JUSTIFICADO", "EM_CONFLITO",
 )
 _CLI = "value-cli.js"
 _P = load_policy()

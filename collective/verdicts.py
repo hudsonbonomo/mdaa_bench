@@ -36,6 +36,9 @@ def verdicts(decision_by_cell: dict) -> dict:
                 continue
             n_app += 1
             r = cd[pred]
+            # Skip reported-only cells (passed=None, no threshold)
+            if r.get("passed") is None:
+                continue
             if not r.get("passed", True):
                 failed.append({"cell": ck,
                                "failure_class": r.get("failure_class")})

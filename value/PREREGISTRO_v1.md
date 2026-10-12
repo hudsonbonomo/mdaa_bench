@@ -183,3 +183,7 @@ commit de execução).
 5. Interface: eventos no envelope `{type, seq, payload}`; estratégia como lista; N0 com
    norma de origem HOST (uma norma de origem DECLARED é a declaração da própria pessoa e
    entra confirmada); leitura da saída do plugin em UTF-8.
+
+## §13 — Emenda v1.2 (12 out 2026, DEPOIS da grade)
+
+Ao ler a grade, encontrou-se que value/decide.py comparava o estado NÃO_JUSTIFICADO com a grafia sem til e por isso não contou nenhuma leitura de Xp nesse estado. A comparação foi corrigida para a grafia que o plugin devolve. Os dados não mudam: o decide.py emendado é reaplicado às linhas da grade gravadas antes da emenda, sem nova execução. Os dois vereditos são relatados, o do código congelado e o do código emendado. A previsão P4 não é emendada: o seu veredito fica como saiu.

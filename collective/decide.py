@@ -118,6 +118,15 @@ def q3(rows: list[dict], world: str, **cell) -> dict | None:
                 "rate_borrow_error": rate_borrow,
                 "passed": passed, "failure_class": fc}
     else:  # Pl
+        # Threshold only applies to [0.05, 0.95] range per PREREGISTRO §8.
+        pr = cell.get("p_range")
+        if pr is not None and pr != [0.05, 0.95]:
+            ok_refuse = sum(1 for r in rows
+                            if r.get("Q3_location_ratio") is not None
+                            and r["Q3_location_ratio"] > 1.0)
+            rate_refuse = ok_refuse / n if n else 0.0
+            return {"rate_H1_refuses": rate_refuse,
+                    "passed": None, "failure_class": None}
         if key not in TH_Q3_H1_REFUSE:
             raise RuntimeError(f"No theta for Q3 H1 refuse, cell {key}")
         th_refuse = TH_Q3_H1_REFUSE[key]
@@ -137,10 +146,12 @@ def q4(rows: list[dict], world: str, **cell) -> dict | None:
         return None
     _check_thresholds()
     key = (cell["n"], cell["p"], cell["rho"])
-    if key not in TH_Q4_MEAN_OUTSIDE:
-        raise RuntimeError(f"No theta for Q4 mean outside, cell {key}")
-    th = TH_Q4_MEAN_OUTSIDE[key]
     n = len(rows)
+    # Structural predictions (R_group) apply in all 12 cells.
+    # R_mean threshold comparison is skipped for cells without θ₄.
+    if key not in TH_Q4_MEAN_OUTSIDE:
+        return None
+    th = TH_Q4_MEAN_OUTSIDE[key]
     ok_mean_out = sum(1 for r in rows
                       if r.get("Q4_R_mean_in_all_gamma") is False)
     rate_mean_out = ok_mean_out / n if n else 0.0

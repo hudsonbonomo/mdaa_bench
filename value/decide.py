@@ -30,8 +30,8 @@ TH_P4_ELECT_T80: float | None = 0.85  # R_norm elects s2 in C1/C2, T=80
 TH_P4_ELECT_T160: float | None = 0.95 # R_norm elects s2 in C1/C2, T=160
 TH_P5_X_NAIVE_T80: float | None = 0.85   # R_naive justifies s1, T=80
 TH_P5_X_NAIVE_T160: float | None = 0.95  # R_naive justifies s1, T=160
-TH_P5_XP_T80: float | None = 0.70     # R_norm NAO_JUSTIFICADO in Xp, T=80
-TH_P5_XP_T160: float | None = 0.90    # R_norm NAO_JUSTIFICADO in Xp, T=160
+TH_P5_XP_T80: float | None = 0.70     # R_norm NÃO_JUSTIFICADO in Xp, T=80
+TH_P5_XP_T160: float | None = 0.90    # R_norm NÃO_JUSTIFICADO in Xp, T=160
 
 FAILURE_CLASSES = ("against_thesis", "instrument_defect", "plugin_defect")
 
@@ -158,7 +158,7 @@ def p5(rows: list[dict], world: str, T: int) -> dict | None:
         _check_thresholds()
         th = TH_P5_XP_T160 if T == 160 else TH_P5_XP_T80
         n = len(rows)
-        ok = sum(1 for r in rows if r["R_norm_state"] == "NAO_JUSTIFICADO")
+        ok = sum(1 for r in rows if r["R_norm_state"] == "NÃO_JUSTIFICADO")
         rn = ok / n if n else 0.0
         passed = rn >= th
         fc = "against_thesis" if not passed else None

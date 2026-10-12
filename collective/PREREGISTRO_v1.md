@@ -214,3 +214,7 @@ autorização explícita de Hudson A. R. Bonomo, registrada no commit de execuç
 O `decide.py` do commit `7751ec1` reduziu os limiares por célula ao menor
 valor de cada quantidade; corrigido para os valores por célula já fixados
 no §8 e na tabela 8.1; nenhum limiar preregistrado muda.
+
+## §14 — Emenda v1.2 (12 out 2026, depois de uma primeira execução da grade que parou antes de qualquer veredito)
+
+(a) O decide.py recusava célula sem θ, e as células de G com n = 5 não têm θ₄ por desenho (tabela 8.1). Ali R_mean é relatado sem limiar, e a recusa passa a valer só para as células que a previsão cobre. (b) O run_grid.py rodava Pl só na primeira faixa de p; o §7 manda as cinco. A grade foi rodada de novo por inteiro, com as mesmas sementes, e as 28 células da primeira execução saíram idênticas. Nenhum limiar muda.

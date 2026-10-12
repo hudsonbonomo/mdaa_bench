@@ -71,10 +71,19 @@ def run_grid() -> list[dict]:
     for wn in _P["Pop"]["worlds"]:
         for n in _P["Pop"]["n"]:
             for T in _P["Pop"]["T"]:
-                for seed in SEEDS:
-                    rows.append(measure_run(
-                        wn, seed, use_plugin=True, n=n, T=T))
-                print(f"{wn} n={n} T={T}: done", flush=True)
+                if wn == "Pl":
+                    for pr in _P["Pop"]["Pl"]["p_range"]:
+                        for seed in SEEDS:
+                            rows.append(measure_run(
+                                wn, seed, use_plugin=True,
+                                n=n, T=T, p_range=pr))
+                        print(f"Pl n={n} T={T} p_range={pr}: done",
+                              flush=True)
+                else:
+                    for seed in SEEDS:
+                        rows.append(measure_run(
+                            wn, seed, use_plugin=True, n=n, T=T))
+                    print(f"{wn} n={n} T={T}: done", flush=True)
 
     for n in _P["G"]["n"]:
         for p in _P["G"]["p"]:
@@ -90,7 +99,7 @@ def run_grid() -> list[dict]:
 def _cell_params(row: dict) -> dict:
     """Extract cell parameters from a measurement row."""
     out = {}
-    for k in ("n", "T", "k", "m", "p", "rho"):
+    for k in ("n", "T", "k", "m", "p", "rho", "p_range"):
         if k in row:
             out[k] = row[k]
     return out
@@ -106,7 +115,10 @@ def _decide(rows: list[dict]) -> dict:
             key = f"O_k{r.get('k', '?')}"
         elif w == "Pn":
             key = f"Pn_n{r.get('n', '?')}"
-        elif w in ("Pc", "Pl", "Pw"):
+        elif w == "Pl":
+            pr = r.get("p_range", "?")
+            key = f"Pl_n{r.get('n', '?')}_T{r.get('T', '?')}_pr{pr}"
+        elif w in ("Pc", "Pw"):
             key = f"{w}_n{r.get('n', '?')}_T{r.get('T', '?')}"
         elif w == "G":
             key = (f"G_n{r.get('n', '?')}_m{r.get('m', '?')}"

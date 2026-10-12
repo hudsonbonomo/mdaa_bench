@@ -23,7 +23,7 @@ def test_measure_run_with_plugin(T, seed):
     assert d["R_norm_state"] is not None
     assert d["R_norm_state"] in (
         "SEM_NORMA", "INSUFICIENTE", "JUSTIFICADO",
-        "NAO_JUSTIFICADO", "EM_CONFLITO")
+        "NÃO_JUSTIFICADO", "EM_CONFLITO")
 
 
 @pytest.mark.parametrize("seed", SEEDS[:2])
