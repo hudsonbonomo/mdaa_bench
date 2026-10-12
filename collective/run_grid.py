@@ -87,6 +87,15 @@ def run_grid() -> list[dict]:
     return rows
 
 
+def _cell_params(row: dict) -> dict:
+    """Extract cell parameters from a measurement row."""
+    out = {}
+    for k in ("n", "T", "k", "m", "p", "rho"):
+        if k in row:
+            out[k] = row[k]
+    return out
+
+
 def _decide(rows: list[dict]) -> dict:
     decision: dict = {}
     # Group by cell key
@@ -108,9 +117,10 @@ def _decide(rows: list[dict]) -> dict:
 
     for key, cell_rows in cells.items():
         w = key.split("_")[0]
+        cp = _cell_params(cell_rows[0])
         d = {}
         for fn in _PREDS:
-            result = fn(cell_rows, w)
+            result = fn(cell_rows, w, **cp)
             if result is not None:
                 d[fn.__name__] = result
         if d:

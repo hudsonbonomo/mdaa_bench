@@ -96,33 +96,122 @@ def test_positive_control_changed_file(tmp_path):
         fc.COLLECTIVE = orig
 
 
-# -- 6. Theta traceability: each TH_ in decide.py appears in PREREGISTRO --
+# -- 6. Theta traceability: per-cell exact match with PREREGISTRO --
 def _prereg_text() -> str:
     return (COLLECTIVE / "PREREGISTRO_v1.md").read_text(encoding="utf-8")
 
 
-_THETA_MAP = [
-    ("TH_Q1_COUNT", "Q1", "1,00"),
-    ("TH_Q2_POOL", "Q2", "1,00"),
-    ("TH_Q3_H1_PASS", "Q3", "0,95"),
-    ("TH_Q3_H1_WRONG", "Q3", "0,95"),
-    ("TH_Q3_H1_REFUSE", "Q3", "0,70"),
-    ("TH_Q4_MEAN_OUTSIDE", "Q4", "0,55"),
-]
+def _parse_table_81(text: str) -> dict[tuple, float]:
+    """Parse Tabela 8.1 to extract per-cell theta_4 values."""
+    result: dict[tuple, float] = {}
+    found_header = False
+    in_rows = False
+    for line in text.splitlines():
+        if "Tabela 8.1" in line:
+            found_header = True
+            continue
+        if not found_header:
+            continue
+        if not line.startswith("|"):
+            if in_rows:
+                break
+            continue
+        cols = [c.strip() for c in line.split("|")[1:-1]]
+        if cols[0] in ("---", "n"):
+            continue
+        in_rows = True
+        try:
+            n = int(cols[0])
+            p = float(cols[1].replace(",", "."))
+            rho = float(cols[2].replace(",", "."))
+            theta = float(cols[5].replace(",", "."))
+            result[(n, p, rho)] = theta
+        except (ValueError, IndexError):
+            continue
+    return result
 
 
-@pytest.mark.parametrize("var,section,text", _THETA_MAP,
-                         ids=[t[0] for t in _THETA_MAP])
-def test_theta_in_preregistro(var, section, text):
-    """Each threshold in decide.py must appear in the preregistro."""
+def _parse_main_table(text: str) -> dict[str, float]:
+    """Parse the main sizing table (non-G rows) into quantity->theta."""
+    result: dict[str, float] = {}
+    in_table = False
+    for line in text.splitlines():
+        if line.startswith("| Quantidade"):
+            in_table = True
+            continue
+        if in_table and line.startswith("|"):
+            cols = [c.strip() for c in line.split("|")[1:-1]]
+            if cols[0] == "---":
+                continue
+            if "tabela 8.1" in cols[-1]:
+                continue
+            try:
+                theta = float(cols[-1].replace(",", "."))
+                qty = cols[0]
+                cell_desc = cols[1]
+                result[f"{qty} | {cell_desc}"] = theta
+            except (ValueError, IndexError):
+                continue
+        elif in_table and not line.startswith("|") and line.strip():
+            break
+    return result
+
+
+# -- Q3 thresholds: per-cell from main table --
+_Q3_PASS_EXPECTED = {
+    (5, 320): 0.95, (5, 640): 1.00,
+    (20, 320): 1.00, (20, 640): 1.00,
+}
+_Q3_WRONG_EXPECTED = {
+    (5, 320): 0.95, (5, 640): 1.00,
+    (20, 320): 1.00, (20, 640): 1.00,
+}
+_Q3_REFUSE_EXPECTED = {
+    (5, 320): 0.70, (5, 640): 0.70,
+    (20, 320): 1.00, (20, 640): 1.00,
+}
+_Q4_EXPECTED = {
+    (10, 0.8, 0.0): 0.85, (10, 0.8, 0.5): 0.80,
+    (10, 0.9, 0.0): 0.55, (10, 0.9, 0.5): 0.60,
+    (30, 0.8, 0.0): 1.00, (30, 0.8, 0.5): 1.00,
+    (30, 0.9, 0.0): 1.00, (30, 0.9, 0.5): 1.00,
+}
+
+
+def test_theta_q1_q2_in_preregistro():
     import collective.decide as D
-    val = getattr(D, var)
-    assert val is not None, f"{var} is None"
-    prereg = _prereg_text()
-    pattern = rf"\*\*{section}\b.*?\*\*"
-    match = re.search(pattern, prereg)
-    assert match, f"Section {section} not found in preregistro"
-    start = match.start()
-    rest = prereg[start:]
-    assert text in rest, (
-        f"{var}={val}: expected '{text}' in {section} section")
+    assert D.TH_Q1_COUNT == 1.00
+    assert D.TH_Q2_POOL == 1.00
+    text = _prereg_text()
+    assert "1,00" in text
+
+
+def test_theta_q3_pass_per_cell():
+    import collective.decide as D
+    assert D.TH_Q3_H1_PASS == _Q3_PASS_EXPECTED
+
+
+def test_theta_q3_wrong_per_cell():
+    import collective.decide as D
+    assert D.TH_Q3_H1_WRONG == _Q3_WRONG_EXPECTED
+
+
+def test_theta_q3_refuse_per_cell():
+    import collective.decide as D
+    assert D.TH_Q3_H1_REFUSE == _Q3_REFUSE_EXPECTED
+
+
+def test_theta_q4_per_cell_matches_table_81():
+    """Each Q4 cell theta must exactly match Tabela 8.1."""
+    import collective.decide as D
+    text = _prereg_text()
+    parsed = _parse_table_81(text)
+    assert parsed, "Could not parse Tabela 8.1"
+    assert D.TH_Q4_MEAN_OUTSIDE == parsed, (
+        f"decide.py: {D.TH_Q4_MEAN_OUTSIDE}\n"
+        f"preregistro: {parsed}")
+
+
+def test_theta_q4_per_cell_exact():
+    import collective.decide as D
+    assert D.TH_Q4_MEAN_OUTSIDE == _Q4_EXPECTED

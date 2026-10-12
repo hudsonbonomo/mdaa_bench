@@ -68,21 +68,31 @@ def test_q2_not_applicable():
     assert D.q2(_rows(), "O") is None
 
 def test_q3_not_applicable():
-    assert D.q3(_rows(), "O") is None
+    assert D.q3(_rows(), "O", n=5, T=320) is None
 
 def test_q4_not_applicable():
-    assert D.q4(_rows(), "O") is None
+    assert D.q4(_rows(), "O", n=10, p=0.8, rho=0.0) is None
 
 
-# -- 3. With thresholds set --
+# -- 3. With thresholds set (monkeypatch per-cell dicts) --
+_PW_TH = {(5, 320): 0.80, (5, 640): 0.80,
+           (20, 320): 0.80, (20, 640): 0.80}
+_PL_TH = {(5, 320): 0.80, (5, 640): 0.80,
+           (20, 320): 0.80, (20, 640): 0.80}
+_G_TH = {(10, 0.8, 0.0): 0.80, (10, 0.8, 0.5): 0.80,
+          (10, 0.9, 0.0): 0.80, (10, 0.9, 0.5): 0.80,
+          (30, 0.8, 0.0): 0.80, (30, 0.8, 0.5): 0.80,
+          (30, 0.9, 0.0): 0.80, (30, 0.9, 0.5): 0.80}
+
+
 @pytest.fixture(autouse=True)
 def _set_thresholds(monkeypatch):
     monkeypatch.setattr(D, "TH_Q1_COUNT", 0.80)
     monkeypatch.setattr(D, "TH_Q2_POOL", 0.80)
-    monkeypatch.setattr(D, "TH_Q3_H1_PASS", 0.80)
-    monkeypatch.setattr(D, "TH_Q3_H1_WRONG", 0.80)
-    monkeypatch.setattr(D, "TH_Q3_H1_REFUSE", 0.80)
-    monkeypatch.setattr(D, "TH_Q4_MEAN_OUTSIDE", 0.80)
+    monkeypatch.setattr(D, "TH_Q3_H1_PASS", _PW_TH)
+    monkeypatch.setattr(D, "TH_Q3_H1_WRONG", _PW_TH)
+    monkeypatch.setattr(D, "TH_Q3_H1_REFUSE", _PL_TH)
+    monkeypatch.setattr(D, "TH_Q4_MEAN_OUTSIDE", _G_TH)
 
 
 # Q1
@@ -109,30 +119,33 @@ def test_q2_plugin_defect():
 
 # Q3
 def test_q3_pw_passes():
-    r = D.q3(_rows(Q3_location_ratio=0.5, Q3_borrow_error=True), "Pw")
+    r = D.q3(_rows(Q3_location_ratio=0.5, Q3_borrow_error=True),
+             "Pw", n=5, T=320)
     assert r["passed"] is True
 
 def test_q3_pw_against_thesis():
-    r = D.q3(_rows(Q3_location_ratio=1.5), "Pw")
+    r = D.q3(_rows(Q3_location_ratio=1.5), "Pw", n=5, T=320)
     assert not r["passed"]
     assert r["failure_class"] == "against_thesis"
 
 def test_q3_pl_passes():
-    r = D.q3(_rows(Q3_location_ratio=1.5), "Pl")
+    r = D.q3(_rows(Q3_location_ratio=1.5), "Pl", n=5, T=320)
     assert r["passed"] is True
 
 def test_q3_pl_against_thesis():
-    r = D.q3(_rows(Q3_location_ratio=0.5), "Pl")
+    r = D.q3(_rows(Q3_location_ratio=0.5), "Pl", n=5, T=320)
     assert not r["passed"]
     assert r["failure_class"] == "against_thesis"
 
 
 # Q4
 def test_q4_passes():
-    r = D.q4(_rows(Q4_R_mean_in_all_gamma=False), "G")
+    r = D.q4(_rows(Q4_R_mean_in_all_gamma=False), "G",
+             n=10, p=0.8, rho=0.0)
     assert r["passed"] is True
 
 def test_q4_instrument_defect():
-    r = D.q4(_rows(Q4_R_mean_in_all_gamma=True), "G")
+    r = D.q4(_rows(Q4_R_mean_in_all_gamma=True), "G",
+             n=10, p=0.8, rho=0.0)
     assert not r["passed"]
     assert r["failure_class"] == "instrument_defect"

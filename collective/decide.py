@@ -15,13 +15,31 @@ __all__ = [
 
 FAILURE_CLASSES = ("against_thesis", "instrument_defect", "plugin_defect")
 
-# --- Thresholds from sizing (PREREGISTRO v1 SS8). ---
+# --- Thresholds from sizing (PREREGISTRO v1 SS8, per-cell). ---
 TH_Q1_COUNT: float | None = 1.00      # R_count converts B->T rate in O
 TH_Q2_POOL: float | None = 1.00       # R_pool elects rate in Pn
-TH_Q3_H1_PASS: float | None = 0.95    # R_H1 passes gate in Pw (min cell)
-TH_Q3_H1_WRONG: float | None = 0.95   # R_H1 borrow error in Pw (min cell)
-TH_Q3_H1_REFUSE: float | None = 0.70  # R_H1 refuses in Pl (min cell)
-TH_Q4_MEAN_OUTSIDE: float | None = 0.55  # R_mean outside Gamma_i (min cell)
+
+# Q3: per-cell (n, T) thresholds -- Pw
+TH_Q3_H1_PASS: dict[tuple, float] | None = {
+    (5, 320): 0.95, (5, 640): 1.00,
+    (20, 320): 1.00, (20, 640): 1.00,
+}
+TH_Q3_H1_WRONG: dict[tuple, float] | None = {
+    (5, 320): 0.95, (5, 640): 1.00,
+    (20, 320): 1.00, (20, 640): 1.00,
+}
+# Q3: per-cell (n, T) thresholds -- Pl, only p_range [0.05, 0.95]
+TH_Q3_H1_REFUSE: dict[tuple, float] | None = {
+    (5, 320): 0.70, (5, 640): 0.70,
+    (20, 320): 1.00, (20, 640): 1.00,
+}
+# Q4: per-cell (n, p, rho) thresholds -- G
+TH_Q4_MEAN_OUTSIDE: dict[tuple, float] | None = {
+    (10, 0.8, 0.0): 0.85, (10, 0.8, 0.5): 0.80,
+    (10, 0.9, 0.0): 0.55, (10, 0.9, 0.5): 0.60,
+    (30, 0.8, 0.0): 1.00, (30, 0.8, 0.5): 1.00,
+    (30, 0.9, 0.0): 1.00, (30, 0.9, 0.5): 1.00,
+}
 
 
 def _check_thresholds():
@@ -36,15 +54,12 @@ def _check_thresholds():
             "Run sizing first.")
 
 
-def q1(rows: list[dict], world: str) -> dict | None:
+def q1(rows: list[dict], world: str, **cell) -> dict | None:
     """Q1 (O): duplicate obs don't change statute. R_count converts B->T."""
     if world != "O":
         return None
     _check_thresholds()
     n = len(rows)
-    # R_own side: statute must be B with both dup and dedup (rate 1.00)
-    # This is structural, tested via plugin integration.
-    # R_count side: converts B to T
     ok_count = sum(1 for r in rows
                    if r.get("Q1_statute_dup") == "T")
     rate_count = ok_count / n if n else 0.0
@@ -56,17 +71,15 @@ def q1(rows: list[dict], world: str) -> dict | None:
             "passed": passed, "failure_class": fc}
 
 
-def q2(rows: list[dict], world: str) -> dict | None:
+def q2(rows: list[dict], world: str, **cell) -> dict | None:
     """Q2 (Pn): R_own never elects (1.00). R_pool elects >= TH."""
     if world != "Pn":
         return None
     _check_thresholds()
     n = len(rows)
-    # R_own must never elect (plugin side, stub None means not elected)
     ok_own = sum(1 for r in rows
                  if r.get("Q2_R_own_elected") is None)
     rate_own = ok_own / n if n else 0.0
-    # R_pool elects
     ok_pool = sum(1 for r in rows
                   if r.get("Q2_R_pool_elected") is not None)
     rate_pool = ok_pool / n if n else 0.0
@@ -78,23 +91,26 @@ def q2(rows: list[dict], world: str) -> dict | None:
             "passed": passed, "failure_class": fc}
 
 
-def q3(rows: list[dict], world: str) -> dict | None:
+def q3(rows: list[dict], world: str, **cell) -> dict | None:
     """Q3 (Pw/Pl): H1 gate and adjustment correctness."""
     if world not in ("Pw", "Pl"):
         return None
     _check_thresholds()
+    key = (cell["n"], cell["T"])
     n = len(rows)
     if world == "Pw":
-        # theta_3: H1 passes rate
+        if key not in TH_Q3_H1_PASS:
+            raise RuntimeError(f"No theta for Q3 H1 pass, cell {key}")
+        th_pass = TH_Q3_H1_PASS[key]
+        th_wrong = TH_Q3_H1_WRONG[key]
         ok_pass = sum(1 for r in rows
                       if r.get("Q3_location_ratio") is not None
                       and r["Q3_location_ratio"] <= 1.0)
         rate_pass = ok_pass / n if n else 0.0
-        pass_ok = rate_pass >= TH_Q3_H1_PASS
-        # theta_3': borrowing error (majority of decaying have H1 > own)
+        pass_ok = rate_pass >= th_pass
         ok_borrow = sum(1 for r in rows if r.get("Q3_borrow_error"))
         rate_borrow = ok_borrow / n if n else 0.0
-        borrow_ok = rate_borrow >= TH_Q3_H1_WRONG
+        borrow_ok = rate_borrow >= th_wrong
         passed = pass_ok and borrow_ok
         fc = ("against_thesis" if not pass_ok
               else "instrument_defect" if not borrow_ok else None)
@@ -102,39 +118,44 @@ def q3(rows: list[dict], world: str) -> dict | None:
                 "rate_borrow_error": rate_borrow,
                 "passed": passed, "failure_class": fc}
     else:  # Pl
-        # H1 refuses in rate >= TH_Q3_H1_REFUSE
+        if key not in TH_Q3_H1_REFUSE:
+            raise RuntimeError(f"No theta for Q3 H1 refuse, cell {key}")
+        th_refuse = TH_Q3_H1_REFUSE[key]
         ok_refuse = sum(1 for r in rows
                         if r.get("Q3_location_ratio") is not None
                         and r["Q3_location_ratio"] > 1.0)
         rate_refuse = ok_refuse / n if n else 0.0
-        passed = rate_refuse >= TH_Q3_H1_REFUSE
+        passed = rate_refuse >= th_refuse
         fc = "against_thesis" if not passed else None
         return {"rate_H1_refuses": rate_refuse,
                 "passed": passed, "failure_class": fc}
 
 
-def q4(rows: list[dict], world: str) -> dict | None:
+def q4(rows: list[dict], world: str, **cell) -> dict | None:
     """Q4 (G): group intersection correctness."""
     if world != "G":
         return None
     _check_thresholds()
+    key = (cell["n"], cell["p"], cell["rho"])
+    if key not in TH_Q4_MEAN_OUTSIDE:
+        raise RuntimeError(f"No theta for Q4 mean outside, cell {key}")
+    th = TH_Q4_MEAN_OUTSIDE[key]
     n = len(rows)
-    # R_mean outside Gamma_i rate
     ok_mean_out = sum(1 for r in rows
                       if r.get("Q4_R_mean_in_all_gamma") is False)
     rate_mean_out = ok_mean_out / n if n else 0.0
-    passed = rate_mean_out >= TH_Q4_MEAN_OUTSIDE
+    passed = rate_mean_out >= th
     fc = "instrument_defect" if not passed else None
     return {"rate_mean_outside": rate_mean_out,
             "passed": passed, "failure_class": fc}
 
 
-def decide(rows: list[dict], world: str) -> dict:
+def decide(rows: list[dict], world: str, **cell) -> dict:
     """Run all applicable predictions for one cell."""
     _check_thresholds()
     result: dict = {}
     for fn in (q1, q2, q3, q4):
-        r = fn(rows, world)
+        r = fn(rows, world, **cell)
         if r is not None:
             result[fn.__name__] = r
     return result

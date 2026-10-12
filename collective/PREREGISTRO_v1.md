@@ -208,3 +208,9 @@ autorização explícita de Hudson A. R. Bonomo, registrada no commit de execuç
 8. **Arquivo reescrito por teste.** `make_prereg.py` (L42), chamado por `tests/test_prereg.py`
    (L21), reescreve o hash de proveniência de `PREREGISTRO_v3.md` a cada execução. Esse arquivo
    não é coberto por nenhum `freeze.sha256` e nunca entra em commit da bancada do Paper 8.
+
+## 13. Emenda v1.1 (12 out 2026, antes de qualquer execução)
+
+O `decide.py` do commit `7751ec1` reduziu os limiares por célula ao menor
+valor de cada quantidade; corrigido para os valores por célula já fixados
+no §8 e na tabela 8.1; nenhum limiar preregistrado muda.
