@@ -1,0 +1,41 @@
+{
+  "cells": {
+    "n5_T320": {
+      "n_seeds": 300,
+      "H1_pass_rate": 0.9867,
+      "borrow_error_rate": 0.9867,
+      "R_own_mean_stable": 120.74,
+      "R_own_mean_decay": 67.53,
+      "R_pool_mean_window": 160.0,
+      "R_H1_mean_window": 160.0
+    },
+    "n5_T640": {
+      "n_seeds": 300,
+      "H1_pass_rate": 1.0,
+      "borrow_error_rate": 0.9933,
+      "R_own_mean_stable": 160.0,
+      "R_own_mean_decay": 104.13,
+      "R_pool_mean_window": 160.0,
+      "R_H1_mean_window": 160.0
+    },
+    "n20_T320": {
+      "n_seeds": 300,
+      "H1_pass_rate": 1.0,
+      "borrow_error_rate": 1.0,
+      "R_own_mean_stable": 120.69,
+      "R_own_mean_decay": 67.48,
+      "R_pool_mean_window": 160.0,
+      "R_H1_mean_window": 160.0
+    },
+    "n20_T640": {
+      "n_seeds": 300,
+      "H1_pass_rate": 1.0,
+      "borrow_error_rate": 1.0,
+      "R_own_mean_stable": 159.99,
+      "R_own_mean_decay": 105.8,
+      "R_pool_mean_window": 160.0,
+      "R_H1_mean_window": 160.0
+    }
+  },
+  "n_total": 1200
+}

@@ -1,0 +1,41 @@
+{
+  "cells": {
+    "n5_T320": {
+      "n_seeds": 300,
+      "R_own_mean_first_block": 6.46,
+      "R_own_n_found": 1500,
+      "R_pool_mean_first_return": 17.68,
+      "R_pool_n_found": 300,
+      "R_H1_mean_first_return": 17.68,
+      "R_H1_n_found": 300
+    },
+    "n5_T640": {
+      "n_seeds": 300,
+      "R_own_mean_first_block": 6.46,
+      "R_own_n_found": 1500,
+      "R_pool_mean_first_return": 17.68,
+      "R_pool_n_found": 300,
+      "R_H1_mean_first_return": 17.68,
+      "R_H1_n_found": 300
+    },
+    "n20_T320": {
+      "n_seeds": 300,
+      "R_own_mean_first_block": 6.42,
+      "R_own_n_found": 6000,
+      "R_pool_mean_first_return": 62.74,
+      "R_pool_n_found": 300,
+      "R_H1_mean_first_return": 62.74,
+      "R_H1_n_found": 300
+    },
+    "n20_T640": {
+      "n_seeds": 300,
+      "R_own_mean_first_block": 6.42,
+      "R_own_n_found": 6000,
+      "R_pool_mean_first_return": 62.74,
+      "R_pool_n_found": 300,
+      "R_H1_mean_first_return": 62.74,
+      "R_H1_n_found": 300
+    }
+  },
+  "n_total": 1200
+}

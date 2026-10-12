@@ -1,0 +1,29 @@
+{
+  "cells": {
+    "R_T80": {
+      "n_seeds": 300,
+      "R_infer_value_changes_rate": 0.53,
+      "R_infer_value_no_pause_changes_rate": 0.1167,
+      "R_norm_invariance_rate": 1.0
+    },
+    "R+_T80": {
+      "n_seeds": 300,
+      "R_infer_value_changes_rate": 0.5467,
+      "R_infer_value_no_pause_changes_rate": 0.13,
+      "R_norm_invariance_rate": 1.0
+    },
+    "R_T160": {
+      "n_seeds": 300,
+      "R_infer_value_changes_rate": 0.5533,
+      "R_infer_value_no_pause_changes_rate": 0.1133,
+      "R_norm_invariance_rate": 1.0
+    },
+    "R+_T160": {
+      "n_seeds": 300,
+      "R_infer_value_changes_rate": 0.54,
+      "R_infer_value_no_pause_changes_rate": 0.1467,
+      "R_norm_invariance_rate": 1.0
+    }
+  },
+  "n_total": 1200
+}
