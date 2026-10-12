@@ -8,7 +8,8 @@ from adaptive.verdicts import rate_excluding_empty
 __all__ = [
     "TH_Q1_COUNT", "TH_Q2_POOL", "TH_Q3_H1_PASS",
     "TH_Q3_H1_WRONG", "TH_Q3_H1_REFUSE", "TH_Q4_MEAN_OUTSIDE",
-    "q1", "q2", "q3", "q4", "decide",
+    "TH_Q3V2_PASS", "TH_Q3V2_BORROW",
+    "q1", "q2", "q3", "q3_v2", "q4", "decide",
 ]
 FAILURE_CLASSES = ("against_thesis", "instrument_defect", "plugin_defect")
 
@@ -36,6 +37,17 @@ TH_Q4_MEAN_OUTSIDE: dict[tuple, float] | None = {
     (10, 0.9, 0.0): 0.55, (10, 0.9, 0.5): 0.60,
     (30, 0.8, 0.0): 1.00, (30, 0.8, 0.5): 1.00,
     (30, 0.9, 0.0): 1.00, (30, 0.9, 0.5): 1.00,
+}
+
+
+# --- v2 thresholds (Q3-v2, second round, addendum v2 SS4) ---
+TH_Q3V2_PASS: dict[tuple, float] = {
+    (5, 320): 0.95, (5, 640): 1.00,
+    (20, 320): 1.00, (20, 640): 1.00,
+}
+TH_Q3V2_BORROW: dict[tuple, float] = {
+    (5, 320): 0.95, (5, 640): 0.95,
+    (20, 320): 1.00, (20, 640): 1.00,
 }
 
 
@@ -134,6 +146,37 @@ def q3(rows: list[dict], world: str, **cell) -> dict | None:
         fc = "instrument_defect" if not passed else None
         return {"rate_H1_refuses": rate_refuse,
                 "passed": passed, "failure_class": fc}
+
+
+def q3_v2(rows: list[dict], world: str, **cell) -> dict | None:
+    """Q3-v2 (Pw only): gate + borrowing error with v2 thresholds.
+    R_own never adjusts from others must be 1.00."""
+    if world != "Pw":
+        return None
+    key = (cell["n"], cell["T"])
+    n = len(rows)
+    th_pass = TH_Q3V2_PASS[key]
+    th_borrow = TH_Q3V2_BORROW[key]
+    ok_pass = sum(1 for r in rows
+                  if r.get("Q3_location_ratio") is not None
+                  and r["Q3_location_ratio"] <= 1.0)
+    rate_pass = ok_pass / n if n else 0.0
+    ok_borrow = sum(1 for r in rows if r.get("Q3_borrow_error"))
+    rate_borrow = ok_borrow / n if n else 0.0
+    ok_no_cross = sum(1 for r in rows
+                      if r.get("Q3_R_own_no_cross_adjust", True))
+    rate_no_cross = ok_no_cross / n if n else 0.0
+    pass_ok = rate_pass >= th_pass
+    borrow_ok = rate_borrow >= th_borrow
+    cross_ok = rate_no_cross >= 1.0
+    passed = pass_ok and borrow_ok and cross_ok
+    fc = ("plugin_defect" if not cross_ok
+          else "instrument_defect" if not pass_ok
+          else "against_thesis" if not borrow_ok else None)
+    return {"rate_H1_passes": rate_pass,
+            "rate_borrow_error": rate_borrow,
+            "rate_no_cross_adjust": rate_no_cross,
+            "passed": passed, "failure_class": fc}
 
 
 def _parse_list(v):

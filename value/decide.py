@@ -11,7 +11,8 @@ __all__ = [
     "TH_P2_REWARD", "TH_P3_R", "TH_P3_RPLUS", "TH_P4_CONFLICT",
     "TH_P4_ELECT_T80", "TH_P4_ELECT_T160", "TH_P5_X_NAIVE_T80",
     "TH_P5_X_NAIVE_T160", "TH_P5_XP_T80", "TH_P5_XP_T160",
-    "p1", "p2", "p3", "p4", "p5", "p6", "decide",
+    "TH_P3V2",
+    "p1", "p2", "p3", "p3_v2", "p4", "p5", "p6", "decide",
 ]
 
 # --- Thresholds from sizing (PREREGISTRO v1 SS8). ---
@@ -29,6 +30,9 @@ TH_P5_X_NAIVE_T80: float | None = 0.85
 TH_P5_X_NAIVE_T160: float | None = 0.95
 TH_P5_XP_T80: float | None = 0.70
 TH_P5_XP_T160: float | None = 0.90
+
+# --- v2 thresholds (P3-v2, second round, addendum v2 SS4) ---
+TH_P3V2: float = 0.35   # per cell, k=4, conjunction power >= 0.80
 
 FAILURE_CLASSES = ("against_thesis", "instrument_defect", "plugin_defect")
 
@@ -87,6 +91,28 @@ def p3(rows: list[dict], world: str, T: int) -> dict | None:
     riv = _rate(rows, lambda r: (
         r["R_infer_value_elected"] != r.get("R_infer_value_no_pause")))
     passed = rinv >= 1.0 and riv >= th
+    fc = ("plugin_defect" if rinv < 1.0
+          else "instrument_defect" if not passed else None)
+    return {"rate_invariant": rinv, "rate_infer_value_changes": riv,
+            "passed": passed, "failure_class": fc}
+
+
+def _no_pause_elected(r: dict):
+    """Get R_infer_value_no_pause elected, supporting both field names."""
+    return r.get("R_infer_value_no_pause_elected",
+                 r.get("R_infer_value_no_pause"))
+
+
+def p3_v2(rows: list[dict], world: str, T: int) -> dict | None:
+    """P3-v2 (R, R+): R_norm invariance 1.00; change of choice >= TH_P3V2.
+    v2 measure: R_infer_value_elected != R_infer_value_no_pause_elected.
+    Never compared against R_reward."""
+    if world not in ("R", "R+"):
+        return None
+    rinv = _rate(rows, lambda r: r["P3_invariant"] is True)
+    riv = _rate(rows, lambda r: (
+        r["R_infer_value_elected"] != _no_pause_elected(r)))
+    passed = rinv >= 1.0 and riv >= TH_P3V2
     fc = ("plugin_defect" if rinv < 1.0
           else "instrument_defect" if not passed else None)
     return {"rate_invariant": rinv, "rate_infer_value_changes": riv,
