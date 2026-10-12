@@ -1,0 +1,562 @@
+{
+  "comparison_v12_v13": {
+    "C0_T160": {
+      "p4": {
+        "v12_passed": false,
+        "v13_passed": false,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "C0_T80": {
+      "p4": {
+        "v12_passed": false,
+        "v13_passed": false,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "C1_T160": {
+      "p4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "C1_T80": {
+      "p4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "C2_T160": {
+      "p4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "C2_T80": {
+      "p4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "N0_T160": {
+      "p1": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "N0_T80": {
+      "p1": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "P_T160": {
+      "p2": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "P_T80": {
+      "p2": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "R+_T160": {
+      "p3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_infer_value)"
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "R+_T80": {
+      "p3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_infer_value)"
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "R_T160": {
+      "p3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_infer_value)"
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "R_T80": {
+      "p3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_infer_value)"
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "X_T160": {
+      "p5": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "X_T80": {
+      "p5": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "Xp_T160": {
+      "p5": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "Xp_T80": {
+      "p5": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      },
+      "p6": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    }
+  },
+  "decision_v13": {
+    "N0_T80": {
+      "p1": {
+        "rate_norm": 1.0,
+        "rate_reward": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "N0_T160": {
+      "p1": {
+        "rate_norm": 1.0,
+        "rate_reward": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "P_T80": {
+      "p2": {
+        "rate_norm": 0.9,
+        "rate_reward": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "P_T160": {
+      "p2": {
+        "rate_norm": 1.0,
+        "rate_reward": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T80": {
+      "p3": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T160": {
+      "p3": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R+_T80": {
+      "p3": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R+_T160": {
+      "p3": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C0_T80": {
+      "p4": {
+        "rate_conflict": 0.75,
+        "rate_scalar": 1.0,
+        "passed": false,
+        "failure_class": "plugin_defect"
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C0_T160": {
+      "p4": {
+        "rate_conflict": 0.85,
+        "rate_scalar": 1.0,
+        "passed": false,
+        "failure_class": "plugin_defect"
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C1_T80": {
+      "p4": {
+        "rate_elect": 0.9,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C1_T160": {
+      "p4": {
+        "rate_elect": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C2_T80": {
+      "p4": {
+        "rate_elect": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "C2_T160": {
+      "p4": {
+        "rate_elect": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "X_T80": {
+      "p5": {
+        "rate_insuf": 1.0,
+        "rate_naive_s1": 0.95,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "X_T160": {
+      "p5": {
+        "rate_insuf": 1.0,
+        "rate_naive_s1": 1.0,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Xp_T80": {
+      "p5": {
+        "rate_no_justificado": 0.85,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Xp_T160": {
+      "p5": {
+        "rate_no_justificado": 0.9,
+        "passed": true,
+        "failure_class": null
+      },
+      "p6": {
+        "rates": {
+          "s3_never": 1.0,
+          "verdicts_eq": 1.0,
+          "suggestion_ok": 1.0,
+          "lambda_eq": 1.0,
+          "no_conflict_elect": 1.0
+        },
+        "passed": true,
+        "failure_class": null
+      }
+    }
+  }
+}

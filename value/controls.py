@@ -46,13 +46,40 @@ def R_reward(world: ValueWorld,
 
 
 def _seq_consumed(world: ValueWorld, strategy: str) -> int:
-    """Total seq span consumed by episodes of this strategy,
-    including pause gaps in the seq numbering."""
-    seqs = [o["seq"] for o in world.observations
-            if o["strategy"][0] == strategy]
-    if not seqs:
+    """Seq consumed by episodes of this strategy.  Each episode
+    contributes its observation span plus any pause that follows it
+    (identified via journey_events).  The pause is charged to the
+    strategy of the episode that precedes it, as the R world plants."""
+    eps: dict[str, list] = {}          # aid -> [strategy, min_seq, max_seq]
+    for o in world.observations:
+        aid = o.get("assignmentId")
+        if aid is None:
+            continue
+        s = o["strategy"][0]
+        if aid not in eps:
+            eps[aid] = [s, o["seq"], o["seq"]]
+        else:
+            eps[aid][1] = min(eps[aid][1], o["seq"])
+            eps[aid][2] = max(eps[aid][2], o["seq"])
+    if not eps:
         return 0
-    return max(seqs) - min(seqs) + 1
+    # Build pause map: seq_of_PAUSED -> pause_length
+    pause_at: dict[int, int] = {}
+    jevts = sorted(world.journey_events, key=lambda e: e["seq"])
+    i = 0
+    while i < len(jevts) - 1:
+        if (jevts[i].get("status") == "PAUSED"
+                and jevts[i + 1].get("status") == "ACTIVE"):
+            pause_at[jevts[i]["seq"]] = jevts[i + 1]["seq"] - jevts[i]["seq"]
+            i += 2
+        else:
+            i += 1
+    total = 0
+    for s, mn, mx in eps.values():
+        if s != strategy:
+            continue
+        total += mx - mn + 1 + pause_at.get(mx + 1, 0)
+    return total
 
 
 def R_infer_value(world: ValueWorld,

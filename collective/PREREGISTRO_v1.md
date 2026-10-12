@@ -218,3 +218,7 @@ no §8 e na tabela 8.1; nenhum limiar preregistrado muda.
 ## §14 — Emenda v1.2 (12 out 2026, depois de uma primeira execução da grade que parou antes de qualquer veredito)
 
 (a) O decide.py recusava célula sem θ, e as células de G com n = 5 não têm θ₄ por desenho (tabela 8.1). Ali R_mean é relatado sem limiar, e a recusa passa a valer só para as células que a previsão cobre. (b) O run_grid.py rodava Pl só na primeira faixa de p; o §7 manda as cinco. A grade foi rodada de novo por inteiro, com as mesmas sementes. A primeira execução parou antes de gravar qualquer linha, e por isso a conferência de identidade com ela não pôde ser feita. Nenhum limiar muda.
+
+## §15 — Emenda v1.3 (12 out 2026, depois da grade)
+
+Uma auditoria por recomputação das linhas gravadas encontrou que o R_pool deduplicava os retornos por seq, e as pessoas de uma população compartilham o calendário de seq: só os retornos da primeira pessoa entravam, e a janela emprestada era a dela. O lado do empréstimo do Q3 não foi testado, e o θ₃′ tinha sido dimensionado com o mesmo defeito. O R_pool foi corrigido para deduplicar por pessoa e seq. O decide.py passou a conferir as previsões estruturais de R_group em Q4 e a classificar o Q3 como diz o §9, reaplicado às linhas gravadas. Nenhum limiar muda.

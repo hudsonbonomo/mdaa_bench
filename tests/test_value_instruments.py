@@ -76,6 +76,34 @@ class TestRInferValue:
         assert r["values"]["s1"] > r["values"]["s2"]
 
 
+    def test_pause_charges_preceding_strategy(self):
+        """A pause after s1 lowers s1's value (more seq consumed)
+        and does NOT change s2's value.
+        Bug: old code measured gap (max-min+1), ignoring pauses."""
+        from value.world_utils import make_status_changed
+        obs = []
+        # Episode 0 (s1): seq 0,1. BETTER practice.
+        obs.append(make_obs(0, "BETTER", "s1", "retention", "a-0"))
+        obs.append(make_obs(1, "BETTER", "s1", "practice", "a-0"))
+        # Episode 1 (s1): seq 2,3. BETTER practice.
+        obs.append(make_obs(2, "BETTER", "s1", "retention", "a-1"))
+        obs.append(make_obs(3, "BETTER", "s1", "practice", "a-1"))
+        # PAUSE after s1 episode: seq 4->14 (plen=10)
+        j_evts = [make_status_changed(4, "PAUSED"),
+                  make_status_changed(14, "ACTIVE")]
+        # Episode 2 (s2): seq 14,15. BETTER practice.
+        obs.append(make_obs(14, "BETTER", "s2", "retention", "b-0"))
+        obs.append(make_obs(15, "BETTER", "s2", "practice", "b-0"))
+        # Episode 3 (s2): seq 16,17. BETTER practice.
+        obs.append(make_obs(16, "BETTER", "s2", "retention", "b-1"))
+        obs.append(make_obs(17, "BETTER", "s2", "practice", "b-1"))
+        w = ValueWorld(obs, [], [], j_evts, {"world": "R"}, {})
+        r = R_infer_value(w)
+        # s1: 2 BETTER / (2+12)=14 seq consumed. s2: 2 BETTER / 4.
+        assert r["values"]["s1"] < r["values"]["s2"]
+        assert r["elected"] == "s2"
+
+
 # --- R_scalar: equal-weight sum of retention + autonomy ---
 class TestRScalar:
     def test_elects_in_conflict(self):

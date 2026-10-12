@@ -1,139 +1,117 @@
 """Decision functions for the value grid (Paper 7).
-Predictions P1-P6 per cell. Thresholds from sizing (PREREGISTRO v1 SS8).
-The decide() dispatcher REFUSES to run with any threshold still None.
+Predictions P1-P6 per cell.  Thresholds from sizing (PREREGISTRO v1 SS8).
 Failure classes: against_thesis, instrument_defect, plugin_defect.
 """
 from __future__ import annotations
-
+import ast
 from adaptive.verdicts import rate_excluding_empty
 
 __all__ = [
-    "TH_P1_NORM", "TH_P1_REWARD",
-    "TH_P2_T80", "TH_P2_T160", "TH_P2_REWARD",
-    "TH_P3_R", "TH_P3_RPLUS",
-    "TH_P4_CONFLICT", "TH_P4_ELECT_T80", "TH_P4_ELECT_T160",
-    "TH_P5_X_NAIVE_T80", "TH_P5_X_NAIVE_T160",
-    "TH_P5_XP_T80", "TH_P5_XP_T160",
+    "TH_P1_NORM", "TH_P1_REWARD", "TH_P2_T80", "TH_P2_T160",
+    "TH_P2_REWARD", "TH_P3_R", "TH_P3_RPLUS", "TH_P4_CONFLICT",
+    "TH_P4_ELECT_T80", "TH_P4_ELECT_T160", "TH_P5_X_NAIVE_T80",
+    "TH_P5_X_NAIVE_T160", "TH_P5_XP_T80", "TH_P5_XP_T160",
     "p1", "p2", "p3", "p4", "p5", "p6", "decide",
 ]
 
 # --- Thresholds from sizing (PREREGISTRO v1 SS8). ---
-TH_P1_NORM: float | None = 1.00       # R_norm SEM_NORMA rate in N0
-TH_P1_REWARD: float | None = 1.00     # R_reward judges rate in N0
-TH_P2_T80: float | None = 0.80        # R_norm JUSTIFICADO s2, T=80
-TH_P2_T160: float | None = 0.95       # R_norm JUSTIFICADO s2, T=160
-TH_P2_REWARD: float | None = 1.00     # R_reward elects s1 in P
-TH_P3_R: float | None = 0.20          # R_infer_value changes in R
-TH_P3_RPLUS: float | None = 0.25      # R_infer_value changes in R+
-TH_P4_CONFLICT: float | None = 1.00   # R_scalar elege in C0
-TH_P4_ELECT_T80: float | None = 0.85  # R_norm elects s2 in C1/C2, T=80
-TH_P4_ELECT_T160: float | None = 0.95 # R_norm elects s2 in C1/C2, T=160
-TH_P5_X_NAIVE_T80: float | None = 0.85   # R_naive justifies s1, T=80
-TH_P5_X_NAIVE_T160: float | None = 0.95  # R_naive justifies s1, T=160
-TH_P5_XP_T80: float | None = 0.70     # R_norm NÃO_JUSTIFICADO in Xp, T=80
-TH_P5_XP_T160: float | None = 0.90    # R_norm NÃO_JUSTIFICADO in Xp, T=160
+TH_P1_NORM: float | None = 1.00
+TH_P1_REWARD: float | None = 1.00
+TH_P2_T80: float | None = 0.80
+TH_P2_T160: float | None = 0.95
+TH_P2_REWARD: float | None = 1.00
+TH_P3_R: float | None = 0.20
+TH_P3_RPLUS: float | None = 0.25
+TH_P4_CONFLICT: float | None = 1.00
+TH_P4_ELECT_T80: float | None = 0.85
+TH_P4_ELECT_T160: float | None = 0.95
+TH_P5_X_NAIVE_T80: float | None = 0.85
+TH_P5_X_NAIVE_T160: float | None = 0.95
+TH_P5_XP_T80: float | None = 0.70
+TH_P5_XP_T160: float | None = 0.90
 
 FAILURE_CLASSES = ("against_thesis", "instrument_defect", "plugin_defect")
 
 
 def _check_thresholds():
-    """Refuse to run if any threshold is still None."""
-    nones = []
-    for name in __all__:
-        if name.startswith("TH_") and globals()[name] is None:
-            nones.append(name)
+    nones = [n for n in __all__
+             if n.startswith("TH_") and globals()[n] is None]
     if nones:
         raise RuntimeError(
             f"Cannot decide: thresholds not set: {', '.join(nones)}. "
             "Run sizing first.")
 
 
+def _rate(rows, pred):
+    n = len(rows)
+    return sum(1 for r in rows if pred(r)) / n if n else 0.0
+
+
 def p1(rows: list[dict], world: str, T: int) -> dict | None:
-    """P1 (N0): R_norm SEM_NORMA in 1.00; R_reward judges in 1.00."""
+    """P1 (N0): R_norm SEM_NORMA 1.00; R_reward judges 1.00."""
     if world != "N0":
         return None
     _check_thresholds()
-    n = len(rows)
-    ok_norm = sum(1 for r in rows if r["R_norm_state"] == "SEM_NORMA")
-    ok_rw = sum(1 for r in rows if r["R_reward_elected"] is not None)
-    rn = ok_norm / n if n else 0.0
-    rr = ok_rw / n if n else 0.0
+    rn = _rate(rows, lambda r: r["R_norm_state"] == "SEM_NORMA")
+    rr = _rate(rows, lambda r: r["R_reward_elected"] is not None)
     passed = rn >= 1.0 and rr >= 1.0
-    fc = None
-    if not passed:
-        fc = "plugin_defect" if rn < 1.0 else "instrument_defect"
+    fc = ("plugin_defect" if rn < 1.0
+          else "instrument_defect" if not passed else None)
     return {"rate_norm": rn, "rate_reward": rr,
             "passed": passed, "failure_class": fc}
 
 
 def p2(rows: list[dict], world: str, T: int) -> dict | None:
-    """P2 (P): R_norm JUSTIFICADO s2 >= TH_P2; R_reward elects s1 >= 1.00."""
+    """P2 (P): R_norm JUSTIFICADO s2 >= TH; R_reward elects s1."""
     if world != "P":
         return None
     _check_thresholds()
     th = TH_P2_T160 if T == 160 else TH_P2_T80
-    n = len(rows)
-    ok_norm = sum(1 for r in rows
-                  if r["R_norm_state"] == "JUSTIFICADO"
-                  and r["R_norm_elected"] == "s2")
-    ok_rw = sum(1 for r in rows if r["R_reward_elected"] == "s1")
-    rn = ok_norm / n if n else 0.0
-    rr = ok_rw / n if n else 0.0
+    rn = _rate(rows, lambda r: (r["R_norm_state"] == "JUSTIFICADO"
+                                and r["R_norm_elected"] == "s2"))
+    rr = _rate(rows, lambda r: r["R_reward_elected"] == "s1")
     passed = rn >= th and rr >= TH_P2_REWARD
-    fc = None
-    if not passed:
-        fc = "against_thesis" if rn < th else "instrument_defect"
+    fc = ("against_thesis" if rn < th
+          else "instrument_defect" if not passed else None)
     return {"rate_norm": rn, "rate_reward": rr,
             "passed": passed, "failure_class": fc}
 
 
 def p3(rows: list[dict], world: str, T: int) -> dict | None:
-    """P3 (R, R+): pause invariance 1.00; R_infer_value changes >= TH_P3."""
+    """P3 (R, R+): pause invariance 1.00; R_infer_value changes >= TH."""
     if world not in ("R", "R+"):
         return None
     _check_thresholds()
     th = TH_P3_RPLUS if world == "R+" else TH_P3_R
-    n = len(rows)
-    ok_inv = sum(1 for r in rows if r["P3_invariant"] is True)
-    rinv = ok_inv / n if n else 0.0
-    ok_iv = sum(1 for r in rows
-                if r["R_infer_value_elected"] != r.get("R_infer_value_no_pause"))
-    riv = ok_iv / n if n else 0.0
+    rinv = _rate(rows, lambda r: r["P3_invariant"] is True)
+    riv = _rate(rows, lambda r: (
+        r["R_infer_value_elected"] != r.get("R_infer_value_no_pause")))
     passed = rinv >= 1.0 and riv >= th
-    fc = None
-    if not passed:
-        fc = "plugin_defect" if rinv < 1.0 else "instrument_defect"
+    fc = ("plugin_defect" if rinv < 1.0
+          else "instrument_defect" if not passed else None)
     return {"rate_invariant": rinv, "rate_infer_value_changes": riv,
             "passed": passed, "failure_class": fc}
 
 
 def p4(rows: list[dict], world: str, T: int) -> dict | None:
-    """P4 (C0/C1/C2): conflict/elect rates."""
+    """P4 (C0/C1/C2): conflict or elect rates."""
     if world == "C0":
         _check_thresholds()
-        n = len(rows)
-        ok = sum(1 for r in rows if r["R_norm_state"] == "EM_CONFLITO")
-        rn = ok / n if n else 0.0
-        ok_sc = sum(1 for r in rows if r["R_scalar_elected"] is not None)
-        rsc = ok_sc / n if n else 0.0
+        rn = _rate(rows, lambda r: r["R_norm_state"] == "EM_CONFLITO")
+        rsc = _rate(rows, lambda r: r["R_scalar_elected"] is not None)
         passed = rn >= 1.0 and rsc >= TH_P4_CONFLICT
-        fc = None
-        if not passed:
-            fc = "plugin_defect" if rn < 1.0 else "instrument_defect"
+        fc = ("plugin_defect" if rn < 1.0
+              else "instrument_defect" if not passed else None)
         return {"rate_conflict": rn, "rate_scalar": rsc,
                 "passed": passed, "failure_class": fc}
     if world in ("C1", "C2"):
         _check_thresholds()
         th = TH_P4_ELECT_T160 if T == 160 else TH_P4_ELECT_T80
-        n = len(rows)
-        ok = sum(1 for r in rows
-                 if r["R_norm_state"] == "JUSTIFICADO"
-                 and r["R_norm_elected"] == "s2")
-        rn = ok / n if n else 0.0
+        rn = _rate(rows, lambda r: (r["R_norm_state"] == "JUSTIFICADO"
+                                    and r["R_norm_elected"] == "s2"))
         passed = rn >= th
         fc = "against_thesis" if not passed else None
-        return {"rate_elect": rn,
-                "passed": passed, "failure_class": fc}
+        return {"rate_elect": rn, "passed": passed, "failure_class": fc}
     return None
 
 
@@ -142,24 +120,18 @@ def p5(rows: list[dict], world: str, T: int) -> dict | None:
     if world == "X":
         _check_thresholds()
         th = TH_P5_X_NAIVE_T160 if T == 160 else TH_P5_X_NAIVE_T80
-        n = len(rows)
-        ok_insuf = sum(1 for r in rows if r["R_norm_state"] == "INSUFICIENTE")
-        ri = ok_insuf / n if n else 0.0
-        ok_naive = sum(1 for r in rows
-                       if r["R_naive_justified"] and r["R_naive_elected"] == "s1")
-        rn = ok_naive / n if n else 0.0
+        ri = _rate(rows, lambda r: r["R_norm_state"] == "INSUFICIENTE")
+        rn = _rate(rows, lambda r: (
+            r["R_naive_justified"] and r["R_naive_elected"] == "s1"))
         passed = ri >= 1.0 and rn >= th
-        fc = None
-        if not passed:
-            fc = "plugin_defect" if ri < 1.0 else "instrument_defect"
+        fc = ("plugin_defect" if ri < 1.0
+              else "instrument_defect" if not passed else None)
         return {"rate_insuf": ri, "rate_naive_s1": rn,
                 "passed": passed, "failure_class": fc}
     if world == "Xp":
         _check_thresholds()
         th = TH_P5_XP_T160 if T == 160 else TH_P5_XP_T80
-        n = len(rows)
-        ok = sum(1 for r in rows if r["R_norm_state"] == "NÃO_JUSTIFICADO")
-        rn = ok / n if n else 0.0
+        rn = _rate(rows, lambda r: r["R_norm_state"] == "NÃO_JUSTIFICADO")
         passed = rn >= th
         fc = "against_thesis" if not passed else None
         return {"rate_no_justificado": rn,
@@ -167,16 +139,47 @@ def p5(rows: list[dict], world: str, T: int) -> dict | None:
     return None
 
 
+def _parse_par(v):
+    if isinstance(v, str) and v:
+        return ast.literal_eval(v)
+    return v if isinstance(v, dict) else None
+
+
 def p6(rows: list[dict], world: str, T: int) -> dict | None:
-    """P6 (all worlds): D3 boundaries, always 1.00."""
+    """P6 (all worlds): five D3 boundaries, each 1.00."""
     _check_thresholds()
     n = len(rows)
-    ok_s3 = sum(1 for r in rows if r.get("P6_s3_never_elected") is True)
-    rs3 = ok_s3 / n if n else 0.0
-    passed = rs3 >= 1.0
+    ok = [0, 0, 0, 0, 0]
+    for r in rows:
+        if r.get("P6_s3_never_elected") is True:
+            ok[0] += 1
+        on = _parse_par(r.get("P6_layer7_true"))
+        off = _parse_par(r.get("P6_layer7_false"))
+        if not isinstance(on, dict) or not isinstance(off, dict):
+            continue
+        if on.get("verdicts") == off.get("verdicts"):
+            ok[1] += 1
+        el = on.get("electedStrategy")
+        s_on, s_off = on.get("exploratory"), off.get("exploratory")
+        if (el is not None and s_on is None) or (
+                el is None and s_on == s_off):
+            ok[2] += 1
+        po = on.get("status", {}).get("byProposition", [])
+        pf = off.get("status", {}).get("byProposition", [])
+        if len(po) == len(pf) and all(
+                a.get("status", {}).get("kind")
+                == b.get("status", {}).get("kind")
+                for a, b in zip(po, pf)):
+            ok[3] += 1
+        jdg = on.get("judgment", {})
+        if not (jdg.get("state") == "EM_CONFLITO" and el is not None):
+            ok[4] += 1
+    names = ["s3_never", "verdicts_eq", "suggestion_ok",
+             "lambda_eq", "no_conflict_elect"]
+    rates = {names[i]: ok[i] / n if n else 0.0 for i in range(5)}
+    passed = all(v >= 1.0 for v in rates.values())
     fc = "plugin_defect" if not passed else None
-    return {"rate_s3_never": rs3,
-            "passed": passed, "failure_class": fc}
+    return {"rates": rates, "passed": passed, "failure_class": fc}
 
 
 def decide(rows: list[dict], world: str, T: int) -> dict:

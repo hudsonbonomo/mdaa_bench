@@ -1,0 +1,632 @@
+{
+  "comparison_v12_v13": {
+    "G_n10_m5_p0.8_rho0.0": {
+      "q4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "G_n10_m5_p0.8_rho0.5": {
+      "q4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "G_n10_m5_p0.9_rho0.0": {
+      "q4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "G_n10_m5_p0.9_rho0.5": {
+      "q4": {
+        "v12_passed": false,
+        "v13_passed": false,
+        "changed": false
+      }
+    },
+    "G_n30_m5_p0.8_rho0.0": {
+      "q4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "G_n30_m5_p0.8_rho0.5": {
+      "q4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "G_n30_m5_p0.9_rho0.0": {
+      "q4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "G_n30_m5_p0.9_rho0.5": {
+      "q4": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "G_n5_m5_p0.8_rho0.0": {
+      "q4": {
+        "v12_passed": null,
+        "v13_passed": true,
+        "changed": true
+      }
+    },
+    "G_n5_m5_p0.8_rho0.5": {
+      "q4": {
+        "v12_passed": null,
+        "v13_passed": true,
+        "changed": true
+      }
+    },
+    "G_n5_m5_p0.9_rho0.0": {
+      "q4": {
+        "v12_passed": null,
+        "v13_passed": true,
+        "changed": true
+      }
+    },
+    "G_n5_m5_p0.9_rho0.5": {
+      "q4": {
+        "v12_passed": null,
+        "v13_passed": true,
+        "changed": true
+      }
+    },
+    "O_k2": {
+      "q1": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "O_k5": {
+      "q1": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "Pl_n20_T320_pr[0.05, 0.95]": {
+      "q3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T320_pr[0.3, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T320_pr[0.4, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T320_pr[0.5, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T320_pr[0.6, 0.9]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T640_pr[0.05, 0.95]": {
+      "q3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T640_pr[0.3, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T640_pr[0.4, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T640_pr[0.5, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n20_T640_pr[0.6, 0.9]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T320_pr[0.05, 0.95]": {
+      "q3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T320_pr[0.3, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T320_pr[0.4, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T320_pr[0.5, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T320_pr[0.6, 0.9]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T640_pr[0.05, 0.95]": {
+      "q3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T640_pr[0.3, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T640_pr[0.4, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T640_pr[0.5, 0.95]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pl_n5_T640_pr[0.6, 0.9]": {
+      "q3": {
+        "v12_passed": null,
+        "v13_passed": null,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pn_n20": {
+      "q2": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "Pn_n5": {
+      "q2": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false
+      }
+    },
+    "Pw_n20_T320": {
+      "q3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pw_n20_T640": {
+      "q3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pw_n5_T320": {
+      "q3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    },
+    "Pw_n5_T640": {
+      "q3": {
+        "v12_passed": true,
+        "v13_passed": true,
+        "changed": false,
+        "note": "não testado (defeito de instrumento: R_pool)"
+      }
+    }
+  },
+  "decision_v13": {
+    "O_k2": {
+      "q1": {
+        "rate_count_T": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "O_k5": {
+      "q1": {
+        "rate_count_T": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pn_n5": {
+      "q2": {
+        "rate_own_never": 1.0,
+        "rate_pool_elects": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pn_n20": {
+      "q2": {
+        "rate_own_never": 1.0,
+        "rate_pool_elects": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T320_pr[0.6, 0.9]": {
+      "q3": {
+        "rate_H1_refuses": 0.15,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T320_pr[0.5, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.15,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T320_pr[0.4, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.45,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T320_pr[0.3, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.45,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T320_pr[0.05, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.75,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T640_pr[0.6, 0.9]": {
+      "q3": {
+        "rate_H1_refuses": 0.0,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T640_pr[0.5, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.1,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T640_pr[0.4, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.4,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T640_pr[0.3, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.45,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n5_T640_pr[0.05, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.85,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T320_pr[0.6, 0.9]": {
+      "q3": {
+        "rate_H1_refuses": 0.0,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T320_pr[0.5, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.0,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T320_pr[0.4, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.4,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T320_pr[0.3, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.8,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T320_pr[0.05, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T640_pr[0.6, 0.9]": {
+      "q3": {
+        "rate_H1_refuses": 0.0,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T640_pr[0.5, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.0,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T640_pr[0.4, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.35,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T640_pr[0.3, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 0.65,
+        "passed": null,
+        "failure_class": null
+      }
+    },
+    "Pl_n20_T640_pr[0.05, 0.95]": {
+      "q3": {
+        "rate_H1_refuses": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pw_n5_T320": {
+      "q3": {
+        "rate_H1_passes": 1.0,
+        "rate_borrow_error": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pw_n5_T640": {
+      "q3": {
+        "rate_H1_passes": 1.0,
+        "rate_borrow_error": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pw_n20_T320": {
+      "q3": {
+        "rate_H1_passes": 1.0,
+        "rate_borrow_error": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pw_n20_T640": {
+      "q3": {
+        "rate_H1_passes": 1.0,
+        "rate_borrow_error": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n5_m5_p0.8_rho0.0": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": null,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n5_m5_p0.8_rho0.5": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": null,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n5_m5_p0.9_rho0.0": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": null,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n5_m5_p0.9_rho0.5": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": null,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n10_m5_p0.8_rho0.0": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": 0.95,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n10_m5_p0.8_rho0.5": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": 0.8,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n10_m5_p0.9_rho0.0": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": 0.65,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n10_m5_p0.9_rho0.5": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": 0.55,
+        "passed": false,
+        "failure_class": "instrument_defect"
+      }
+    },
+    "G_n30_m5_p0.8_rho0.0": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n30_m5_p0.8_rho0.5": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n30_m5_p0.9_rho0.0": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "G_n30_m5_p0.9_rho0.5": {
+      "q4": {
+        "rate_admissible_eq": 1.0,
+        "rate_indeterminate_ok": 1.0,
+        "rate_hidden_ok": 1.0,
+        "rate_mean_outside": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    }
+  }
+}

@@ -1,10 +1,8 @@
 """Decision functions for the collective grid (Paper 8).
-Predictions Q1-Q4 per cell. Thresholds are None until sizing.
-decide() REFUSES to run with any threshold still None.
+Predictions Q1-Q4 per cell.  Thresholds from sizing.
 Failure classes: against_thesis, instrument_defect, plugin_defect.
 """
 from __future__ import annotations
-
 from adaptive.verdicts import rate_excluding_empty
 
 __all__ = [
@@ -12,7 +10,6 @@ __all__ = [
     "TH_Q3_H1_WRONG", "TH_Q3_H1_REFUSE", "TH_Q4_MEAN_OUTSIDE",
     "q1", "q2", "q3", "q4", "decide",
 ]
-
 FAILURE_CLASSES = ("against_thesis", "instrument_defect", "plugin_defect")
 
 # --- Thresholds from sizing (PREREGISTRO v1 SS8, per-cell). ---
@@ -43,11 +40,8 @@ TH_Q4_MEAN_OUTSIDE: dict[tuple, float] | None = {
 
 
 def _check_thresholds():
-    """Refuse to run if any threshold is still None."""
-    nones = []
-    for name in __all__:
-        if name.startswith("TH_") and globals()[name] is None:
-            nones.append(name)
+    nones = [n for n in __all__
+             if n.startswith("TH_") and globals()[n] is None]
     if nones:
         raise RuntimeError(
             f"Cannot decide: thresholds not set: {', '.join(nones)}. "
@@ -92,7 +86,10 @@ def q2(rows: list[dict], world: str, **cell) -> dict | None:
 
 
 def q3(rows: list[dict], world: str, **cell) -> dict | None:
-    """Q3 (Pw/Pl): H1 gate and adjustment correctness."""
+    """Q3 (Pw/Pl): H1 gate and borrowing error.
+    Failure classes per SS9: borrowing below theta3' -> against_thesis;
+    gate below theta3 (Pw) or theta3'' (extreme Pl) -> instrument_defect.
+    """
     if world not in ("Pw", "Pl"):
         return None
     _check_thresholds()
@@ -112,13 +109,12 @@ def q3(rows: list[dict], world: str, **cell) -> dict | None:
         rate_borrow = ok_borrow / n if n else 0.0
         borrow_ok = rate_borrow >= th_wrong
         passed = pass_ok and borrow_ok
-        fc = ("against_thesis" if not pass_ok
-              else "instrument_defect" if not borrow_ok else None)
+        fc = ("instrument_defect" if not pass_ok
+              else "against_thesis" if not borrow_ok else None)
         return {"rate_H1_passes": rate_pass,
                 "rate_borrow_error": rate_borrow,
                 "passed": passed, "failure_class": fc}
     else:  # Pl
-        # Threshold only applies to [0.05, 0.95] range per PREREGISTRO §8.
         pr = cell.get("p_range")
         if pr is not None and pr != [0.05, 0.95]:
             ok_refuse = sum(1 for r in rows
@@ -135,30 +131,60 @@ def q3(rows: list[dict], world: str, **cell) -> dict | None:
                         and r["Q3_location_ratio"] > 1.0)
         rate_refuse = ok_refuse / n if n else 0.0
         passed = rate_refuse >= th_refuse
-        fc = "against_thesis" if not passed else None
+        fc = "instrument_defect" if not passed else None
         return {"rate_H1_refuses": rate_refuse,
                 "passed": passed, "failure_class": fc}
 
 
+def _parse_list(v):
+    """Parse a list value that may be a string repr from CSV."""
+    import ast
+    if isinstance(v, str) and v:
+        return ast.literal_eval(v)
+    return v if isinstance(v, list) else []
+
+
 def q4(rows: list[dict], world: str, **cell) -> dict | None:
-    """Q4 (G): group intersection correctness."""
+    """Q4 (G): R_group structural predictions in all 12 cells,
+    plus R_mean threshold in cells with theta4."""
     if world != "G":
         return None
     _check_thresholds()
     key = (cell["n"], cell["p"], cell["rho"])
     n = len(rows)
-    # Structural predictions (R_group) apply in all 12 cells.
-    # R_mean threshold comparison is skipped for cells without θ₄.
-    if key not in TH_Q4_MEAN_OUTSIDE:
-        return None
-    th = TH_Q4_MEAN_OUTSIDE[key]
-    ok_mean_out = sum(1 for r in rows
+    # --- Structural checks (all 12 G cells) ---
+    ok_adm = sum(1 for r in rows
+                 if _parse_list(r.get("Q4_R_group_admissible"))
+                 == _parse_list(r.get("Q4_planted_admissible")))
+    rate_adm = ok_adm / n if n else 0.0
+    ok_ind = sum(1 for r in rows
+                 if (r.get("Q4_R_group_indeterminate") is True)
+                 == (r.get("Q4_admissible_empty") is True))
+    rate_ind = ok_ind / n if n else 0.0
+    ok_hid = sum(1 for r in rows
+                 if r.get("Q4_R_group_hidden_ok") is not False)
+    rate_hid = ok_hid / n if n else 0.0
+    struct_ok = rate_adm >= 1.0 and rate_ind >= 1.0 and rate_hid >= 1.0
+    struct_fc = "plugin_defect" if not struct_ok else None
+    d: dict = {"rate_admissible_eq": rate_adm,
+               "rate_indeterminate_ok": rate_ind,
+               "rate_hidden_ok": rate_hid}
+    # --- R_mean threshold (only cells with theta4) ---
+    if key in TH_Q4_MEAN_OUTSIDE:
+        th = TH_Q4_MEAN_OUTSIDE[key]
+        ok_mean = sum(1 for r in rows
                       if r.get("Q4_R_mean_in_all_gamma") is False)
-    rate_mean_out = ok_mean_out / n if n else 0.0
-    passed = rate_mean_out >= th
-    fc = "instrument_defect" if not passed else None
-    return {"rate_mean_outside": rate_mean_out,
-            "passed": passed, "failure_class": fc}
+        rate_mean = ok_mean / n if n else 0.0
+        mean_ok = rate_mean >= th
+        d["rate_mean_outside"] = rate_mean
+        passed = struct_ok and mean_ok
+        fc = struct_fc or ("instrument_defect" if not mean_ok else None)
+    else:
+        d["rate_mean_outside"] = None
+        passed = struct_ok
+        fc = struct_fc
+    d.update({"passed": passed, "failure_class": fc})
+    return d
 
 
 def decide(rows: list[dict], world: str, **cell) -> dict:

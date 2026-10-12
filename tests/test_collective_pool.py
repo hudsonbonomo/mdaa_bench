@@ -113,6 +113,35 @@ class TestRPoolPop:
         assert r["window"] is None
 
 
+# -- Unit: _collect_returns dedup by (person, seq) --
+
+class TestCollectReturnsMultiPerson:
+    def test_same_seq_different_persons_not_collapsed(self):
+        """Two persons with the same seq calendar: both returns survive.
+        Bug: old code deduped by seq alone, collapsing to one person."""
+        pf = [
+            [_fold(10, "COUNTED"), _fold(20, "COUNTED")],
+            [_fold(10, "NEUTRAL"), _fold(20, "COUNTED")],
+        ]
+        ret = _collect_returns(pf)
+        # Should have 4 entries (2 per person), not 2
+        assert len(ret) == 4
+        # Ordered by (seq, person)
+        assert [(r["seq"], r["person"]) for r in ret] == [
+            (10, 0), (10, 1), (20, 0), (20, 1)]
+
+    def test_pooled_window_uses_all_persons(self):
+        """With two persons each contributing 2 COUNTED, the pool
+        should count 4 COUNTED total and fire if threshold k=3."""
+        pf = [
+            [_fold(10, "COUNTED"), _fold(20, "COUNTED")],
+            [_fold(10, "COUNTED"), _fold(20, "COUNTED")],
+        ]
+        r = R_pool_pop(pf, _RULE, w0=20)
+        assert r["counted_returns"] == 4
+        assert r["window"] == 30  # 4 COUNTED with k=3 fires once
+
+
 # -- Integration: Python rule matches plugin for one person --
 
 _need_plugin = pytest.mark.skipif(

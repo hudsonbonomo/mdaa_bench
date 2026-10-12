@@ -69,12 +69,13 @@ def R_pool(population_obs: list[dict], strategies: list[str]) -> dict:
 
 def _collect_returns(person_folds: list[list[dict]]) -> list[dict]:
     """Collect all lastReturn entries from all persons' folds.
-    Returns a list of {seq, kind} dicts, sorted by seq.
-    Deduplicates by seq (same return seen in overlapping folds).
+    Returns a list of {seq, kind, person} dicts, sorted by (seq, person).
+    Deduplicates by (person_index, seq) — same return seen in
+    overlapping folds of the SAME person.
     """
-    seen: set[int] = set()
+    seen: set[tuple[int, int]] = set()
     returns: list[dict] = []
-    for folds in person_folds:
+    for pi, folds in enumerate(person_folds):
         if not folds:
             continue
         for f in folds:
@@ -83,10 +84,12 @@ def _collect_returns(person_folds: list[list[dict]]) -> list[dict]:
             lr = f.get("lastReturn")
             if not isinstance(lr, dict) or lr.get("seq") is None:
                 continue
-            if lr["seq"] not in seen:
-                seen.add(lr["seq"])
-                returns.append({"seq": lr["seq"], "kind": lr["kind"]})
-    returns.sort(key=lambda r: r["seq"])
+            key = (pi, lr["seq"])
+            if key not in seen:
+                seen.add(key)
+                returns.append({"seq": lr["seq"], "kind": lr["kind"],
+                                "person": pi})
+    returns.sort(key=lambda r: (r["seq"], r["person"]))
     return returns
 
 

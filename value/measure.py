@@ -45,13 +45,17 @@ def _measure_gap_shift(world: ValueWorld) -> dict:
             "gap_shift": abs(gap_with - gap_wo)}
 
 
-def _measure_controls(world: ValueWorld) -> dict:
+def _measure_controls(world: ValueWorld, world_name: str = "") -> dict:
     """Run all four Python controls on the world."""
     d: dict = {}
     rw = R_reward(world)
     d["R_reward_elected"] = rw["elected"]
     iv = R_infer_value(world)
     d["R_infer_value_elected"] = iv["elected"]
+    if world_name in ("R", "R+"):
+        stripped = _strip_pauses(world)
+        iv_np = R_infer_value(stripped)
+        d["R_infer_value_no_pause"] = iv_np["elected"]
     sc = R_scalar(world)
     d["R_scalar_elected"] = sc["elected"]
     nv = R_naive(world)
@@ -165,7 +169,7 @@ def measure_run(world_name: str, T: int, seed: int,
     """
     w = world_override or make_world(world_name, T=T, seed=seed)
     d: dict = {}
-    d.update(_measure_controls(w))
+    d.update(_measure_controls(w, world_name))
     if world_name in ("R", "R+"):
         d.update(_measure_gap_shift(w))
     if use_plugin:

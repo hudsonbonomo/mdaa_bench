@@ -51,25 +51,12 @@ def test_p1_refuses_none():
             setattr(D, k, v)
 
 
-# -- 2. Not applicable returns None (skips _check_thresholds) --
-def test_p1_not_applicable():
-    assert D.p1(_rows(), "P", 80) is None
-
-
-def test_p2_not_applicable():
-    assert D.p2(_rows(), "N0", 80) is None
-
-
-def test_p3_not_applicable():
-    assert D.p3(_rows(), "P", 80) is None
-
-
-def test_p4_not_applicable():
-    assert D.p4(_rows(), "P", 80) is None
-
-
-def test_p5_not_applicable():
-    assert D.p5(_rows(), "P", 80) is None
+# -- 2. Not applicable returns None --
+def test_p1_not_applicable(): assert D.p1(_rows(), "P", 80) is None
+def test_p2_not_applicable(): assert D.p2(_rows(), "N0", 80) is None
+def test_p3_not_applicable(): assert D.p3(_rows(), "P", 80) is None
+def test_p4_not_applicable(): assert D.p4(_rows(), "P", 80) is None
+def test_p5_not_applicable(): assert D.p5(_rows(), "P", 80) is None
 
 
 # -- 3. With thresholds set, test each prediction --
@@ -176,13 +163,27 @@ def test_p5_xp_accented_spelling_matches():
 
 
 # P6
+def _par(elected=None, expl=None):
+    """Minimal parecer output for P6 boundary tests."""
+    return {"verdicts": [{"id": "obs-0", "standing": "APPLICABLE"}],
+            "status": {"byProposition": [
+                {"strategy": "s1", "status": {"kind": "B"}}]},
+            "electedStrategy": elected,
+            "exploratory": expl,
+            "judgment": {"state": "SEM_NORMA"}}
+
+
 def test_p6_passes():
-    r = D.p6(_rows(P6_s3_never_elected=True), "P", 80)
+    expl = {"strategy": ["s3"], "reason": "LEAST_OBSERVED"}
+    r = D.p6(_rows(P6_s3_never_elected=True,
+                   P6_layer7_true=_par(expl=expl),
+                   P6_layer7_false=_par(expl=expl)), "P", 80)
     assert r["passed"] is True
 
 
 def test_p6_plugin_defect():
-    r = D.p6(_rows(P6_s3_never_elected=False), "P", 80)
+    r = D.p6(_rows(P6_s3_never_elected=False,
+                   P6_layer7_true=_par(), P6_layer7_false=_par()), "P", 80)
     assert not r["passed"] and r["failure_class"] == "plugin_defect"
 
 

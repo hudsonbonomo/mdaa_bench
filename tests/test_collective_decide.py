@@ -123,8 +123,16 @@ def test_q3_pw_passes():
              "Pw", n=5, T=320)
     assert r["passed"] is True
 
-def test_q3_pw_against_thesis():
+def test_q3_pw_instrument_defect_gate():
+    """Gate fails (ratio > 1): instrument_defect per SS9."""
     r = D.q3(_rows(Q3_location_ratio=1.5), "Pw", n=5, T=320)
+    assert not r["passed"]
+    assert r["failure_class"] == "instrument_defect"
+
+def test_q3_pw_against_thesis_borrow():
+    """Borrowing error below threshold: against_thesis per SS9."""
+    r = D.q3(_rows(Q3_location_ratio=0.5, Q3_borrow_error=False),
+             "Pw", n=5, T=320)
     assert not r["passed"]
     assert r["failure_class"] == "against_thesis"
 
@@ -132,20 +140,42 @@ def test_q3_pl_passes():
     r = D.q3(_rows(Q3_location_ratio=1.5), "Pl", n=5, T=320)
     assert r["passed"] is True
 
-def test_q3_pl_against_thesis():
+def test_q3_pl_instrument_defect_gate():
+    """Gate fails to refuse (ratio <= 1 in Pl): instrument_defect per SS9."""
     r = D.q3(_rows(Q3_location_ratio=0.5), "Pl", n=5, T=320)
     assert not r["passed"]
-    assert r["failure_class"] == "against_thesis"
+    assert r["failure_class"] == "instrument_defect"
 
 
 # Q4
 def test_q4_passes():
-    r = D.q4(_rows(Q4_R_mean_in_all_gamma=False), "G",
+    r = D.q4(_rows(Q4_R_mean_in_all_gamma=False,
+                   Q4_R_group_admissible=["a0"],
+                   Q4_planted_admissible=["a0"],
+                   Q4_R_group_indeterminate=False,
+                   Q4_admissible_empty=False,
+                   Q4_R_group_hidden_ok=True), "G",
              n=10, p=0.8, rho=0.0)
     assert r["passed"] is True
 
 def test_q4_instrument_defect():
-    r = D.q4(_rows(Q4_R_mean_in_all_gamma=True), "G",
+    r = D.q4(_rows(Q4_R_mean_in_all_gamma=True,
+                   Q4_R_group_admissible=["a0"],
+                   Q4_planted_admissible=["a0"],
+                   Q4_R_group_indeterminate=False,
+                   Q4_admissible_empty=False,
+                   Q4_R_group_hidden_ok=True), "G",
              n=10, p=0.8, rho=0.0)
     assert not r["passed"]
     assert r["failure_class"] == "instrument_defect"
+
+def test_q4_plugin_defect_admissible_mismatch():
+    r = D.q4(_rows(Q4_R_mean_in_all_gamma=False,
+                   Q4_R_group_admissible=["a1"],
+                   Q4_planted_admissible=["a0"],
+                   Q4_R_group_indeterminate=False,
+                   Q4_admissible_empty=False,
+                   Q4_R_group_hidden_ok=True), "G",
+             n=10, p=0.8, rho=0.0)
+    assert not r["passed"]
+    assert r["failure_class"] == "plugin_defect"

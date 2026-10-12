@@ -187,3 +187,7 @@ commit de execução).
 ## §13 — Emenda v1.2 (12 out 2026, DEPOIS da grade)
 
 Ao ler a grade, encontrou-se que value/decide.py comparava o estado NÃO_JUSTIFICADO com a grafia sem til e por isso não contou nenhuma leitura de Xp nesse estado. A comparação foi corrigida para a grafia que o plugin devolve. Os dados não mudam: o decide.py emendado é reaplicado às linhas da grade gravadas antes da emenda, sem nova execução. Os dois vereditos são relatados, o do código congelado e o do código emendado. A previsão P4 não é emendada: o seu veredito fica como saiu.
+
+## §14 — Emenda v1.3 (12 out 2026, depois da grade)
+
+Uma auditoria por recomputação das linhas gravadas encontrou dois problemas. (a) O controle R_infer_value media o vão entre o primeiro e o último episódio de cada estratégia, e não o seq consumido por ela; a pausa alongava as duas por igual, e o controle não mudou de escolha em nenhuma das 80 execuções de R e R+. O decide.py lia uma coluna que não foi gravada e devolvia 1,00, e o dimensionamento do θ₃ mediu outra quantidade (R_infer_value contra R_reward). O lado do controle da P3 não foi testado. O controle foi corrigido para cobrar a pausa da estratégia do episódio que a precede. (b) O decide.py conferia uma só das cinco fronteiras da P6; passou a conferir as cinco, reaplicado às linhas gravadas. Nenhum limiar muda.
