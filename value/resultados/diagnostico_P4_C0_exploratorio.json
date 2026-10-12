@@ -1,0 +1,436 @@
+{
+  "label": "exploratorio -- nao altera nenhum veredito",
+  "description": "Per-norm detail for C0 seeds that did NOT produce EM_CONFLITO in grid v1",
+  "results": [
+    {
+      "world": "C0",
+      "T": 80,
+      "seed": 6,
+      "state": "JUSTIFICADO",
+      "elected": [
+        "s2"
+      ],
+      "label": "exploratorio",
+      "perNorm": [
+        {
+          "norm": null,
+          "verdict": "JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 28,
+              "better": 13,
+              "worse": 0,
+              "rate": 0.4643
+            },
+            "s2": {
+              "episodes": 38,
+              "better": 31,
+              "worse": 0,
+              "rate": 0.8158
+            }
+          },
+          "rate_diff": 0.3515,
+          "diff_vs_margin_015": 0.2015
+        },
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 29,
+              "better": 14,
+              "worse": 0,
+              "rate": 0.4828
+            },
+            "s2": {
+              "episodes": 42,
+              "better": 16,
+              "worse": 0,
+              "rate": 0.381
+            }
+          },
+          "rate_diff": 0.1018,
+          "diff_vs_margin_015": -0.0482
+        }
+      ]
+    },
+    {
+      "world": "C0",
+      "T": 80,
+      "seed": 8,
+      "state": "JUSTIFICADO",
+      "elected": [
+        "s1"
+      ],
+      "label": "exploratorio",
+      "perNorm": [
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 35,
+              "better": 20,
+              "worse": 0,
+              "rate": 0.5714
+            },
+            "s2": {
+              "episodes": 40,
+              "better": 27,
+              "worse": 0,
+              "rate": 0.675
+            }
+          },
+          "rate_diff": 0.1036,
+          "diff_vs_margin_015": -0.0464
+        },
+        {
+          "norm": null,
+          "verdict": "JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 35,
+              "better": 23,
+              "worse": 0,
+              "rate": 0.6571
+            },
+            "s2": {
+              "episodes": 39,
+              "better": 19,
+              "worse": 0,
+              "rate": 0.4872
+            }
+          },
+          "rate_diff": 0.1699,
+          "diff_vs_margin_015": 0.0199
+        }
+      ]
+    },
+    {
+      "world": "C0",
+      "T": 80,
+      "seed": 13,
+      "state": "NÃO_JUSTIFICADO",
+      "elected": null,
+      "label": "exploratorio",
+      "perNorm": [
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 34,
+              "better": 17,
+              "worse": 0,
+              "rate": 0.5
+            },
+            "s2": {
+              "episodes": 34,
+              "better": 22,
+              "worse": 0,
+              "rate": 0.6471
+            }
+          },
+          "rate_diff": 0.1471,
+          "diff_vs_margin_015": -0.0029
+        },
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 34,
+              "better": 18,
+              "worse": 0,
+              "rate": 0.5294
+            },
+            "s2": {
+              "episodes": 40,
+              "better": 18,
+              "worse": 0,
+              "rate": 0.45
+            }
+          },
+          "rate_diff": 0.0794,
+          "diff_vs_margin_015": -0.0706
+        }
+      ]
+    },
+    {
+      "world": "C0",
+      "T": 80,
+      "seed": 14,
+      "state": "JUSTIFICADO",
+      "elected": [
+        "s2"
+      ],
+      "label": "exploratorio",
+      "perNorm": [
+        {
+          "norm": null,
+          "verdict": "JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 35,
+              "better": 18,
+              "worse": 0,
+              "rate": 0.5143
+            },
+            "s2": {
+              "episodes": 39,
+              "better": 26,
+              "worse": 0,
+              "rate": 0.6667
+            }
+          },
+          "rate_diff": 0.1524,
+          "diff_vs_margin_015": 0.0024
+        },
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 34,
+              "better": 20,
+              "worse": 0,
+              "rate": 0.5882
+            },
+            "s2": {
+              "episodes": 41,
+              "better": 20,
+              "worse": 0,
+              "rate": 0.4878
+            }
+          },
+          "rate_diff": 0.1004,
+          "diff_vs_margin_015": -0.0496
+        }
+      ]
+    },
+    {
+      "world": "C0",
+      "T": 80,
+      "seed": 19,
+      "state": "JUSTIFICADO",
+      "elected": [
+        "s2"
+      ],
+      "label": "exploratorio",
+      "perNorm": [
+        {
+          "norm": null,
+          "verdict": "JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 37,
+              "better": 12,
+              "worse": 0,
+              "rate": 0.3243
+            },
+            "s2": {
+              "episodes": 37,
+              "better": 28,
+              "worse": 0,
+              "rate": 0.7568
+            }
+          },
+          "rate_diff": 0.4325,
+          "diff_vs_margin_015": 0.2825
+        },
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 37,
+              "better": 19,
+              "worse": 0,
+              "rate": 0.5135
+            },
+            "s2": {
+              "episodes": 39,
+              "better": 17,
+              "worse": 0,
+              "rate": 0.4359
+            }
+          },
+          "rate_diff": 0.0776,
+          "diff_vs_margin_015": -0.0724
+        }
+      ]
+    },
+    {
+      "world": "C0",
+      "T": 160,
+      "seed": 7,
+      "state": "JUSTIFICADO",
+      "elected": [
+        "s2"
+      ],
+      "label": "exploratorio",
+      "perNorm": [
+        {
+          "norm": null,
+          "verdict": "JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 75,
+              "better": 27,
+              "worse": 0,
+              "rate": 0.36
+            },
+            "s2": {
+              "episodes": 70,
+              "better": 44,
+              "worse": 0,
+              "rate": 0.6286
+            }
+          },
+          "rate_diff": 0.2686,
+          "diff_vs_margin_015": 0.1186
+        },
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 76,
+              "better": 45,
+              "worse": 0,
+              "rate": 0.5921
+            },
+            "s2": {
+              "episodes": 69,
+              "better": 32,
+              "worse": 0,
+              "rate": 0.4638
+            }
+          },
+          "rate_diff": 0.1283,
+          "diff_vs_margin_015": -0.0217
+        }
+      ]
+    },
+    {
+      "world": "C0",
+      "T": 160,
+      "seed": 8,
+      "state": "JUSTIFICADO",
+      "elected": [
+        "s2"
+      ],
+      "label": "exploratorio",
+      "perNorm": [
+        {
+          "norm": null,
+          "verdict": "JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 69,
+              "better": 29,
+              "worse": 0,
+              "rate": 0.4203
+            },
+            "s2": {
+              "episodes": 75,
+              "better": 48,
+              "worse": 0,
+              "rate": 0.64
+            }
+          },
+          "rate_diff": 0.2197,
+          "diff_vs_margin_015": 0.0697
+        },
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 74,
+              "better": 48,
+              "worse": 0,
+              "rate": 0.6486
+            },
+            "s2": {
+              "episodes": 74,
+              "better": 37,
+              "worse": 0,
+              "rate": 0.5
+            }
+          },
+          "rate_diff": 0.1486,
+          "diff_vs_margin_015": -0.0014
+        }
+      ]
+    },
+    {
+      "world": "C0",
+      "T": 160,
+      "seed": 14,
+      "state": "JUSTIFICADO",
+      "elected": [
+        "s2"
+      ],
+      "label": "exploratorio",
+      "perNorm": [
+        {
+          "norm": null,
+          "verdict": "JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 65,
+              "better": 31,
+              "worse": 0,
+              "rate": 0.4769
+            },
+            "s2": {
+              "episodes": 81,
+              "better": 55,
+              "worse": 0,
+              "rate": 0.679
+            }
+          },
+          "rate_diff": 0.2021,
+          "diff_vs_margin_015": 0.0521
+        },
+        {
+          "norm": null,
+          "verdict": "NÃO_JUSTIFICADO",
+          "margin": null,
+          "arms": {
+            "s1": {
+              "episodes": 65,
+              "better": 42,
+              "worse": 0,
+              "rate": 0.6462
+            },
+            "s2": {
+              "episodes": 79,
+              "better": 42,
+              "worse": 0,
+              "rate": 0.5316
+            }
+          },
+          "rate_diff": 0.1146,
+          "diff_vs_margin_015": -0.0354
+        }
+      ]
+    }
+  ]
+}
