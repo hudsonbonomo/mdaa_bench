@@ -3,7 +3,7 @@
   "access_right": "open",
   "license": "cc-by-4.0",
   "title": "mdaa_bench: simulation bench for blind identification of latent dynamical structure (MDAA)",
-  "version": "v7.0.0",
+  "version": "v8.0.0",
   "language": "eng",
   "creators": [
     {
@@ -12,7 +12,7 @@
       "orcid": "0000-0003-0656-7641"
     }
   ],
-  "description": "<p>This version adds the fourth bench to the repository: the adaptive policy bench, supplementary material for Paper 6 (Adaptive Policy Learning in Situated Learning Accessibility).</p><p>What is new. Five planted worlds (S, N, K, V, R) test whether a reader that adjusts a declared window under the rule of layer 6 separates from readers that each drop one rule of that paper. R_declared calls the @tmulab/mdaa plugin by subprocess with layer 6. R_fixed is the same plugin with a range of zero width, which is the window of Paper 5. R_simple drops replication, R_mix drops provenance, R_sym also shortens on contradiction, and R_cross counts across vocabulary regimes.</p><p>Pre-registration and amendments. The pre-registration (adaptive/PREREGISTRO_v1.md) was frozen at commit bed380b, with SHA-256 hashes, line endings normalized to LF, verified by a guardian test (tests/test_adaptive_guardian.py). Three rounds of amendment (v0.3 to v0.5) were committed before the freeze, none from a result. A pilot on discarded seeds 901–905 (commit 65f5e6b) recorded only the control sides of the predictions and required no amendment.</p><p>Grid. 400 runs (20 cells × 20 seeds), with the authorization and the results committed at 3cd0aad. Six of the eight pre-registered predictions are met. P1 fails in one cell (S, T = 320, k = 5: 0.80 against a threshold of 0.90), which the pre-registration classifies as against the paper. P5 fails on its control side in one cell (K, T = 320, k = 3: R_sym 0.65 against 0.80), which it classifies as a defect of instrument. Results in adaptive/resultados/grid_adaptive_decision.json and grid_adaptive_rows.csv.</p><p>Measured plugin. The grid ran against three compiled files of tmulab-mdaa at commit 04e71bb (dist/adjustment-cli.js, dist/adjustment.js, dist/standing.js), whose hashes are fixed in adaptive/plugin.sha256; the pilot and the grid refuse to run against any other build. The plugin repository is private. These three files and the source of layer 6 are deposited as supplementary material with Paper 6.</p>",
+  "description": "<p>This version adds two benches to the repository: value/, supplementary material for Paper 7 (Evaluation and Value in Situated Learning Accessibility), and collective/, supplementary material for Paper 8 (Collective and Multi-Agent Settings in Situated Learning Accessibility).</p><p>value/. Nine planted worlds, at two lengths and twenty seeds (360 runs), test whether a reader that judges only against a norm the person confirmed separates from four readers of the regime in force: one that elects by reward, one that infers value from behaviour, one that sums norms with weights, and one that compares naively. The reader under test calls the @tmulab/mdaa plugin by subprocess with layer 7. The pre-registration was frozen at 5e4cc3c, and a pilot on seeds 901–905 at d5403f6 recorded only the control sides. Amendment v1.2 (2d3d733) corrected an encoding defect in the decision code, and amendment v1.3 (6e69e69) recorded an audit of the grid. The grid rows and verdicts are at ec38eba (frozen code) and 7f0cdd3 (amended code), with an erratum at 5eda9c9 and the results documents at bf358b2. P1, P2, P5 (after v1.2) and P6 are met. P4 fails in its conflict clause (15 and 17 of 20), as the pre-registration classifies it. The audit found the control for P3 defective, so a second pre-registered round tested only that contrast. It was sized on seeds 200001–200300 at b2362a4 for the conjunction of its cells, frozen as an addendum at da3c841, and run on seeds 21–40 at 31e4739. The reader under test was unchanged by removing every authorized pause in 80 of 80 runs. The corrected control changed its choice in 13 of 20 runs in each cell, against a threshold of 0.35, so P3 is met. An exploratory re-run of the P4 runs, outside the pre-registration and changing no verdict, is at 14f2029.</p><p>collective/. Planted worlds test four predictions about the records of more than one person:</p><ul><li>Q1. Reports of the same episode count once.</li><li>Q2. The records of others enter as repertoire and never as evidence.</li><li>Q3. The gate for describing a population does not license borrowing from it.</li><li>Q4. A decision for a group is the intersection of what each member authorized, and silence does not authorize.</li></ul><p>The pre-registration was frozen at 7751ec1, with amendments at c6d247b, 2d3d733, 5eda9c9 and 6e69e69. A pilot on the same seeds ran at d5403f6, and the grid rows and verdicts are at 7f0cdd3. Q1, Q2 and the plugin side of Q4 (240 of 240) are met. The control of Q4 falls below its threshold in 1 of 8 cells. The gate side of Q3 is met: it passed where laws differ in 80 of 80 runs. The audit found the pooling reader defective, so a second pre-registered round tested the borrowing side of Q3. It was sized on seeds 300001–300300 at b2362a4, frozen at da3c841, and run on seeds 21–40 at 31e4739. Borrowing licensed by the gate gave most of those whose records age a longer ruler than their own records sustain, in 80 of 80 runs, so Q3 is met. Where persons are comparable, refusing to borrow cost about 2.4 blocks. The second-round grid recorded per-person folds for the comparable world and not for the world where laws differ; the seeds are fixed and a rerun reproduces them.</p><p>Measured plugin. Both grids ran against compiled files of tmulab-mdaa at commit 32e0105, whose hashes are fixed in value/plugin.sha256 and collective/plugin.sha256; the runs refuse any other build. The plugin repository is private. The source of layers 7 and 8 and the compiled files are deposited as supplementary material with Papers 7 and 8.</p>",
   "keywords": [
     "dynamical systems",
     "system identification",
@@ -28,12 +28,18 @@
     "action warrant",
     "provenance",
     "record standing",
-    "vocabulary reconciliation"
+    "vocabulary reconciliation",
+    "evaluation",
+    "declared norm",
+    "justification",
+    "multi-agent",
+    "provenance of reports",
+    "judgment aggregation"
   ],
   "notes": "Competing interest: TMU-LAB has commercial interests, declared as a competing interest in the associated papers.",
   "related_identifiers": [
     {
-      "identifier": "https://github.com/hudsonbonomo/mdaa_bench/tree/v7.0.0",
+      "identifier": "https://github.com/hudsonbonomo/mdaa_bench/tree/v8.0.0",
       "relation": "isSupplementTo",
       "resource_type": "software",
       "scheme": "url"

@@ -1162,6 +1162,54 @@ the decision bench uses, on worlds where the correct adaptation is planted.
 - Result: 6 of 8 predictions met, per `adaptive/resultados/grid_adaptive_decision.json`
 - Paper 6: https://doi.org/10.5281/zenodo.23241779
 
+## value/ — Paper 7 (Evaluation and Value)
+
+Paper 7 asks whether a reader that judges only against a norm the person
+confirmed separates from four readers of the regime in force: one that elects by
+reward, one that infers value from behaviour, one that sums norms with weights,
+and one that compares naively. Nine planted worlds, two lengths, twenty seeds
+(360 runs).
+
+- Preregistro frozen at `5e4cc3c`; amendment v1.2 at `2d3d733`, v1.3 at `6e69e69`
+- Pilot at `d5403f6` (seeds 901–905, control sides only)
+- Grid at `ec38eba` (frozen code) and `7f0cdd3` (amended code); erratum at
+  `5eda9c9`; results documents at `bf358b2`
+- Second round: sizing at `b2362a4` (seeds 200001–200300), addendum frozen at
+  `da3c841`, grid at `31e4739` (seeds 21–40)
+- Exploratory re-run of the P4 runs, outside the preregistro and changing no
+  verdict, at `14f2029`
+- Plugin fixed at `tmulab-mdaa 32e0105` via `value/plugin.sha256`
+- Result: P1, P2, P5 (after v1.2) and P6 met; P4 fails in its conflict clause
+  (15 and 17 of 20), as the preregistro classifies it; P3 met in the second
+  round — the reader under test was unchanged by removing every authorized pause
+  in 80 of 80 runs, and the corrected control changed its choice in 13 of 20
+  runs in each cell, against a threshold of 0.35
+
+## collective/ — Paper 8 (Collective and Multi-Agent Settings)
+
+Paper 8 plants worlds that test four predictions about the records of more than
+one person: Q1, reports of the same episode count once; Q2, the records of
+others enter as repertoire and never as evidence; Q3, the gate for describing a
+population does not license borrowing from it; Q4, a decision for a group is the
+intersection of what each member authorized, and silence does not authorize.
+
+- Preregistro frozen at `7751ec1`; amendments at `c6d247b`, `2d3d733`,
+  `5eda9c9` and `6e69e69`
+- Pilot at `d5403f6` (same seeds)
+- Grid at `7f0cdd3`
+- Second round: sizing at `b2362a4` (seeds 300001–300300), frozen at `da3c841`,
+  grid at `31e4739` (seeds 21–40)
+- Plugin fixed at `tmulab-mdaa 32e0105` via `collective/plugin.sha256`
+- Result: Q1, Q2 and the plugin side of Q4 (240 of 240) met; the control of Q4
+  falls below its threshold in 1 of 8 cells; the gate side of Q3 met, passing
+  where laws differ in 80 of 80 runs; Q3 met in the second round — borrowing
+  licensed by the gate gave most of those whose records age a longer ruler than
+  their own records sustain, in 80 of 80 runs, and where persons are comparable
+  refusing to borrow cost about 2.4 blocks
+- The second-round grid (v2) recorded per-person folds for the comparable world
+  (Pc) and not for the world where laws differ (Pw); the seeds are fixed and a
+  re-run reproduces them
+
 ## Next cells (in order of value)
 
 1-6. ~~Cells 1-5 of the original roadmap, plus the Wiener null.~~ **Done (v1, v2).**
