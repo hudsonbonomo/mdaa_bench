@@ -78,13 +78,18 @@ def _set_thresholds(monkeypatch):
     """Set all thresholds to known values for testing."""
     monkeypatch.setattr(D, "TH_P1_NORM", 1.0)
     monkeypatch.setattr(D, "TH_P1_REWARD", 1.0)
-    monkeypatch.setattr(D, "TH_P2", 0.80)
+    monkeypatch.setattr(D, "TH_P2_T80", 0.80)
+    monkeypatch.setattr(D, "TH_P2_T160", 0.80)
     monkeypatch.setattr(D, "TH_P2_REWARD", 0.80)
-    monkeypatch.setattr(D, "TH_P3", 0.80)
+    monkeypatch.setattr(D, "TH_P3_R", 0.80)
+    monkeypatch.setattr(D, "TH_P3_RPLUS", 0.80)
     monkeypatch.setattr(D, "TH_P4_CONFLICT", 0.80)
-    monkeypatch.setattr(D, "TH_P4_ELECT", 0.80)
-    monkeypatch.setattr(D, "TH_P5_X_NAIVE", 0.80)
-    monkeypatch.setattr(D, "TH_P5_XP", 0.80)
+    monkeypatch.setattr(D, "TH_P4_ELECT_T80", 0.80)
+    monkeypatch.setattr(D, "TH_P4_ELECT_T160", 0.80)
+    monkeypatch.setattr(D, "TH_P5_X_NAIVE_T80", 0.80)
+    monkeypatch.setattr(D, "TH_P5_X_NAIVE_T160", 0.80)
+    monkeypatch.setattr(D, "TH_P5_XP_T80", 0.80)
+    monkeypatch.setattr(D, "TH_P5_XP_T160", 0.80)
 
 
 # P1

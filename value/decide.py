@@ -1,5 +1,5 @@
 """Decision functions for the value grid (Paper 7).
-Predictions P1-P6 per cell. Thresholds are None until sizing sets them.
+Predictions P1-P6 per cell. Thresholds from sizing (PREREGISTRO v1 SS8).
 The decide() dispatcher REFUSES to run with any threshold still None.
 Failure classes: against_thesis, instrument_defect, plugin_defect.
 """
@@ -9,23 +9,29 @@ from adaptive.verdicts import rate_excluding_empty
 
 __all__ = [
     "TH_P1_NORM", "TH_P1_REWARD",
-    "TH_P2", "TH_P2_REWARD",
-    "TH_P3",
-    "TH_P4_CONFLICT", "TH_P4_ELECT",
-    "TH_P5_X_NAIVE", "TH_P5_XP",
+    "TH_P2_T80", "TH_P2_T160", "TH_P2_REWARD",
+    "TH_P3_R", "TH_P3_RPLUS",
+    "TH_P4_CONFLICT", "TH_P4_ELECT_T80", "TH_P4_ELECT_T160",
+    "TH_P5_X_NAIVE_T80", "TH_P5_X_NAIVE_T160",
+    "TH_P5_XP_T80", "TH_P5_XP_T160",
     "p1", "p2", "p3", "p4", "p5", "p6", "decide",
 ]
 
-# --- Thresholds: None until sizing. decide() refuses to run with None. ---
-TH_P1_NORM: float | None = None      # R_norm SEM_NORMA rate in N0
-TH_P1_REWARD: float | None = None    # R_reward judges rate in N0
-TH_P2: float | None = None           # R_norm JUSTIFICADO s2 rate in P
-TH_P2_REWARD: float | None = None    # R_reward elects s1 rate in P
-TH_P3: float | None = None           # R_infer_value changes juizo in R/R+
-TH_P4_CONFLICT: float | None = None  # R_norm EM_CONFLITO rate in C0
-TH_P4_ELECT: float | None = None     # R_norm elects s2 rate in C1/C2
-TH_P5_X_NAIVE: float | None = None   # R_naive justifies s1 in X
-TH_P5_XP: float | None = None        # R_norm NAO_JUSTIFICADO rate in Xp
+# --- Thresholds from sizing (PREREGISTRO v1 SS8). ---
+TH_P1_NORM: float | None = 1.00       # R_norm SEM_NORMA rate in N0
+TH_P1_REWARD: float | None = 1.00     # R_reward judges rate in N0
+TH_P2_T80: float | None = 0.80        # R_norm JUSTIFICADO s2, T=80
+TH_P2_T160: float | None = 0.95       # R_norm JUSTIFICADO s2, T=160
+TH_P2_REWARD: float | None = 1.00     # R_reward elects s1 in P
+TH_P3_R: float | None = 0.20          # R_infer_value changes in R
+TH_P3_RPLUS: float | None = 0.25      # R_infer_value changes in R+
+TH_P4_CONFLICT: float | None = 1.00   # R_scalar elege in C0
+TH_P4_ELECT_T80: float | None = 0.85  # R_norm elects s2 in C1/C2, T=80
+TH_P4_ELECT_T160: float | None = 0.95 # R_norm elects s2 in C1/C2, T=160
+TH_P5_X_NAIVE_T80: float | None = 0.85   # R_naive justifies s1, T=80
+TH_P5_X_NAIVE_T160: float | None = 0.95  # R_naive justifies s1, T=160
+TH_P5_XP_T80: float | None = 0.70     # R_norm NAO_JUSTIFICADO in Xp, T=80
+TH_P5_XP_T160: float | None = 0.90    # R_norm NAO_JUSTIFICADO in Xp, T=160
 
 FAILURE_CLASSES = ("against_thesis", "instrument_defect", "plugin_defect")
 
@@ -61,10 +67,11 @@ def p1(rows: list[dict], world: str, T: int) -> dict | None:
 
 
 def p2(rows: list[dict], world: str, T: int) -> dict | None:
-    """P2 (P): R_norm JUSTIFICADO s2 >= TH_P2; R_reward elects s1 >= TH_P2'."""
+    """P2 (P): R_norm JUSTIFICADO s2 >= TH_P2; R_reward elects s1 >= 1.00."""
     if world != "P":
         return None
     _check_thresholds()
+    th = TH_P2_T160 if T == 160 else TH_P2_T80
     n = len(rows)
     ok_norm = sum(1 for r in rows
                   if r["R_norm_state"] == "JUSTIFICADO"
@@ -72,10 +79,10 @@ def p2(rows: list[dict], world: str, T: int) -> dict | None:
     ok_rw = sum(1 for r in rows if r["R_reward_elected"] == "s1")
     rn = ok_norm / n if n else 0.0
     rr = ok_rw / n if n else 0.0
-    passed = rn >= TH_P2 and rr >= TH_P2_REWARD
+    passed = rn >= th and rr >= TH_P2_REWARD
     fc = None
     if not passed:
-        fc = "against_thesis" if rn < TH_P2 else "instrument_defect"
+        fc = "against_thesis" if rn < th else "instrument_defect"
     return {"rate_norm": rn, "rate_reward": rr,
             "passed": passed, "failure_class": fc}
 
@@ -85,13 +92,14 @@ def p3(rows: list[dict], world: str, T: int) -> dict | None:
     if world not in ("R", "R+"):
         return None
     _check_thresholds()
+    th = TH_P3_RPLUS if world == "R+" else TH_P3_R
     n = len(rows)
     ok_inv = sum(1 for r in rows if r["P3_invariant"] is True)
     rinv = ok_inv / n if n else 0.0
     ok_iv = sum(1 for r in rows
                 if r["R_infer_value_elected"] != r.get("R_infer_value_no_pause"))
     riv = ok_iv / n if n else 0.0
-    passed = rinv >= 1.0 and riv >= TH_P3
+    passed = rinv >= 1.0 and riv >= th
     fc = None
     if not passed:
         fc = "plugin_defect" if rinv < 1.0 else "instrument_defect"
@@ -116,12 +124,13 @@ def p4(rows: list[dict], world: str, T: int) -> dict | None:
                 "passed": passed, "failure_class": fc}
     if world in ("C1", "C2"):
         _check_thresholds()
+        th = TH_P4_ELECT_T160 if T == 160 else TH_P4_ELECT_T80
         n = len(rows)
         ok = sum(1 for r in rows
                  if r["R_norm_state"] == "JUSTIFICADO"
                  and r["R_norm_elected"] == "s2")
         rn = ok / n if n else 0.0
-        passed = rn >= TH_P4_ELECT
+        passed = rn >= th
         fc = "against_thesis" if not passed else None
         return {"rate_elect": rn,
                 "passed": passed, "failure_class": fc}
@@ -132,13 +141,14 @@ def p5(rows: list[dict], world: str, T: int) -> dict | None:
     """P5 (X, Xp): confounded / protocol."""
     if world == "X":
         _check_thresholds()
+        th = TH_P5_X_NAIVE_T160 if T == 160 else TH_P5_X_NAIVE_T80
         n = len(rows)
         ok_insuf = sum(1 for r in rows if r["R_norm_state"] == "INSUFICIENTE")
         ri = ok_insuf / n if n else 0.0
         ok_naive = sum(1 for r in rows
                        if r["R_naive_justified"] and r["R_naive_elected"] == "s1")
         rn = ok_naive / n if n else 0.0
-        passed = ri >= 1.0 and rn >= TH_P5_X_NAIVE
+        passed = ri >= 1.0 and rn >= th
         fc = None
         if not passed:
             fc = "plugin_defect" if ri < 1.0 else "instrument_defect"
@@ -146,10 +156,11 @@ def p5(rows: list[dict], world: str, T: int) -> dict | None:
                 "passed": passed, "failure_class": fc}
     if world == "Xp":
         _check_thresholds()
+        th = TH_P5_XP_T160 if T == 160 else TH_P5_XP_T80
         n = len(rows)
         ok = sum(1 for r in rows if r["R_norm_state"] == "NAO_JUSTIFICADO")
         rn = ok / n if n else 0.0
-        passed = rn >= TH_P5_XP
+        passed = rn >= th
         fc = "against_thesis" if not passed else None
         return {"rate_no_justificado": rn,
                 "passed": passed, "failure_class": fc}
