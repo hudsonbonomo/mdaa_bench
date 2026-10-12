@@ -1,0 +1,116 @@
+{
+  "value_decision": {
+    "R_T80": {
+      "p3_v2": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 0.65,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R_T160": {
+      "p3_v2": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 0.65,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R+_T80": {
+      "p3_v2": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 0.65,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "R+_T160": {
+      "p3_v2": {
+        "rate_invariant": 1.0,
+        "rate_infer_value_changes": 0.65,
+        "passed": true,
+        "failure_class": null
+      }
+    }
+  },
+  "collective_decision": {
+    "Pw_n5_T320": {
+      "q3_v2": {
+        "rate_H1_passes": 1.0,
+        "rate_borrow_error": 1.0,
+        "rate_no_cross_adjust": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pw_n5_T640": {
+      "q3_v2": {
+        "rate_H1_passes": 1.0,
+        "rate_borrow_error": 1.0,
+        "rate_no_cross_adjust": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pw_n20_T320": {
+      "q3_v2": {
+        "rate_H1_passes": 1.0,
+        "rate_borrow_error": 1.0,
+        "rate_no_cross_adjust": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    },
+    "Pw_n20_T640": {
+      "q3_v2": {
+        "rate_H1_passes": 1.0,
+        "rate_borrow_error": 1.0,
+        "rate_no_cross_adjust": 1.0,
+        "passed": true,
+        "failure_class": null
+      }
+    }
+  },
+  "collective_pc_cost": {
+    "Pc_n5_T320": {
+      "R_own_mean_block": 6.3,
+      "R_pool_mean_block": 4.0
+    },
+    "Pc_n5_T640": {
+      "R_own_mean_block": 6.3,
+      "R_pool_mean_block": 4.0
+    },
+    "Pc_n20_T320": {
+      "R_own_mean_block": 6.36,
+      "R_pool_mean_block": 4.0
+    },
+    "Pc_n20_T640": {
+      "R_own_mean_block": 6.36,
+      "R_pool_mean_block": 4.0
+    }
+  },
+  "seeds": [
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40
+  ],
+  "plugin_commit": "32e010599fec8c09b811d435f2fbabda62be69d3",
+  "elapsed_seconds": 557.18
+}
