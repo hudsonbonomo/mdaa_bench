@@ -57,6 +57,7 @@ def test_all_value_files_in_freeze():
         if p.name == "test_value_guardian.py":
             continue
         expected.add(f"../tests/{p.name}")
+    expected.add("../run_grid_v2.py")
     missing = expected - listed
     extra = listed - expected
     assert not missing, f"Files not in freeze.sha256: {missing}"
